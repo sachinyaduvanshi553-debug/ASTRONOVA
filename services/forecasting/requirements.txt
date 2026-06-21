@@ -1,0 +1,12 @@
+fastapi>=0.115.0
+uvicorn>=0.30.0
+pydantic>=2.9.0
+sqlalchemy>=2.0.0
+asyncpg>=0.30.0
+torch>=2.0.0
+pandas>=2.2.0
+numpy>=2.0.0
+redis>=5.2.0
+prometheus-client>=0.21.0
+structlog>=24.0.0
+astronova-core

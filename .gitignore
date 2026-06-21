@@ -1,0 +1,24 @@
+# Large datasets
+data/sample/*.csv
+data/sample/*.parquet
+
+# Scientific datasets
+*.fits
+*.cdf
+
+# Trained models
+*.pt
+*.pth
+*.ckpt
+
+# Python
+__pycache__/
+*.pyc
+.pytest_cache/
+
+# Node
+node_modules/
+.next/
+
+# Environment
+.env
