@@ -54,17 +54,17 @@ const initialFluxData = Array.from({ length: 60 }, (_, i) => {
 });
 
 const defaultXAIImportance = [
-  { name: 'Soft Flux Rolling Mean (30m)', value: 42, color: '#3b82f6' },
-  { name: 'Soft/Hard X-Ray Ratio', value: 28, color: '#10b981' },
-  { name: 'Soft Flux Gradient (1st Deriv)', value: 18, color: '#f59e0b' },
-  { name: 'Hard Flux Rolling Std (15m)', value: 12, color: '#ec4899' }
+  { name: 'Soft Flux Rolling Mean (30m)', value: 42, color: '#FF0000' },
+  { name: 'Soft/Hard X-Ray Ratio', value: 28, color: '#CC0000' },
+  { name: 'Soft Flux Gradient (1st Deriv)', value: 18, color: '#990000' },
+  { name: 'Hard Flux Rolling Std (15m)', value: 12, color: '#660000' }
 ];
 
 const benchmarkLeaderboard = [
   { model: 'Transformer Forecaster', tss: 0.88, leadTime: '26 min', f1: 0.84, accuracy: 0.94 },
   { model: 'BiLSTM (Active)', tss: 0.82, leadTime: '22 min', f1: 0.80, accuracy: 0.92 },
   { model: 'GRU Forecaster', tss: 0.78, leadTime: '18 min', f1: 0.77, accuracy: 0.90 },
-  { model: 'LightGBM Baseline', tss: 0.69, leadTime: '12 min', f1: 0.65, accuracy: 0.85 }
+  { model: 'XGBoost Baseline', tss: 0.69, leadTime: '12 min', f1: 0.65, accuracy: 0.85 }
 ];
 
 export default function Dashboard() {
@@ -144,7 +144,7 @@ export default function Dashboard() {
     setTimeout(() => {
       let replyText = "Analyst Query resolved. Probabilistic forecasts show 84% confidence bounds within ±8 min lead-time. The active M-class flare suggests South-Asian D-layer ionization ceiling at 22 MHz.";
       if (chatInput.toLowerCase().includes('shielding') || chatInput.toLowerCase().includes('gsat')) {
-        replyText = "GSAT communication assets in GEO are recommended for non-essential transponder power saflng. Magnetic helicity parameters show active thermal loading.";
+        replyText = "GSAT communication assets in GEO are recommended for non-essential transponder power safing. Magnetic helicity parameters show active thermal loading.";
       }
       setChatHistory((prev) => [...prev, { sender: 'copilot', text: replyText }]);
       setIsTyping(false);
@@ -169,29 +169,43 @@ export default function Dashboard() {
     setLifecyclePhase('Peak');
   };
 
+  // Alert category badge styling
+  const getCategoryBadge = (category: string) => {
+    const styles: Record<string, string> = {
+      'Safe': 'bg-white/10 text-white/80 border-white/20',
+      'Moderate': 'bg-red-950/40 text-red-300 border-red-400/20',
+      'High': 'bg-red-900/50 text-red-400 border-red-500/30',
+      'Extreme': 'bg-red-800/60 text-red-300 border-red-600/40',
+    };
+    return styles[category] || styles['Safe'];
+  };
+
   return (
-    <div className="min-h-screen flex flex-col bg-[#0b0f19] text-gray-100">
+    <div className="min-h-screen flex flex-col bg-black text-white">
       {/* HEADER */}
-      <header className="glass-panel sticky top-0 z-50 flex items-center justify-between px-6 py-4 border-b border-gray-800">
+      <header className="glass-panel sticky top-0 z-50 flex items-center justify-between px-6 py-4 border-b border-red-900/30">
         <div className="flex items-center gap-3">
-          <Compass className="w-8 h-8 text-blue-500 animate-spin-slow" />
+          <div className="relative">
+            <Compass className="w-8 h-8 text-red-500" />
+            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse-red" />
+          </div>
           <div>
-            <h1 className="text-xl font-bold tracking-wider text-white">AstroNova</h1>
-            <p className="text-xs text-gray-400">Aditya-L1 Space Weather Intelligence Console</p>
+            <h1 className="text-xl font-bold tracking-[0.15em] text-white uppercase">AstroNova</h1>
+            <p className="text-[10px] text-white/40 tracking-widest uppercase">Aditya-L1 Space Weather Intelligence Console</p>
           </div>
         </div>
         
         <div className="flex items-center gap-6 text-sm">
-          <div className="flex items-center gap-2 px-3 py-1 bg-blue-950/40 border border-blue-500/30 rounded-full text-blue-400">
-            <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
-            Sensors: SoLEXS & HEL1OS Calibrated
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-red-950/30 border border-red-500/20 rounded-full text-red-400">
+            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+            <span className="text-[11px] tracking-wide">SoLEXS &amp; HEL1OS Calibrated</span>
           </div>
-          <div className="flex items-center gap-2 px-3 py-1 bg-orange-950/40 border border-orange-500/30 rounded-full text-orange-400">
-            <span className="w-2 h-2 rounded-full bg-orange-400 animate-pulse"></span>
-            Lifecycle Phase: {lifecyclePhase}
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-white/5 border border-white/10 rounded-full text-white/60">
+            <span className="w-2 h-2 rounded-full bg-white/50 animate-pulse" />
+            <span className="text-[11px] tracking-wide">Phase: {lifecyclePhase}</span>
           </div>
-          <div className="flex items-center gap-2 text-gray-400 font-mono">
-            <Clock className="w-4 h-4 text-gray-500" />
+          <div className="flex items-center gap-2 text-white/40 font-mono text-xs">
+            <Clock className="w-4 h-4 text-red-500/60" />
             UTC: {new Date().toUTCString().slice(17, 25)}
           </div>
         </div>
@@ -200,170 +214,138 @@ export default function Dashboard() {
       {/* MAIN CONTAINER */}
       <div className="flex-1 flex overflow-hidden">
         {/* SIDEBAR */}
-        <aside className="w-64 border-r border-gray-800 bg-[#0e1322]/80 flex flex-col p-4 gap-2">
-          <button
-            onClick={() => setActiveTab('console')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-              activeTab === 'console'
-                ? 'bg-blue-600/20 text-blue-400 border-l-4 border-blue-500'
-                : 'text-gray-400 hover:bg-gray-800/40 hover:text-white'
-            }`}
-          >
-            <Compass className="w-5 h-5" />
-            ISRO Mission Console
-          </button>
+        <aside className="w-64 border-r border-red-900/20 bg-[#050505] flex flex-col p-4 gap-1">
+          {[
+            { id: 'console', icon: Compass, label: 'ISRO Mission Console' },
+            { id: 'live', icon: Activity, label: 'Aditya-L1 Telemetry' },
+            { id: 'simulation', icon: Sliders, label: 'Scenario Simulator' },
+            { id: 'research', icon: Award, label: 'Research Benchmarking' },
+            { id: 'copilot', icon: MessageSquare, label: 'Mission AI Copilot' },
+          ].map(({ id, icon: Icon, label }) => (
+            <button
+              key={id}
+              onClick={() => setActiveTab(id)}
+              className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
+                activeTab === id
+                  ? 'bg-red-950/40 text-red-400 border-l-4 border-red-500 glow-red-border'
+                  : 'text-white/40 hover:bg-white/5 hover:text-white/80 border-l-4 border-transparent'
+              }`}
+            >
+              <Icon className="w-5 h-5" />
+              {label}
+            </button>
+          ))}
           
-          <button
-            onClick={() => setActiveTab('live')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-              activeTab === 'live'
-                ? 'bg-blue-600/20 text-blue-400 border-l-4 border-blue-500'
-                : 'text-gray-400 hover:bg-gray-800/40 hover:text-white'
-            }`}
-          >
-            <Activity className="w-5 h-5" />
-            Aditya-L1 Telemetry
-          </button>
-          
-          <button
-            onClick={() => setActiveTab('simulation')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-              activeTab === 'simulation'
-                ? 'bg-blue-600/20 text-blue-400 border-l-4 border-blue-500'
-                : 'text-gray-400 hover:bg-gray-800/40 hover:text-white'
-            }`}
-          >
-            <Sliders className="w-5 h-5" />
-            Scenario Simulator
-          </button>
-
-          <button
-            onClick={() => setActiveTab('research')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-              activeTab === 'research'
-                ? 'bg-blue-600/20 text-blue-400 border-l-4 border-blue-500'
-                : 'text-gray-400 hover:bg-gray-800/40 hover:text-white'
-            }`}
-          >
-            <Award className="w-5 h-5" />
-            Research Benchmarking
-          </button>
-
-          <button
-            onClick={() => setActiveTab('copilot')}
-            className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-              activeTab === 'copilot'
-                ? 'bg-blue-600/20 text-blue-400 border-l-4 border-blue-500'
-                : 'text-gray-400 hover:bg-gray-800/40 hover:text-white'
-            }`}
-          >
-            <MessageSquare className="w-5 h-5" />
-            Mission AI Copilot
-          </button>
-          
-          <div className="mt-auto border-t border-gray-800 pt-4 flex flex-col gap-2">
-            <div className="p-3 bg-red-950/20 border border-red-500/20 rounded-lg flex items-start gap-2 text-xs">
+          <div className="mt-auto border-t border-red-900/20 pt-4 flex flex-col gap-2">
+            <div className="p-3 bg-red-950/20 border border-red-500/15 rounded-lg flex items-start gap-2 text-xs glow-red-border">
               <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
               <div>
-                <h4 className="font-semibold text-red-400">Comms Blackout Alert</h4>
-                <p className="text-[10px] text-gray-400">NavIC degradation forecast index high over South-Asia.</p>
+                <h4 className="font-semibold text-red-400 tracking-wide">Comms Blackout Alert</h4>
+                <p className="text-[10px] text-white/30 mt-0.5">NavIC degradation forecast index high over South-Asia.</p>
               </div>
             </div>
           </div>
         </aside>
 
         {/* CONTENT */}
-        <main className="flex-1 overflow-y-auto p-6 bg-[#0b0f19]">
+        <main className="flex-1 overflow-y-auto p-6 bg-black">
 
-          {/* ────────────────────────────────────────────────────────────────────────────── */}
-          {/* TAB: ISRO MISSION CONSOLE */}
-          {/* ────────────────────────────────────────────────────────────────────────────── */}
+          {/* ── TAB: ISRO MISSION CONSOLE ── */}
           {activeTab === 'console' && (
             <div className="space-y-6">
               {/* TOP SUMMARY STATS */}
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                <div className="glass-card p-4 rounded-xl flex flex-col justify-between">
-                  <span className="text-xs text-gray-400 font-medium">Solar Hazard Index (SHI)</span>
-                  <div className="my-2 flex items-center justify-between">
-                    <span className="text-3xl font-extrabold text-red-500 font-mono">{shiScore.toFixed(2)}</span>
-                    <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-red-950 text-red-400 border border-red-500/20">
+                <div className="glass-card p-5 rounded-xl flex flex-col justify-between glow-red-border">
+                  <span className="text-[10px] text-white/40 font-medium tracking-widest uppercase">Solar Hazard Index</span>
+                  <div className="my-3 flex items-center justify-between">
+                    <span className="text-4xl font-extrabold text-red-500 font-mono tabular-nums">{shiScore.toFixed(2)}</span>
+                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border tracking-wider uppercase ${getCategoryBadge(shiCategory)}`}>
                       {shiCategory}
                     </span>
                   </div>
-                  <span className="text-[10px] text-gray-400">SHI Formula active</span>
+                  <div className="w-full bg-white/5 rounded-full h-1.5 mt-1">
+                    <div className="bg-gradient-to-r from-red-900 via-red-500 to-red-400 h-1.5 rounded-full transition-all duration-1000" style={{ width: `${shiScore * 100}%` }} />
+                  </div>
                 </div>
 
-                <div className="glass-card p-4 rounded-xl flex flex-col justify-between">
-                  <span className="text-xs text-gray-400 font-medium">GOES Target Class Nowcast</span>
-                  <div className="my-2 flex items-baseline gap-2">
-                    <span className="text-3xl font-extrabold text-orange-500 font-mono">{goesClass}</span>
+                <div className="glass-card p-5 rounded-xl flex flex-col justify-between glow-red-border">
+                  <span className="text-[10px] text-white/40 font-medium tracking-widest uppercase">GOES Nowcast Class</span>
+                  <div className="my-3 flex items-baseline gap-2">
+                    <span className="text-4xl font-extrabold text-white font-mono tabular-nums">{goesClass}</span>
                   </div>
-                  <span className="text-[10px] text-green-400">Confidence bounds: ±8%</span>
+                  <span className="text-[10px] text-white/30">Confidence bounds: ±8%</span>
                 </div>
 
-                <div className="glass-card p-4 rounded-xl flex flex-col justify-between">
-                  <span className="text-xs text-gray-400 font-medium">Estimated Time-to-Flare</span>
-                  <div className="my-2 flex items-baseline gap-2">
-                    <span className="text-2xl font-bold text-white font-mono">22 min</span>
+                <div className="glass-card p-5 rounded-xl flex flex-col justify-between glow-red-border">
+                  <span className="text-[10px] text-white/40 font-medium tracking-widest uppercase">Time-to-Flare</span>
+                  <div className="my-3 flex items-baseline gap-2">
+                    <span className="text-3xl font-bold text-white font-mono tabular-nums">22</span>
+                    <span className="text-sm text-white/40">min</span>
                   </div>
-                  <span className="text-[10px] text-blue-400">Dynamic lead-time optimization</span>
+                  <span className="text-[10px] text-red-400/60">Dynamic lead-time optimization</span>
                 </div>
 
-                <div className="glass-card p-4 rounded-xl flex flex-col justify-between">
-                  <span className="text-xs text-gray-400 font-medium">Telemetry Source</span>
-                  <div className="my-2 flex items-baseline gap-2">
-                    <span className="text-xl font-bold text-blue-400">Aditya-L1 L1 Data</span>
+                <div className="glass-card p-5 rounded-xl flex flex-col justify-between glow-red-border">
+                  <span className="text-[10px] text-white/40 font-medium tracking-widest uppercase">Telemetry Source</span>
+                  <div className="my-3 flex items-baseline gap-2">
+                    <span className="text-lg font-bold text-red-400">Aditya-L1 L1 Data</span>
                   </div>
-                  <span className="text-[10px] text-gray-400 font-mono">FITS / CDF synchronization</span>
+                  <span className="text-[10px] text-white/30 font-mono">FITS / CDF synchronization</span>
                 </div>
               </div>
 
-              {/* MISSION CONSOLE SUMMARY MATRIX */}
+              {/* MISSION CONSOLE: MAP + OPERATIONS */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 
-                {/* Visual Map/Earth Impact */}
-                <div className="glass-panel p-6 rounded-xl border border-gray-800 md:col-span-2">
-                  <h3 className="text-base font-bold text-white mb-2">ISRO Geospatial Earth Impact</h3>
-                  <p className="text-xs text-gray-400 mb-6">NavIC/D-layer absorption projection over South-Asia quadrant</p>
+                {/* Earth Impact Map */}
+                <div className="glass-panel p-6 rounded-xl border border-red-900/20 md:col-span-2 glow-red">
+                  <h3 className="text-sm font-bold text-white tracking-widest uppercase mb-1">ISRO Geospatial Earth Impact</h3>
+                  <p className="text-[10px] text-white/30 mb-6">NavIC/D-layer absorption projection over South-Asia quadrant</p>
                   
-                  <div className="relative bg-[#0d1220] rounded-xl border border-gray-800 p-6 flex flex-col justify-center items-center h-72 overflow-hidden">
-                    <svg className="w-full h-56 text-gray-800 opacity-60" fill="currentColor" viewBox="0 0 800 400">
-                      <path d="M120 80h100v100H120zM140 180h80v150h-80z" />
-                      <path d="M380 60h100v120H380zM390 180h90v160h-90z" />
-                      <path d="M500 40h180v160H500z" />
+                  <div className="relative bg-[#050505] rounded-xl border border-red-900/15 p-6 flex flex-col justify-center items-center h-72 overflow-hidden">
+                    <svg className="w-full h-56 opacity-40" fill="currentColor" viewBox="0 0 800 400">
+                      <path d="M120 80h100v100H120zM140 180h80v150h-80z" className="text-white/10" />
+                      <path d="M380 60h100v120H380zM390 180h90v160h-90z" className="text-white/10" />
+                      <path d="M500 40h180v160H500z" className="text-white/10" />
                       <circle cx="560" cy="140" r="30" className="fill-red-500/20 stroke-red-500 stroke-2 animate-ping" />
                       <circle cx="560" cy="140" r="10" className="fill-red-600" />
                     </svg>
                     
-                    <div className="absolute top-4 left-4 bg-gray-900/90 border border-gray-800 p-3 rounded-lg text-xs">
-                      <div className="font-semibold text-white mb-1">Impact Center: South-Asia</div>
+                    <div className="absolute top-4 left-4 bg-black/80 border border-red-900/30 p-3 rounded-lg text-xs">
+                      <div className="font-semibold text-white mb-1 tracking-wide">Impact Center: South-Asia</div>
                       <div className="text-red-400">NavIC Scintillation Index (S4): 0.74</div>
-                      <div className="text-gray-400">Absorption ceiling: 22 MHz</div>
+                      <div className="text-white/40">Absorption ceiling: 22 MHz</div>
+                    </div>
+
+                    <div className="absolute bottom-4 right-4 bg-black/80 border border-red-900/30 p-2 rounded text-[10px] text-white/30">
+                      <span className="text-red-400 font-mono">●</span> Active Impact Zone
                     </div>
                   </div>
                 </div>
 
-                {/* Mitigations & Operational Recommendations */}
-                <div className="glass-panel p-6 rounded-xl border border-gray-800 flex flex-col justify-between">
+                {/* Operational Guidelines */}
+                <div className="glass-panel p-6 rounded-xl border border-red-900/20 flex flex-col justify-between">
                   <div>
-                    <h3 className="text-base font-bold text-white mb-2">Operational Guidelines</h3>
-                    <p className="text-xs text-gray-400 mb-6">Actionable satellite & comms mitigations</p>
+                    <h3 className="text-sm font-bold text-white tracking-widest uppercase mb-1">Operational Guidelines</h3>
+                    <p className="text-[10px] text-white/30 mb-6">Actionable satellite &amp; comms mitigations</p>
                     
                     <div className="space-y-4">
                       {[
-                        { title: 'GSAT GEO Satellites', action: 'Safing/Amber: Prepare backup gyro systems', color: 'text-orange-400' },
-                        { title: 'NavIC Receivers', action: 'Scintillation active: auto-tracking mode', color: 'text-red-500' },
-                        { title: 'Aviation Transponders', action: 'Advisory: route redirection on South-Asia', color: 'text-yellow-400' },
-                        { title: 'Power Grid Operators', action: 'Inductive current load warning S4=0.7', color: 'text-orange-400' }
+                        { title: 'GSAT GEO Satellites', action: 'Safing/Amber: Prepare backup gyro systems', level: 'Moderate' },
+                        { title: 'NavIC Receivers', action: 'Scintillation active: auto-tracking mode', level: 'High' },
+                        { title: 'Aviation Transponders', action: 'Advisory: route redirection on South-Asia', level: 'Moderate' },
+                        { title: 'Power Grid Operators', action: 'Inductive current load warning S4=0.7', level: 'Moderate' }
                       ].map((item, idx) => (
-                        <div key={idx} className="text-xs pb-2 border-b border-gray-800">
-                          <div className="font-semibold text-gray-300">{item.title}</div>
-                          <div className={`text-[11px] ${item.color}`}>{item.action}</div>
+                        <div key={idx} className="text-xs pb-3 border-b border-red-900/10">
+                          <div className="font-semibold text-white/80 tracking-wide">{item.title}</div>
+                          <div className={`text-[11px] mt-0.5 ${item.level === 'High' ? 'text-red-400' : 'text-red-400/60'}`}>
+                            {item.action}
+                          </div>
                         </div>
                       ))}
                     </div>
                   </div>
-                  <button className="w-full mt-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold">
+                  <button className="w-full mt-4 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold tracking-widest uppercase transition-colors">
                     Download Execution Plan
                   </button>
                 </div>
@@ -372,129 +354,165 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* ────────────────────────────────────────────────────────────────────────────── */}
-          {/* TAB: ADITYA-L1 TELEMETRY */}
-          {/* ────────────────────────────────────────────────────────────────────────────── */}
+          {/* ── TAB: ADITYA-L1 TELEMETRY ── */}
           {activeTab === 'live' && (
             <div className="space-y-6">
-              <div className="glass-panel p-6 rounded-xl border border-gray-800">
+              <div className="glass-panel p-6 rounded-xl border border-red-900/20 glow-red">
                 <div className="flex items-center justify-between mb-6">
                   <div>
-                    <h3 className="text-base font-bold text-white">Aditya-L1 Real-Time Sync</h3>
-                    <p className="text-xs text-gray-400">Aligned Soft X-Ray (SoLEXS) and Hard X-Ray (HEL1OS) fluxes</p>
+                    <h3 className="text-sm font-bold text-white tracking-widest uppercase">Aditya-L1 Real-Time Sync</h3>
+                    <p className="text-[10px] text-white/30 mt-1">Aligned Soft X-Ray (SoLEXS) and Hard X-Ray (HEL1OS) fluxes</p>
+                  </div>
+                  <div className="flex items-center gap-4 text-[10px]">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-3 h-0.5 bg-white rounded" />
+                      <span className="text-white/50">SoLEXS</span>
+                    </div>
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-3 h-0.5 bg-red-500 rounded" />
+                      <span className="text-white/50">HEL1OS</span>
+                    </div>
                   </div>
                 </div>
                 
                 <div className="h-96">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={fluxData}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-                      <XAxis dataKey="time" stroke="#9ca3af" fontSize={11} />
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,0,0,0.06)" />
+                      <XAxis dataKey="time" stroke="rgba(255,255,255,0.25)" fontSize={10} tickLine={false} />
                       <YAxis 
                         scale="log" 
                         domain={[1e-9, 1e-3]} 
-                        stroke="#9ca3af" 
-                        fontSize={11} 
-                        tickFormatter={(v) => v.toExponential(0)} 
+                        stroke="rgba(255,255,255,0.25)" 
+                        fontSize={10} 
+                        tickFormatter={(v) => v.toExponential(0)}
+                        tickLine={false}
                       />
-                      <Tooltip contentStyle={{ backgroundColor: '#111827', borderColor: '#374151' }} />
-                      <Area type="monotone" dataKey="softFlux" stroke="#3b82f6" strokeWidth={2} fillOpacity={0.1} fill="#3b82f6" name="SoLEXS Soft X-Ray" />
-                      <Area type="monotone" dataKey="hardFlux" stroke="#ec4899" strokeWidth={1.5} fillOpacity={0.1} fill="#ec4899" name="HEL1OS Hard X-Ray" />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: '#0a0a0a',
+                          borderColor: 'rgba(255,0,0,0.2)',
+                          borderRadius: '8px',
+                          color: '#fff',
+                          fontSize: '11px'
+                        }}
+                      />
+                      <Area type="monotone" dataKey="softFlux" stroke="#ffffff" strokeWidth={2} fillOpacity={0.05} fill="#ffffff" name="SoLEXS Soft X-Ray" />
+                      <Area type="monotone" dataKey="hardFlux" stroke="#FF0000" strokeWidth={1.5} fillOpacity={0.08} fill="#FF0000" name="HEL1OS Hard X-Ray" />
                     </AreaChart>
+                  </ResponsiveContainer>
+                </div>
+              </div>
+
+              {/* XAI Feature Importance */}
+              <div className="glass-panel p-6 rounded-xl border border-red-900/20">
+                <h3 className="text-sm font-bold text-white tracking-widest uppercase mb-1">Feature Importance — XAI</h3>
+                <p className="text-[10px] text-white/30 mb-4">SHAP-derived contribution weights for active prediction</p>
+                <div className="h-48">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={defaultXAIImportance} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,0,0,0.06)" />
+                      <XAxis type="number" stroke="rgba(255,255,255,0.25)" fontSize={10} tickLine={false} />
+                      <YAxis type="category" dataKey="name" stroke="rgba(255,255,255,0.25)" fontSize={10} width={200} tickLine={false} />
+                      <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                        {defaultXAIImportance.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Bar>
+                    </BarChart>
                   </ResponsiveContainer>
                 </div>
               </div>
             </div>
           )}
 
-          {/* ────────────────────────────────────────────────────────────────────────────── */}
-          {/* TAB: SCENARIO SIMULATOR */}
-          {/* ────────────────────────────────────────────────────────────────────────────── */}
+          {/* ── TAB: SCENARIO SIMULATOR ── */}
           {activeTab === 'simulation' && (
             <div className="space-y-6">
-              <div className="glass-panel p-6 rounded-xl border border-gray-800">
-                <h3 className="text-base font-bold text-white mb-2">Risk Scenario Simulator</h3>
-                <p className="text-xs text-gray-400 mb-6">Simulate customized solar flare eruptions to test operational limits</p>
+              <div className="glass-panel p-6 rounded-xl border border-red-900/20 glow-red">
+                <h3 className="text-sm font-bold text-white tracking-widest uppercase mb-1">Risk Scenario Simulator</h3>
+                <p className="text-[10px] text-white/30 mb-6">Simulate customized solar flare eruptions to test operational limits</p>
                 
-                <div className="flex gap-4 mb-8">
+                <div className="flex gap-3 mb-8">
                   {['C5.0', 'M1.0', 'M5.0', 'X1.0', 'X5.0'].map((val) => (
                     <button
                       key={val}
                       onClick={() => handleSimulate(val)}
-                      className={`px-4 py-2 rounded-lg text-xs font-semibold transition-all ${
+                      className={`px-5 py-2.5 rounded-lg text-xs font-bold tracking-wider uppercase transition-all duration-200 ${
                         goesClass === val
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-[#181f30] text-gray-400 hover:text-white'
+                          ? 'bg-red-600 text-white glow-red-strong'
+                          : 'bg-white/5 text-white/40 hover:text-white hover:bg-white/10 border border-white/10'
                       }`}
                     >
-                      Simulate {val}
+                      {val}
                     </button>
                   ))}
                   {isSimulating && (
                     <button
                       onClick={() => setIsSimulating(false)}
-                      className="px-4 py-2 bg-red-950 text-red-400 border border-red-500/20 rounded-lg text-xs font-semibold"
+                      className="px-5 py-2.5 bg-red-950/40 text-red-400 border border-red-500/20 rounded-lg text-xs font-bold tracking-wider uppercase hover:bg-red-950/60 transition-colors"
                     >
-                      Reset Simulation
+                      Reset
                     </button>
                   )}
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="glass-card p-4 rounded-lg">
-                    <span className="text-xs text-gray-400 block mb-2">Simulated Solar Hazard Index</span>
-                    <div className="text-3xl font-extrabold text-red-500 font-mono mb-2">{shiScore.toFixed(2)}</div>
-                    <span className="text-xs font-semibold bg-red-950 text-red-400 border border-red-500/20 px-2.5 py-0.5 rounded-full">{shiCategory}</span>
+                  <div className="glass-card p-5 rounded-xl glow-red-border">
+                    <span className="text-[10px] text-white/40 block mb-2 tracking-widest uppercase">Solar Hazard Index</span>
+                    <div className="text-4xl font-extrabold text-red-500 font-mono tabular-nums mb-2">{shiScore.toFixed(2)}</div>
+                    <span className={`text-[10px] font-bold border px-2.5 py-1 rounded-full tracking-wider uppercase ${getCategoryBadge(shiCategory)}`}>
+                      {shiCategory}
+                    </span>
                   </div>
 
-                  <div className="glass-card p-4 rounded-lg">
-                    <span className="text-xs text-gray-400 block mb-2">Simulated GPS Position Error</span>
-                    <div className="text-2xl font-bold text-white font-mono mb-2">
-                      {goesClass.startsWith('X') ? '14.8 meters' : (goesClass.startsWith('M') ? '5.4 meters' : '1.5 meters')}
+                  <div className="glass-card p-5 rounded-xl glow-red-border">
+                    <span className="text-[10px] text-white/40 block mb-2 tracking-widest uppercase">GPS Position Error</span>
+                    <div className="text-3xl font-bold text-white font-mono tabular-nums mb-2">
+                      {goesClass.startsWith('X') ? '14.8' : (goesClass.startsWith('M') ? '5.4' : '1.5')}
+                      <span className="text-sm text-white/40 ml-1">m</span>
                     </div>
-                    <span className="text-[10px] text-gray-400">Estimated position deviation increase</span>
+                    <span className="text-[10px] text-white/30">Estimated position deviation</span>
                   </div>
 
-                  <div className="glass-card p-4 rounded-lg">
-                    <span className="text-xs text-gray-400 block mb-2">Simulated NavIC Scintillation (S4)</span>
-                    <div className="text-2xl font-bold text-orange-400 font-mono mb-2">
+                  <div className="glass-card p-5 rounded-xl glow-red-border">
+                    <span className="text-[10px] text-white/40 block mb-2 tracking-widest uppercase">NavIC Scintillation (S4)</span>
+                    <div className="text-3xl font-bold text-red-400 font-mono tabular-nums mb-2">
                       {goesClass.startsWith('X') ? '0.85' : (goesClass.startsWith('M') ? '0.45' : '0.15')}
                     </div>
-                    <span className="text-[10px] text-gray-400">Threshold warning limit: 0.40</span>
+                    <span className="text-[10px] text-white/30">Threshold limit: 0.40</span>
                   </div>
                 </div>
               </div>
             </div>
           )}
 
-          {/* ────────────────────────────────────────────────────────────────────────────── */}
-          {/* TAB: RESEARCH BENCHMARKING */}
-          {/* ────────────────────────────────────────────────────────────────────────────── */}
+          {/* ── TAB: RESEARCH BENCHMARKING ── */}
           {activeTab === 'research' && (
             <div className="space-y-6">
-              <div className="glass-panel p-6 rounded-xl border border-gray-800">
-                <h3 className="text-base font-bold text-white mb-2">Research Leaderboard</h3>
-                <p className="text-xs text-gray-400 mb-6">Cross-validation benchmarks calculated on NOAA & Aditya-L1 historical events</p>
+              <div className="glass-panel p-6 rounded-xl border border-red-900/20">
+                <h3 className="text-sm font-bold text-white tracking-widest uppercase mb-1">Research Leaderboard</h3>
+                <p className="text-[10px] text-white/30 mb-6">Cross-validation benchmarks on NOAA &amp; Aditya-L1 historical events</p>
                 
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>
-                      <tr className="border-b border-gray-800 text-gray-400">
-                        <th className="py-3 px-4">Forecasting Model</th>
-                        <th className="py-3 px-4">TSS (True Skill Statistic)</th>
-                        <th className="py-3 px-4">Mean Lead Time</th>
-                        <th className="py-3 px-4">F1 Score</th>
-                        <th className="py-3 px-4">Overall Accuracy</th>
+                      <tr className="border-b border-red-900/20 text-white/40">
+                        <th className="py-3 px-4 tracking-wider uppercase text-[10px]">Model</th>
+                        <th className="py-3 px-4 tracking-wider uppercase text-[10px]">TSS</th>
+                        <th className="py-3 px-4 tracking-wider uppercase text-[10px]">Lead Time</th>
+                        <th className="py-3 px-4 tracking-wider uppercase text-[10px]">F1 Score</th>
+                        <th className="py-3 px-4 tracking-wider uppercase text-[10px]">Accuracy</th>
                       </tr>
                     </thead>
                     <tbody>
                       {benchmarkLeaderboard.map((item, idx) => (
-                        <tr key={idx} className="border-b border-gray-800 hover:bg-gray-800/10">
-                          <td className="py-3 px-4 font-semibold text-gray-200">{item.model}</td>
-                          <td className="py-3 px-4 text-blue-400 font-bold font-mono">{item.tss.toFixed(2)}</td>
-                          <td className="py-3 px-4 font-mono">{item.leadTime}</td>
-                          <td className="py-3 px-4 font-mono">{item.f1.toFixed(2)}</td>
-                          <td className="py-3 px-4 font-mono">{(item.accuracy * 100).toFixed(0)}%</td>
+                        <tr key={idx} className="border-b border-red-900/10 hover:bg-white/[0.02] transition-colors">
+                          <td className="py-3 px-4 font-semibold text-white/80">{item.model}</td>
+                          <td className="py-3 px-4 text-red-400 font-bold font-mono tabular-nums">{item.tss.toFixed(2)}</td>
+                          <td className="py-3 px-4 font-mono text-white/60 tabular-nums">{item.leadTime}</td>
+                          <td className="py-3 px-4 font-mono text-white/60 tabular-nums">{item.f1.toFixed(2)}</td>
+                          <td className="py-3 px-4 font-mono text-white/60 tabular-nums">{(item.accuracy * 100).toFixed(0)}%</td>
                         </tr>
                       ))}
                     </tbody>
@@ -504,19 +522,17 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* ────────────────────────────────────────────────────────────────────────────── */}
-          {/* TAB: MISSION AI COPILOT */}
-          {/* ────────────────────────────────────────────────────────────────────────────── */}
+          {/* ── TAB: MISSION AI COPILOT ── */}
           {activeTab === 'copilot' && (
-            <div className="glass-panel rounded-xl border border-gray-800 flex flex-col h-[520px]">
-              <div className="p-4 border-b border-gray-800 flex items-center justify-between">
+            <div className="glass-panel rounded-xl border border-red-900/20 flex flex-col h-[520px]">
+              <div className="p-4 border-b border-red-900/20 flex items-center justify-between">
                 <div>
-                  <h3 className="text-base font-bold text-white">Space Weather Copilot</h3>
-                  <p className="text-xs text-gray-400">Grounded to local space weather literature & ISRO manuals</p>
+                  <h3 className="text-sm font-bold text-white tracking-widest uppercase">Space Weather Copilot</h3>
+                  <p className="text-[10px] text-white/30 mt-0.5">Grounded to local space weather literature &amp; ISRO manuals</p>
                 </div>
-                <div className="text-xs text-blue-400 flex items-center gap-1.5">
+                <div className="text-[10px] text-red-400 flex items-center gap-1.5">
                   <Database className="w-4 h-4" />
-                  RAG Database active
+                  <span className="tracking-wider uppercase">RAG Active</span>
                 </div>
               </div>
 
@@ -524,10 +540,10 @@ export default function Dashboard() {
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {chatHistory.map((msg, idx) => (
                   <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[70%] p-3 rounded-lg text-xs ${
+                    <div className={`max-w-[70%] p-3 rounded-lg text-xs leading-relaxed ${
                       msg.sender === 'user'
-                        ? 'bg-blue-600 text-white rounded-br-none'
-                        : 'bg-[#181f30] text-gray-200 border border-gray-800 rounded-bl-none'
+                        ? 'bg-red-600 text-white rounded-br-none'
+                        : 'bg-[#0a0a0a] text-white/80 border border-red-900/20 rounded-bl-none'
                     }`}>
                       {msg.text}
                     </div>
@@ -535,25 +551,25 @@ export default function Dashboard() {
                 ))}
                 {isTyping && (
                   <div className="flex justify-start">
-                    <div className="bg-[#181f30] text-gray-400 border border-gray-800 p-3 rounded-lg text-xs rounded-bl-none animate-pulse">
-                      Analyzing query & vector documents...
+                    <div className="bg-[#0a0a0a] text-white/40 border border-red-900/20 p-3 rounded-lg text-xs rounded-bl-none animate-pulse">
+                      Analyzing query &amp; vector documents...
                     </div>
                   </div>
                 )}
               </div>
 
               {/* Chat Input */}
-              <form onSubmit={handleSendMessage} className="p-4 border-t border-gray-800 flex gap-2">
+              <form onSubmit={handleSendMessage} className="p-4 border-t border-red-900/20 flex gap-2">
                 <input
                   type="text"
                   value={chatInput}
                   onChange={(e) => setChatInput(e.target.value)}
-                  placeholder="Ask copilot about solar flares, shielding guidelines, or NOAA catalogs..."
-                  className="flex-1 bg-[#090d16] border border-gray-800 rounded-lg px-4 py-2 text-xs text-white focus:outline-none focus:border-blue-500"
+                  placeholder="Ask about solar flares, shielding, or NOAA catalogs..."
+                  className="flex-1 bg-[#050505] border border-red-900/20 rounded-lg px-4 py-2.5 text-xs text-white placeholder-white/20 focus:outline-none focus:border-red-500/40 transition-colors"
                 />
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-xs font-semibold"
+                  className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold tracking-widest uppercase transition-colors"
                 >
                   Send
                 </button>

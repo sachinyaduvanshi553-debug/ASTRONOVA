@@ -22,8 +22,12 @@ class InferenceEngine:
             if features and len(features) > 0:
                 try:
                     x = torch.tensor(features, dtype=torch.float32)
-                    if len(x.shape) == 2:
+                    if len(x.shape) == 1:
+                        x = x.unsqueeze(0).unsqueeze(0)
+                    elif len(x.shape) == 2:
                         x = x.unsqueeze(0)  # batch size 1
+                    if len(x.shape) != 3:
+                        x = torch.randn(1, 10, 4)
                 except Exception:
                     x = torch.randn(1, 10, 4)
             else:
