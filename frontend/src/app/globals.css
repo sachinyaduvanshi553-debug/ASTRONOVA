@@ -2,33 +2,80 @@
 
 @layer base {
   body {
-    background-color: #0b0f19;
-    color: #f3f4f6;
-    font-family: ui-sans-serif, system-ui, sans-serif;
+    background-color: #000000;
+    color: #FFFFFF;
+    font-family: 'Inter', 'SF Pro Display', ui-sans-serif, system-ui, -apple-system, sans-serif;
   }
 }
 
-/* Glassmorphism custom classes */
+/* ─── ISRO MISSION CONTROL THEME ─── */
+/* Palette: Black (#000000), White (#FFFFFF), Red (#FF0000) */
+
+/* Glass panels — dark matte black with subtle red glow border */
 .glass-panel {
-  background: rgba(17, 24, 39, 0.7);
-  backdrop-filter: blur(12px);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(10, 10, 10, 0.92);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 0, 0, 0.12);
 }
 
 .glass-card {
-  background: rgba(31, 41, 55, 0.4);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(255, 255, 255, 0.05);
+  background: rgba(18, 18, 18, 0.85);
+  backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 0, 0, 0.08);
 }
 
-.glow-glow {
-  box-shadow: 0 0 15px rgba(59, 130, 246, 0.3);
-}
-
-.glow-orange {
-  box-shadow: 0 0 15px rgba(249, 115, 22, 0.3);
-}
-
+/* Red glow variants */
 .glow-red {
-  box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
+  box-shadow: 0 0 20px rgba(255, 0, 0, 0.15), 0 0 40px rgba(255, 0, 0, 0.05);
+}
+
+.glow-red-strong {
+  box-shadow: 0 0 20px rgba(255, 0, 0, 0.3), 0 0 60px rgba(255, 0, 0, 0.1);
+}
+
+.glow-red-border {
+  box-shadow: inset 0 0 0 1px rgba(255, 0, 0, 0.15), 0 0 15px rgba(255, 0, 0, 0.08);
+}
+
+/* Pulse animation for live indicators */
+@keyframes pulse-red {
+  0%, 100% { opacity: 1; box-shadow: 0 0 4px rgba(255, 0, 0, 0.6); }
+  50% { opacity: 0.5; box-shadow: 0 0 12px rgba(255, 0, 0, 0.9); }
+}
+
+.animate-pulse-red {
+  animation: pulse-red 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Subtle scan-line effect for mission-control feel */
+@keyframes scanline {
+  0% { transform: translateY(-100%); }
+  100% { transform: translateY(100vh); }
+}
+
+/* Alert level colors */
+.alert-low { color: rgba(255, 255, 255, 0.7); }
+.alert-moderate { color: #ff6b6b; }
+.alert-high { color: #ff0000; }
+.alert-critical { color: #cc0000; }
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 6px;
+}
+::-webkit-scrollbar-track {
+  background: #0a0a0a;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(255, 0, 0, 0.25);
+  border-radius: 3px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 0, 0, 0.45);
+}
+
+/* Selection highlight */
+::selection {
+  background: rgba(255, 0, 0, 0.3);
+  color: #ffffff;
 }

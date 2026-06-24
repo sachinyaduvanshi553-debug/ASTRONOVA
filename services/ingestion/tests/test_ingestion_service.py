@@ -1,15 +1,15 @@
 import pytest
 import os
 import pandas as pd
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import MagicMock
 from services.ingestion.services.ingestion_service import IngestionService
 from astronova_core.models.timeseries import SolexsObservation
 
 @pytest.mark.asyncio
 async def test_ingest_file_csv_success():
-    # Use AsyncMock for async DB session
-    db_session = AsyncMock()
-
+    # Setup mock DB session
+    db_session = MagicMock()
+    
     # Create temporary CSV file for testing
     csv_path = "test_data.csv"
     df = pd.DataFrame({
@@ -18,14 +18,14 @@ async def test_ingest_file_csv_success():
         "hard_xray_flux": [1.2e-9, 1.5e-9]
     })
     df.to_csv(csv_path, index=False)
-
+    
     try:
         service = IngestionService()
         # Mock kafka producer within the service
         service.producer = MagicMock()
-
+        
         job = await service.ingest_file(csv_path, "csv", db_session)
-
+        
         assert job.status == "completed"
         assert job.rows_ingested == 2
         assert db_session.add.called
@@ -36,7 +36,7 @@ async def test_ingest_file_csv_success():
 
 @pytest.mark.asyncio
 async def test_ingest_file_missing_columns():
-    db_session = AsyncMock()
+    db_session = MagicMock()
     csv_path = "test_invalid_data.csv"
     # missing soft_xray_flux
     df = pd.DataFrame({
@@ -44,13 +44,13 @@ async def test_ingest_file_missing_columns():
         "hard_xray_flux": [1.2e-9]
     })
     df.to_csv(csv_path, index=False)
-
+    
     try:
         service = IngestionService()
         service.producer = MagicMock()
-
+        
         job = await service.ingest_file(csv_path, "csv", db_session)
-
+        
         assert job.status == "failed"
         assert len(job.errors) > 0
         assert "Missing required column" in job.errors[0]
