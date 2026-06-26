@@ -17,3 +17,12 @@ app.include_router(metrics_router)
 @app.get("/")
 def read_root():
     return {"message": "AstroNova XAI Service API v1"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "services.xai.main:app",
+        host="0.0.0.0",
+        port=8005,
+        reload=True
+    )

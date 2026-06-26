@@ -1,0 +1,38 @@
+Folder PATH listing for volume Windows
+Volume serial number is 00000228 E44B:A095
+C:\USERS\SACHI\ONEDRIVE\DOCUMENTS\ASTRONOVA\DATA
++---cleaned
+¦   +---auxiliary
+¦   ¦       cmea_clean.csv
+¦   ¦       cme_clean.csv
+¦   ¦       donki_event_catalog_v2.xls
+¦   ¦       gst_clean.xls
+¦   ¦       sep_clean.csv
+¦   ¦       
+¦   +---goes
+¦   ¦       goes_xrs_oct2024_jan2025 (1).csv
+¦   ¦       
+¦   +---helios
+¦   ¦       HEL1OS_FILTERED.parquet
+¦   ¦       
+¦   +---noaa_labels
+¦   ¦       noaa_flares_clean.csv
+¦   ¦       
+¦   +---solexs
+¦           solexs_ml_ready_v1.csv
+¦           
++---events
+¦   +---event_embeddings
+¦   +---flare_sequences
+¦   +---precursor_events
++---features
+¦   +---fusion
+¦   +---historical
+¦   +---spectral
+¦   +---temporal
++---final
+¦   +---test
+¦   +---train
+¦   +---validation
++---labels
++---synchronized

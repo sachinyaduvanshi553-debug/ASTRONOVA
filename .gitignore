@@ -1,24 +1,28 @@
-# Large datasets
-data/sample/*.csv
-data/sample/*.parquet
-
-# Scientific datasets
-*.fits
-*.cdf
-
-# Trained models
-*.pt
-*.pth
-*.ckpt
-
 # Python
+venv/
 __pycache__/
 *.pyc
-.pytest_cache/
 
-# Node
-node_modules/
-.next/
+# Datasets
+datasets/raw/
+datasets/train/
+datasets/validation/
+datasets/test/
+data/
 
-# Environment
-.env
+# Model artifacts
+*.pkl
+*.parquet
+*.onnx
+*.pt
+*.pth
+checkpoints/
+models/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

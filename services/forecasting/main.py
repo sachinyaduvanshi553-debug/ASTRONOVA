@@ -17,3 +17,12 @@ app.include_router(metrics_router)
 @app.get("/")
 def read_root():
     return {"message": "AstroNova Forecasting Service API v1"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "services.forecasting.main:app",
+        host="0.0.0.0",
+        port=8004,
+        reload=True
+    )

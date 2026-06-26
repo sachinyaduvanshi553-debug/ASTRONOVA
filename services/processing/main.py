@@ -19,3 +19,12 @@ def read_root():
 @app.get("/api/v1/process/health")
 def health():
     return {"status": "healthy"}
+
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run(
+        "services.processing.main:app",
+        host="0.0.0.0",
+        port=8002,
+        reload=True
+    )

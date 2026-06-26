@@ -1,0 +1,108 @@
+{
+  "max_download_size_gb": 5.0,
+  "datasets": {
+    "goes_xray": {
+      "name": "GOES XRS Flux Data",
+      "description": "GOES 1-minute daily solar X-ray flux data (soft and hard bands).",
+      "downloader_config": {
+        "base_url": "https://data.ngdc.noaa.gov/platforms/solar-space-observing-satellites/goes/",
+        "timeout": 15.0,
+        "max_retries": 3,
+        "allowed_extensions": [".csv", ".nc", ".fits"]
+      },
+      "expected_schema": {
+        "columns": {
+          "time": "datetime (ISO 8601)",
+          "soft_xray_flux": "float (W/m^2)",
+          "hard_xray_flux": "float (W/m^2)"
+        }
+      },
+      "files": [
+        {
+          "url": "https://data.ngdc.noaa.gov/platforms/solar-space-observing-satellites/goes/goes16/l2/data/xrs-l2-avg1m_science/2026/06/sci_xrs-l2-avg1m_g16_d20260621_v2-1-0.nc",
+          "checksum": "d41d8cd98f00b204e9800998ecf8427e",
+          "expected_size_bytes": 1048576,
+          "timestamp": "2026-06-21T00:00:00Z"
+        }
+      ]
+    },
+    "noaa_events": {
+      "name": "NOAA SWPC Solar Event Reports",
+      "description": "NOAA Space Weather Prediction Center reports listing solar flares, radio bursts, and CMEs.",
+      "downloader_config": {
+        "base_url": "https://services.swpc.noaa.gov/pub/indices/events/",
+        "timeout": 10.0,
+        "max_retries": 5
+      },
+      "expected_schema": {
+        "columns": {
+          "event_id": "integer",
+          "start_time": "datetime",
+          "peak_time": "datetime",
+          "end_time": "datetime",
+          "observatory": "string",
+          "quality": "integer",
+          "type": "string (e.g., FLA)",
+          "goes_class": "string (e.g., M1.2)",
+          "active_region": "integer"
+        }
+      },
+      "files": [
+        {
+          "url": "https://services.swpc.noaa.gov/pub/indices/events/20260621events.txt",
+          "checksum": "e2fc714c4727ee9395f324cd2e7f331e",
+          "expected_size_bytes": 24576,
+          "timestamp": "2026-06-21T00:00:00Z"
+        }
+      ]
+    },
+    "aditya_l1": {
+      "name": "Aditya-L1 Scientific Payload Manifest",
+      "description": "Data from Aditya-L1 solar observation instruments HEL1OS and SoLEXS.",
+      "downloader_config": {
+        "base_url": "https://adityal1.isro.gov.in/science_data/",
+        "timeout": 20.0,
+        "max_retries": 3
+      },
+      "expected_schema": {
+        "columns": {
+          "time": "datetime",
+          "soft_xray_flux": "float",
+          "hard_xray_flux": "float",
+          "energy_band_lo": "float",
+          "energy_band_hi": "float",
+          "quality_flag": "integer"
+        }
+      },
+      "files": [
+        {
+          "url": "https://adityal1.isro.gov.in/science_data/solexs/level2/2026/06/solexs_l2_20260621_v1.0.fits",
+          "checksum": "a5d8b6c8e9d1f0a2c3b4e5d6f7a8b9c0",
+          "expected_size_bytes": 4194304,
+          "timestamp": "2026-06-21T12:00:00Z"
+        }
+      ]
+    },
+    "sdo_images": {
+      "name": "NASA SDO AIA Imagery",
+      "description": "Solar Dynamics Observatory Atmospheric Imaging Assembly solar images (AIA 131, 171, 193, 211, 304, 335 Angstroms).",
+      "downloader_config": {
+        "base_url": "https://jsoc.stanford.edu/data/aia/synoptic/",
+        "timeout": 30.0,
+        "max_retries": 2
+      },
+      "expected_schema": {
+        "format": "fits",
+        "channels": [131, 171, 193, 211, 304, 335]
+      },
+      "files": [
+        {
+          "url": "https://jsoc.stanford.edu/data/aia/synoptic/2026/06/21/aia.fits",
+          "checksum": "f2e1d0c9b8a7f6e5d4c3b2a1f0e9d8c7",
+          "expected_size_bytes": 8388608,
+          "timestamp": "2026-06-21T12:00:00Z"
+        }
+      ]
+    }
+  }
+}
