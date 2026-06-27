@@ -1,10 +1,12 @@
-import pandas as pd
+import os
+
 import numpy as np
+import pandas as pd
 import torch
 import torch.nn as nn
-from torch.utils.data import Dataset, DataLoader
 from ml.models.bilstm import BiLSTMForecaster
-import os
+from torch.utils.data import DataLoader, Dataset
+
 
 # Define Dataset class for time-series sequences
 class SolarFluxDataset(Dataset):
@@ -19,7 +21,7 @@ class SolarFluxDataset(Dataset):
         flux = data['soft_xray_flux'].values
         # Log scaling: transform W/m^2 to a scaled range
         flux_scaled = np.log10(flux + 1e-9)
-        
+
         for i in range(len(data) - self.seq_len - self.horizon):
             X.append(flux_scaled[i : i + self.seq_len])
             # Target is the classification of the future flux (A=0, B=1, C=2, M=3, X=4)
@@ -35,7 +37,7 @@ class SolarFluxDataset(Dataset):
             else:
                 cls = 4
             y.append(cls)
-            
+
         return torch.tensor(X, dtype=torch.float32).unsqueeze(-1), torch.tensor(y, dtype=torch.long)
 
     def __len__(self):
@@ -75,14 +77,14 @@ def train_model(data_path: str, epochs: int = 5):
         total_loss = 0
         correct = 0
         total = 0
-        
+
         for batch_x, batch_y in train_loader:
             optimizer.zero_grad()
             outputs = model(batch_x)
             loss = criterion(outputs, batch_y)
             loss.backward()
             optimizer.step()
-            
+
             total_loss += loss.item()
             _, predicted = torch.max(outputs, 1)
             total += batch_y.size(0)
@@ -101,7 +103,7 @@ def train_model(data_path: str, epochs: int = 5):
             _, predicted = torch.max(outputs, 1)
             val_total += batch_y.size(0)
             val_correct += (predicted == batch_y).sum().item()
-            
+
     val_accuracy = 100 * val_correct / val_total
     print(f"Validation Accuracy: {val_accuracy:.2f}%")
 

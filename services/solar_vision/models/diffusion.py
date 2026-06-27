@@ -1,6 +1,7 @@
 import torch
 import torch.nn as nn
 
+
 class DiffusionModel(nn.Module):
     """A minimal diffusion refinement placeholder.
     In a full implementation this would perform iterative denoising of an image.

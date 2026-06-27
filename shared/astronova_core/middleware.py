@@ -1,7 +1,9 @@
 import time
 import uuid
+
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
+
 from astronova_core.logging import get_logger
 
 logger = get_logger("gateway-middleware")

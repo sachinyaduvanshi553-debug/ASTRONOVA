@@ -1,10 +1,12 @@
 import argparse
+from pathlib import Path
+
 import torch
 import torch.nn as nn
-from pathlib import Path
 
 # Import the ConvLSTM model from the project
 from models.convlstm import ConvLSTM
+
 
 def get_dummy_dataset(num_samples: int, seq_len: int, channels: int, height: int, width: int):
     """Generate a dummy dataset of random tensors for demonstration purposes.

@@ -1,27 +1,27 @@
+
+import torch
 from fastapi import APIRouter, Body
 from pydantic import BaseModel, Field
-from typing import List
-import torch
 
 # Import model classes
 from services.solar_vision.models.convlstm import ConvLSTM
-from services.solar_vision.models.unet import UNet
 from services.solar_vision.models.diffusion import DiffusionModel
+from services.solar_vision.models.unet import UNet
 
 router = APIRouter(prefix="/solar-vision", tags=["Solar Vision"])
 
 class VisionInput(BaseModel):
-    sdo_images: List[str] = Field(..., description="List of file paths or URLs to historical SDO images")
-    goes_xray: List[float] = Field(..., description="Sequence of GOES X‑ray measurements")
-    solexs: List[float] = Field(..., description="SOLEXS measurement series")
-    noaa_regions: List[dict] = Field(..., description="Active‑region metadata from NOAA")
+    sdo_images: list[str] = Field(..., description="List of file paths or URLs to historical SDO images")
+    goes_xray: list[float] = Field(..., description="Sequence of GOES X‑ray measurements")
+    solexs: list[float] = Field(..., description="SOLEXS measurement series")
+    noaa_regions: list[dict] = Field(..., description="Active‑region metadata from NOAA")
 
 class VisionPrediction(BaseModel):
-    timestamps: List[str] = Field(..., description="Future time points for predictions")
-    convlstm_shape: List[int] = Field(..., description="Output tensor shape from ConvLSTM")
-    unet_shape: List[int] = Field(..., description="Output tensor shape from UNet")
-    diffusion_shape: List[int] = Field(..., description="Output tensor shape from Diffusion model")
-    confidence: List[float] = Field(..., description="Model confidence for each time slot")
+    timestamps: list[str] = Field(..., description="Future time points for predictions")
+    convlstm_shape: list[int] = Field(..., description="Output tensor shape from ConvLSTM")
+    unet_shape: list[int] = Field(..., description="Output tensor shape from UNet")
+    diffusion_shape: list[int] = Field(..., description="Output tensor shape from Diffusion model")
+    confidence: list[float] = Field(..., description="Model confidence for each time slot")
 
 @router.post("/predict", response_model=VisionPrediction)
 async def predict_vision(payload: VisionInput = Body(...)):

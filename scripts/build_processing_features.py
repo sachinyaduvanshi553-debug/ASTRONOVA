@@ -1,5 +1,6 @@
 import os
 
+
 def create_file(path, content):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, 'w', encoding='utf-8') as f:
@@ -74,11 +75,11 @@ class BasePipeline(ABC):
     @abstractmethod
     def fit(self, df: pd.DataFrame) -> 'BasePipeline':
         pass
-        
+
     @abstractmethod
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
         pass
-        
+
     def fit_transform(self, df: pd.DataFrame) -> pd.DataFrame:
         return self.fit(df).transform(df)
 """)
@@ -204,7 +205,7 @@ class TimeDomainFeatures:
             df[f"soft_flux_roll_std_{window}"] = df["soft_xray_flux"].rolling(window=window, min_periods=1).std().fillna(0)
             df[f"hard_flux_roll_mean_{window}"] = df["hard_xray_flux"].rolling(window=window, min_periods=1).mean()
             df[f"hard_flux_roll_std_{window}"] = df["hard_xray_flux"].rolling(window=window, min_periods=1).std().fillna(0)
-        
+
         # Flux derivatives
         df["soft_flux_gradient"] = df["soft_xray_flux"].diff().fillna(0)
         df["hard_flux_gradient"] = df["hard_xray_flux"].diff().fillna(0)
@@ -244,25 +245,25 @@ async def compute_features(db: AsyncSession = Depends(get_db)):
     stmt = select(SolexsObservation).order_by(desc(SolexsObservation.time)).limit(100)
     result = await db.execute(stmt)
     observations = result.scalars().all()
-    
+
     if not observations:
         return {"message": "No observations found to process features"}
-        
+
     data = [{
         "time": obs.time,
         "soft_xray_flux": obs.soft_xray_flux,
         "hard_xray_flux": obs.hard_xray_flux
     } for obs in observations]
-    
+
     df = pd.DataFrame(data).sort_values("time")
-    
+
     # Compute features
     df = TimeDomainFeatures.compute_rolling_features(df)
     df = PhysicsFeatures.compute_physics_features(df)
-    
+
     latest_feat = df.iloc[-1].to_dict()
     latest_feat["time"] = latest_feat["time"].isoformat()
-    
+
     return {
         "status": "computed",
         "latest_features": latest_feat

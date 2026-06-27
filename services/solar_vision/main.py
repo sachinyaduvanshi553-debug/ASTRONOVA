@@ -1,9 +1,10 @@
 '''Solar Vision Service entry point.
 Provides FastAPI application that exposes vision prediction endpoints.
-''' 
+'''
 
 from fastapi import FastAPI
 from services.solar_vision.routers import vision
+
 from astronova_core.logging import setup_logging
 
 setup_logging("solar-vision-service")

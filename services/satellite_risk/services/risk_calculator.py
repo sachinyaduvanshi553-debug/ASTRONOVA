@@ -1,10 +1,11 @@
-from typing import Dict, Any, List
+from typing import Any, ClassVar
+
 
 class SatelliteRiskCalculator:
-    ORBITS = ["LEO", "MEO", "GEO", "HEO"]
-    SATELLITES = ["GSAT", "INSAT", "EOS", "Cartosat"]
+    ORBITS: ClassVar[list[str]] = ["LEO", "MEO", "GEO", "HEO"]
+    SATELLITES: ClassVar[list[str]] = ["GSAT", "INSAT", "EOS", "Cartosat"]
 
-    def calculate_satellite_risk(self, goes_class: str) -> Dict[str, Any]:
+    def calculate_satellite_risk(self, goes_class: str) -> dict[str, Any]:
         severity = 0.2
         if goes_class.startswith("M"):
             severity = 0.5
@@ -15,14 +16,14 @@ class SatelliteRiskCalculator:
         for sat in self.SATELLITES:
             orbit = "GEO" if sat.startswith("INSAT") or sat.startswith("GSAT") else "LEO"
             risk = severity * (0.8 if orbit == "LEO" else 0.6)
-            
+
             mitigations = []
             if risk > 0.4:
                 mitigations.append("Prepare backup attitude control systems")
             if risk > 0.7:
                 mitigations.append("Enter safe-hold mode")
                 mitigations.append("Disable non-essential instruments")
-                
+
             satellite_risks.append({
                 "satellite_id": sat,
                 "orbit_type": orbit,

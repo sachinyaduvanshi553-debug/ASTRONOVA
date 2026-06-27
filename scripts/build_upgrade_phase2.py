@@ -1,5 +1,6 @@
 import os
 
+
 def create_file(path, content):
     dirname = os.path.dirname(path)
     if dirname:
@@ -35,7 +36,7 @@ class SolexsFitsReader:
                 "soft_xray_flux": 1e-8 + np.random.normal(0, 1e-9, 100),
                 "detector_temp": 25.0 + np.random.normal(0, 0.1, 100)
             })
-            
+
         df['time'] = pd.to_datetime(df['time'])
         return df
 """)
@@ -81,11 +82,11 @@ class AdityaSensorSynchronizer:
         # Align timestamps using nearest interpolation
         solexs_df = solexs_df.set_index('time')
         helios_df = helios_df.set_index('time')
-        
+
         # Merge on time and interpolate missing rows
         merged = pd.merge(solexs_df, helios_df, left_index=True, right_index=True, how='outer')
         merged = merged.interpolate(method='linear').ffill().bfill()
-        
+
         return merged.reset_index()
 """)
 
@@ -165,15 +166,15 @@ async def generate_catalog_from_observations(db: AsyncSession = Depends(get_db))
     stmt = select(SolexsObservation).order_by(SolexsObservation.time)
     result = await db.execute(stmt)
     observations = result.scalars().all()
-    
+
     if not observations:
         return {"status": "skipped", "message": "No observations in database"}
-        
+
     df = pd.DataFrame([{
         "time": obs.time,
         "soft_xray_flux": obs.soft_xray_flux
     } for obs in observations])
-    
+
     flares_detected = 0
     # Window analysis
     for idx, row in df.iterrows():
@@ -191,7 +192,7 @@ async def generate_catalog_from_observations(db: AsyncSession = Depends(get_db))
             )
             await db.merge(event)
             flares_detected += 1
-            
+
     await db.commit()
     return {"status": "completed", "flares_detected": flares_detected}
 
@@ -225,26 +226,26 @@ from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_sc
 class ModelBenchmarkHarness:
     def run_benchmarks(self, y_true: np.ndarray, y_pred_probs: np.ndarray) -> dict:
         y_pred = np.argmax(y_pred_probs, axis=1)
-        
+
         # Binary target for metrics (class M/X vs others)
         y_true_binary = (y_true >= 3).astype(int)
         y_pred_binary = (y_pred >= 3).astype(int)
-        
+
         acc = accuracy_score(y_true, y_pred)
         prec = precision_score(y_true_binary, y_pred_binary, zero_division=0)
         rec = recall_score(y_true_binary, y_pred_binary, zero_division=0)
         f1 = f1_score(y_true_binary, y_pred_binary, zero_division=0)
-        
+
         # Calculate True Skill Statistic (TSS = TPR - FPR)
         tp = np.sum((y_true_binary == 1) & (y_pred_binary == 1))
         fn = np.sum((y_true_binary == 1) & (y_pred_binary == 0))
         fp = np.sum((y_true_binary == 0) & (y_pred_binary == 1))
         tn = np.sum((y_true_binary == 0) & (y_pred_binary == 0))
-        
+
         tpr = tp / (tp + fn) if (tp + fn) > 0 else 0
         fpr = fp / (fp + tn) if (fp + tn) > 0 else 0
         tss = tpr - fpr
-        
+
         return {
             "BiLSTM": {
                 "accuracy": acc,
@@ -335,7 +336,7 @@ async def assess_comms_impact(goes_class: str = Query(..., description="GOES Cla
     severity = "Low"
     absorption_db = 1.2
     scintillation_s4 = 0.15
-    
+
     if goes_class.startswith("M"):
         severity = "Moderate"
         absorption_db = 8.5
@@ -344,7 +345,7 @@ async def assess_comms_impact(goes_class: str = Query(..., description="GOES Cla
         severity = "Critical"
         absorption_db = 22.4
         scintillation_s4 = 0.85
-        
+
     return {
         "gps_degradation": {
             "severity": severity,
@@ -383,30 +384,30 @@ class SpaceWeatherMultiAgentOrchestrator:
         forecasting_agent = {
             "output": f"BiLSTM forecasting confirms M/X flare probability at 78% with the current soft X-ray gradient peak at {current_flux:.2e}."
         }
-        
+
         earth_impact_agent = {
             "output": "Ionospheric D-layer ionization spiking over South-Asia quadrant. NavIC scintillation warning S4=0.74 issued."
         }
-        
+
         satellite_risk_agent = {
             "output": "GEO orbit communication satellites (GSAT) alert Amber. Operational guidelines: disable non-essential transponders."
         }
-        
+
         scientific_explanation_agent = {
             "output": "Attributing flare growth to thermal plasma heating (soft X-ray rise). Precursor ratio suggests magnetic reconnection sequence active."
         }
-        
+
         historical_retrieval_agent = {
             "output": "ChromaDB vector matched Event NOAA-8472 (similarity 94%). Historical outcome: Kp=9 geomagnetic storm within 24h."
         }
-        
+
         coordinator_summary = (
             f"SUMMARY ALERT: Solar activity level is elevated ({goes_class}). "
             f"Forecasting highlights high M/X eruption likelihood. "
             f"Specialized sensors indicate NavIC scintillation over India (S4=0.74). "
             f"Mitigation active for GEO transponders."
         )
-        
+
         return {
             "coordinator_summary": coordinator_summary,
             "agent_details": {

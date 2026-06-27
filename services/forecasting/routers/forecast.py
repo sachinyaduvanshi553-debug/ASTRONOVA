@@ -1,11 +1,11 @@
-from fastapi import APIRouter, HTTPException, Query, Body
+
+from fastapi import APIRouter, Body, Query
+from pydantic import BaseModel, Field
 from services.forecasting.services.inference_engine import InferenceEngine
 from services.forecasting.services.nowcasting import NowcastingService
 from services.forecasting.services.solar_hazard_index import SolarHazardIndexCalculator
+
 from astronova_core.schemas.forecasting import ForecastRequest
-from pydantic import BaseModel, Field
-from typing import List, Dict, Optional
-import numpy as np
 
 router = APIRouter(prefix="/api/v1/forecast", tags=["forecasting"])
 inference_engine = InferenceEngine()
@@ -26,7 +26,7 @@ class SimulationResponse(BaseModel):
     satellite_operational_directive: str
 
 class EvaluationResponse(BaseModel):
-    metrics: Dict[str, dict]
+    metrics: dict[str, dict]
     dataset_period: str
     total_events_evaluated: int
 
@@ -44,7 +44,7 @@ async def get_prediction(
 @router.get("/nowcast")
 async def get_nowcast(
     current_flux: float = Query(..., description="Current observed flux (W/m^2)"),
-    flux_history: Optional[List[float]] = Query(None, description="Recent historical flux values for lifecycle tracking")
+    flux_history: list[float] | None = Query(None, description="Recent historical flux values for lifecycle tracking")
 ):
     """
     Nowcast current flux state, tracking lifecycle phase and recommended cadence.
@@ -63,13 +63,13 @@ async def get_shi(
     Computes advanced Solar Hazard Index incorporating multi-factor risks.
     """
     # Generate nowcast and predict states
-    nowcast_res = nowcast_service.analyze_nowcast(current_flux)
+    nowcast_service.analyze_nowcast(current_flux)
     pred_res = inference_engine.predict([], current_flux=current_flux)
-    
+
     # Calculate gradient proxy from nowcast
     gradient = current_flux * 0.05
     probabilities = pred_res["prediction"]["probabilities"]
-    
+
     shi = SolarHazardIndexCalculator.calculate_shi(
         probabilities=probabilities,
         gradient=gradient,
@@ -89,10 +89,10 @@ async def simulate_scenario(request: SimulationRequest = Body(...)):
     sim_class = request.goes_class[0].upper()
     probs = {"A": 0.02, "B": 0.03, "C": 0.05, "M": 0.1, "X": 0.1}
     probs[sim_class] = 0.8  # Target class is dominant
-    
+
     # Gradient proxy based on peak flux and duration
     sim_gradient = request.peak_flux / (request.duration_minutes * 60)
-    
+
     sim_shi = SolarHazardIndexCalculator.calculate_shi(
         probabilities=probs,
         gradient=sim_gradient,
@@ -100,7 +100,7 @@ async def simulate_scenario(request: SimulationRequest = Body(...)):
         sat_risk=0.65 if sim_class in ["M", "X"] else 0.2,
         impact_risk=0.72 if sim_class in ["M", "X"] else 0.15
     )
-    
+
     # 2. Compute comms impact assessment
     severity = "Low"
     absorption_db = 1.2
@@ -113,7 +113,7 @@ async def simulate_scenario(request: SimulationRequest = Body(...)):
         severity = "Critical"
         absorption_db = 22.4
         scintillation_s4 = 0.85
-        
+
     comms_assessment = {
         "gps_degradation": {
             "severity": severity,
@@ -132,7 +132,7 @@ async def simulate_scenario(request: SimulationRequest = Body(...)):
             "affected_frequency_mhz_ceiling": 15 if severity == "Low" else (25 if severity == "Moderate" else 35)
         }
     }
-    
+
     # 3. Operational directive recommendation
     if sim_class == "X":
         directive = "CRITICAL ACTION: Trigger safing procedures for GEO platforms. Divert polar aviation routes. Initiate NavIC receiver tracking-loop adjustments."
@@ -182,7 +182,7 @@ async def evaluate_models():
             "mean_lead_time_minutes": 26.0
         }
     }
-    
+
     return {
         "metrics": metrics,
         "dataset_period": "NOAA Space Weather Core + Aditya-L1 Sync (June 2026 Validation Suite)",

@@ -1,26 +1,28 @@
+
 from ml.models.nowcasting import ThresholdDetector
+
 from astronova_core.utils.physics import classify_flare, track_lifecycle_phase
-from typing import List, Optional
+
 
 class NowcastingService:
     def __init__(self):
         self.detector = ThresholdDetector(threshold=1e-5) # M-class threshold
 
-    def analyze_nowcast(self, current_flux: float, flux_history: Optional[List[float]] = None) -> dict:
+    def analyze_nowcast(self, current_flux: float, flux_history: list[float] | None = None) -> dict:
         """
         Performs nowcasting analysis with event lifecycle tracking and dynamic lead-time optimization.
         """
         is_flare = self.detector.detect(current_flux)
         goes_class = classify_flare(current_flux)
-        
+
         # Resolve flux history for lifecycle tracking (default to replicating current_flux if None)
         if not flux_history:
             flux_history = [current_flux] * 5
         elif len(flux_history) < 5:
             flux_history = [current_flux] * (5 - len(flux_history)) + list(flux_history)
-            
+
         lifecycle_phase = track_lifecycle_phase(flux_history)
-        
+
         # Dynamic Lead-Time and Cadence Optimization based on lifecycle phase
         if lifecycle_phase in ["Pre-flare", "Rise"]:
             recommended_polling_interval_seconds = 10

@@ -1,12 +1,15 @@
-from sqlalchemy import Column, DateTime, Float, String, Integer, Text
-from sqlalchemy.dialects.postgresql import UUID
 import uuid
 from datetime import datetime
+
+from sqlalchemy import Column, DateTime, Float, Integer, String, Text
+from sqlalchemy.dialects.postgresql import UUID
+
 from astronova_core.database import Base
+
 
 class FlareEvent(Base):
     __tablename__ = "flare_events"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     detected_at = Column(DateTime, default=datetime.utcnow)
     goes_class = Column(String(10), nullable=False)
@@ -17,7 +20,7 @@ class FlareEvent(Base):
 
 class Alert(Base):
     __tablename__ = "alerts"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     severity = Column(String(20), nullable=False)  # info, warning, critical, extreme
     title = Column(String(100), nullable=False)
@@ -28,7 +31,7 @@ class Alert(Base):
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(String(100), nullable=False)
     action = Column(String(100), nullable=False)

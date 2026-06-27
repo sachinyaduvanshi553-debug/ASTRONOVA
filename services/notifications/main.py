@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from services.notifications.routers import alerts
+
 from astronova_core.logging import setup_logging
 from astronova_core.metrics import metrics_router
 

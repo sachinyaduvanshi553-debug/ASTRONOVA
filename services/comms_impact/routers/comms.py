@@ -1,5 +1,5 @@
+
 from fastapi import APIRouter, Query
-from typing import Dict, List
 
 router = APIRouter(prefix="/api/v1/comms", tags=["comms-impact"])
 
@@ -9,13 +9,13 @@ async def assess_comms_impact(
     lifecycle_phase: str = Query("Quiescent", description="Current solar flare lifecycle phase")
 ):
     """
-    Performs comms impact assessment and generates operational recommendations 
+    Performs comms impact assessment and generates operational recommendations
     tailored to the flare severity and active lifecycle phase.
     """
     severity = "Low"
     absorption_db = 1.2
     scintillation_s4 = 0.15
-    
+
     if goes_class.startswith("M"):
         severity = "Moderate"
         absorption_db = 8.5
@@ -24,7 +24,7 @@ async def assess_comms_impact(
         severity = "Critical"
         absorption_db = 22.4
         scintillation_s4 = 0.85
-        
+
     # Standard impact assessment data
     comms_assessment = {
         "gps_degradation": {
@@ -44,10 +44,10 @@ async def assess_comms_impact(
             "affected_frequency_mhz_ceiling": 15 if severity == "Low" else (25 if severity == "Moderate" else 35)
         }
     }
-    
+
     # Operational recommendation generation based on severity & lifecycle phase
     recommendations = []
-    
+
     if severity == "Critical":
         if lifecycle_phase in ["Rise", "Pre-flare"]:
             recommendations.append({

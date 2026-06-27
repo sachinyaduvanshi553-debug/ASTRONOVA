@@ -1,9 +1,11 @@
 import argparse
-import torch
 from pathlib import Path
+
+import torch
 
 # Import the ConvLSTM model stub and a dummy checkpoint loader
 from models.convlstm import ConvLSTM
+
 
 def load_model(checkpoint_path: str, args) -> ConvLSTM:
     model = ConvLSTM(

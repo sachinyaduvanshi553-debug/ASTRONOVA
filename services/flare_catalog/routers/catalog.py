@@ -1,13 +1,14 @@
-from fastapi import APIRouter, Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-from astronova_core.database import get_db
-from astronova_core.models.timeseries import SolexsObservation
-from astronova_core.models.events import FlareEvent
-from astronova_core.utils.physics import classify_flare
-from sqlalchemy import select, desc
-import pandas as pd
-from datetime import datetime, timedelta
 import uuid
+
+import pandas as pd
+from fastapi import APIRouter, Depends
+from sqlalchemy import desc, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from astronova_core.database import get_db
+from astronova_core.models.events import FlareEvent
+from astronova_core.models.timeseries import SolexsObservation
+from astronova_core.utils.physics import classify_flare
 
 router = APIRouter(prefix="/api/v1/catalog", tags=["catalog"])
 
@@ -17,18 +18,18 @@ async def generate_catalog_from_observations(db: AsyncSession = Depends(get_db))
     stmt = select(SolexsObservation).order_by(SolexsObservation.time)
     result = await db.execute(stmt)
     observations = result.scalars().all()
-    
+
     if not observations:
         return {"status": "skipped", "message": "No observations in database"}
-        
+
     df = pd.DataFrame([{
         "time": obs.time,
         "soft_xray_flux": obs.soft_xray_flux
     } for obs in observations])
-    
+
     flares_detected = 0
     # Window analysis
-    for idx, row in df.iterrows():
+    for _idx, row in df.iterrows():
         flux = row["soft_xray_flux"]
         if flux >= 1e-5: # M-class threshold
             # Create a mock validated flare event
@@ -43,7 +44,7 @@ async def generate_catalog_from_observations(db: AsyncSession = Depends(get_db))
             )
             await db.merge(event)
             flares_detected += 1
-            
+
     await db.commit()
     return {"status": "completed", "flares_detected": flares_detected}
 

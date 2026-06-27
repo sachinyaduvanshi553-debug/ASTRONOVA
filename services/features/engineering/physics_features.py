@@ -1,5 +1,7 @@
 import pandas as pd
+
 from astronova_core.utils.physics import compute_xray_ratio
+
 
 class PhysicsFeatures:
     @staticmethod

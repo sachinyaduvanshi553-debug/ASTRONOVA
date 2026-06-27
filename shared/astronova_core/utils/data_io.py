@@ -1,8 +1,8 @@
-import pandas as pd
 import json
-import os
-from typing import Dict, Any, List, Union
 import logging
+import os
+
+import pandas as pd
 
 logger = logging.getLogger("astronova.data_io")
 
@@ -38,12 +38,9 @@ def read_json_data(filepath: str) -> pd.DataFrame:
     try:
         return get_solexs_reader().read_json(filepath)
     except Exception:
-        with open(filepath, 'r') as f:
+        with open(filepath) as f:
             data = json.load(f)
-        if isinstance(data, list):
-            df = pd.DataFrame(data)
-        else:
-            df = pd.DataFrame([data])
+        df = pd.DataFrame(data) if isinstance(data, list) else pd.DataFrame([data])
         df['time'] = pd.to_datetime(df['time'])
         return df
 
@@ -61,7 +58,7 @@ def detect_file_format(filepath: str) -> str:
         return 'csv'
     elif ext in ['.json']:
         return 'json'
-    
+
     # Try reading the first few bytes for signatures if extension is ambiguous
     try:
         with open(filepath, 'rb') as f:
@@ -72,20 +69,20 @@ def detect_file_format(filepath: str) -> str:
                 return 'cdf'
     except Exception:
         pass
-        
+
     return 'unknown'
 
-def validate_schema(df: pd.DataFrame, required_columns: List[str]) -> bool:
+def validate_schema(df: pd.DataFrame, required_columns: list[str]) -> bool:
     """
     Validates that a DataFrame contains the required columns and is not empty.
     """
     if df is None or df.empty:
         logger.warning("DataFrame is empty or None")
         return False
-        
+
     missing_cols = [col for col in required_columns if col not in df.columns]
     if missing_cols:
         logger.warning(f"Schema validation failed. Missing columns: {missing_cols}")
         return False
-        
+
     return True

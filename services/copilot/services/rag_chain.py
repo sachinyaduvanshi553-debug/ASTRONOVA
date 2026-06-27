@@ -1,7 +1,8 @@
-from typing import Dict, Any
+from typing import Any
+
 
 class SpaceWeatherRAGChain:
-    def chat(self, query: str) -> Dict[str, Any]:
+    def chat(self, query: str) -> dict[str, Any]:
         # Local RAG-grounded LLM response mock
         return {
             "answer": "Based on the Aditya-L1 SoLEXS Instrument Specifications, the spectrometer monitors solar soft X-ray flux in the 1 to 22 keV range. The anticipated solar flares could cause HF communication blackouts especially over the South-Asian sector.",
