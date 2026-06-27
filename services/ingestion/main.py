@@ -1,9 +1,9 @@
-import os
-from fastapi import FastAPI, Depends
-from services.ingestion.routers import ingest, data
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from services.ingestion.routers import data, ingest
+
 from astronova_core.logging import setup_logging
 from astronova_core.metrics import metrics_router
-from fastapi.middleware.cors import CORSMiddleware
 
 setup_logging("ingestion-service")
 

@@ -1,5 +1,7 @@
 from datetime import datetime
+
 import pandas as pd
+
 
 def to_utc(dt: datetime) -> datetime:
     if dt.tzinfo is not None:

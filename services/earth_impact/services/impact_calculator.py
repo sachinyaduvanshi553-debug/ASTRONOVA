@@ -1,9 +1,10 @@
-from typing import Dict, Any, List
+from typing import Any
+
 
 class EarthImpactCalculator:
     REGIONS = ["South-Asia", "Asia-Pacific", "Europe", "North-America", "South-America", "Africa"]
 
-    def calculate_impact(self, goes_class: str) -> Dict[str, Any]:
+    def calculate_impact(self, goes_class: str) -> dict[str, Any]:
         # Parse flare class to estimate severity
         severity = "Low"
         base_score = 0.1

@@ -54,6 +54,7 @@ def flux_to_class_numeric(flux: float) -> float:
     return base
 
 
+
 class PhysicsFeatures:
     """Computes physics-motivated features for each row in a GOES flux DataFrame.
 

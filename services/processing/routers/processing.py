@@ -16,8 +16,8 @@ from __future__ import annotations
 
 import asyncio
 import uuid
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from datetime import UTC, datetime
+from typing import Any
 
 import structlog
 from fastapi import APIRouter, BackgroundTasks, HTTPException, Query, status
@@ -30,7 +30,7 @@ router = APIRouter(prefix="/process", tags=["Processing"])
 # ---------------------------------------------------------------------------
 # In-memory job registry (replace with Redis/DB in production)
 # ---------------------------------------------------------------------------
-_job_registry: Dict[str, Dict[str, Any]] = {}
+_job_registry: dict[str, dict[str, Any]] = {}
 
 
 # ---------------------------------------------------------------------------
@@ -41,7 +41,7 @@ class TimeRange(BaseModel):
 
     start: datetime = Field(..., description="Start of the processing window (UTC)")
     end: datetime = Field(..., description="End of the processing window (UTC)")
-    pipeline_ids: Optional[List[str]] = Field(
+    pipeline_ids: list[str] | None = Field(
         default=None,
         description="Pipeline IDs to run. None → run all enabled pipelines.",
     )
@@ -66,7 +66,7 @@ class ProcessingJobResponse(BaseModel):
     status: str
     message: str
     submitted_at: datetime
-    estimated_duration_seconds: Optional[float] = None
+    estimated_duration_seconds: float | None = None
 
 
 class JobStatus(BaseModel):
@@ -76,10 +76,10 @@ class JobStatus(BaseModel):
     status: str  # queued | running | completed | failed | cancelled
     progress_pct: float = Field(ge=0, le=100)
     submitted_at: datetime
-    started_at: Optional[datetime] = None
-    completed_at: Optional[datetime] = None
-    error: Optional[str] = None
-    stats: Optional[Dict[str, Any]] = None
+    started_at: datetime | None = None
+    completed_at: datetime | None = None
+    error: str | None = None
+    stats: dict[str, Any] | None = None
 
 
 class PipelineInfo(BaseModel):
@@ -90,15 +90,15 @@ class PipelineInfo(BaseModel):
     description: str
     enabled: bool
     version: str
-    parameters: Dict[str, Any]
+    parameters: dict[str, Any]
 
 
 class PipelineConfigUpdate(BaseModel):
     """Payload for updating pipeline configuration."""
 
     pipeline_id: str = Field(..., description="Pipeline to update")
-    parameters: Dict[str, Any] = Field(..., description="New parameter overrides")
-    enabled: Optional[bool] = Field(
+    parameters: dict[str, Any] = Field(..., description="New parameter overrides")
+    enabled: bool | None = Field(
         default=None, description="Enable or disable the pipeline"
     )
 
@@ -106,7 +106,7 @@ class PipelineConfigUpdate(BaseModel):
 # ---------------------------------------------------------------------------
 # Available pipelines registry (in-memory, seeded at startup)
 # ---------------------------------------------------------------------------
-_PIPELINES: Dict[str, Dict[str, Any]] = {
+_PIPELINES: dict[str, dict[str, Any]] = {
     "cleaning": {
         "pipeline_id": "cleaning",
         "name": "Data Cleaning Pipeline",
@@ -192,7 +192,7 @@ async def _run_processing_job(
     Updates the job registry with progress and results.
     """
     _job_registry[job_id]["status"] = "running"
-    _job_registry[job_id]["started_at"] = datetime.now(timezone.utc)
+    _job_registry[job_id]["started_at"] = datetime.now(UTC)
 
     log.info(
         "processing_job.started",
@@ -209,7 +209,7 @@ async def _run_processing_job(
         ]
 
         total = len(enabled_ids)
-        stats: Dict[str, Any] = {"pipelines_run": [], "rows_processed": 0}
+        stats: dict[str, Any] = {"pipelines_run": [], "rows_processed": 0}
 
         for idx, pid in enumerate(enabled_ids, start=1):
             # Simulate pipeline execution (replace with actual pipeline calls)
@@ -228,16 +228,16 @@ async def _run_processing_job(
 
         stats["rows_processed"] = 1440  # placeholder: 1 day × 1-min cadence
         _job_registry[job_id]["status"] = "completed"
-        _job_registry[job_id]["completed_at"] = datetime.now(timezone.utc)
+        _job_registry[job_id]["completed_at"] = datetime.now(UTC)
         _job_registry[job_id]["progress_pct"] = 100.0
         _job_registry[job_id]["stats"] = stats
 
         log.info("processing_job.completed", job_id=job_id, stats=stats)
 
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:
         _job_registry[job_id]["status"] = "failed"
         _job_registry[job_id]["error"] = str(exc)
-        _job_registry[job_id]["completed_at"] = datetime.now(timezone.utc)
+        _job_registry[job_id]["completed_at"] = datetime.now(UTC)
         log.error("processing_job.failed", job_id=job_id, error=str(exc))
 
 
@@ -263,7 +263,7 @@ async def run_processing(
     **Pipeline order**: cleaning → smoothing → normalization → resampling
     """
     job_id = str(uuid.uuid4())
-    submitted_at = datetime.now(timezone.utc)
+    submitted_at = datetime.now(UTC)
 
     # Rough estimation: 1 second per day of data, minimum 1 s
     delta_days = max(
@@ -336,12 +336,12 @@ async def get_job_status(job_id: str) -> JobStatus:
 
 @router.get(
     "/pipelines",
-    response_model=List[PipelineInfo],
+    response_model=list[PipelineInfo],
     summary="List available processing pipelines",
 )
 async def list_pipelines(
     enabled_only: bool = Query(default=False, description="Filter to enabled pipelines only"),
-) -> List[PipelineInfo]:
+) -> list[PipelineInfo]:
     """
     Return metadata for all registered data processing pipelines,
     including their current configuration parameters.
@@ -398,7 +398,7 @@ async def configure_pipeline(body: PipelineConfigUpdate) -> PipelineInfo:
     summary="Router-level health check",
     tags=["Health"],
 )
-async def processing_health() -> Dict[str, Any]:
+async def processing_health() -> dict[str, Any]:
     """
     Lightweight health check that confirms the processing router is reachable
     and returns the count of jobs currently tracked.

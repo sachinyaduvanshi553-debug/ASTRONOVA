@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from services.flare_catalog.routers import catalog
+
 from astronova_core.logging import setup_logging
 from astronova_core.metrics import metrics_router
 

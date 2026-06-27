@@ -1,15 +1,17 @@
 from datetime import datetime, timedelta
-from typing import Optional, List, Union
-from enum import Enum
-from jose import jwt, JWTError
+from enum import StrEnum
+
+from fastapi import Depends
+from fastapi.security import OAuth2PasswordBearer
+from jose import JWTError, jwt
 from passlib.context import CryptContext
 from pydantic import BaseModel
-from fastapi import Depends, HTTPException, status
-from fastapi.security import OAuth2PasswordBearer
+
 from astronova_core.config import get_settings
 from astronova_core.exceptions import AuthenticationError, AuthorizationError
 
-class UserRole(str, Enum):
+
+class UserRole(StrEnum):
     ADMIN = "admin"
     ANALYST = "analyst"
     OPERATOR = "operator"
@@ -17,8 +19,8 @@ class UserRole(str, Enum):
     SERVICE = "service"
 
 class TokenData(BaseModel):
-    username: Optional[str] = None
-    role: Optional[UserRole] = None
+    username: str | None = None
+    role: UserRole | None = None
 
 settings = get_settings()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -30,7 +32,7 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
 
-def create_access_token(data: dict, expires_delta: Optional[timedelta] = None) -> str:
+def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=settings.jwt.access_token_expire_minutes))
     to_encode.update({"exp": expire})
@@ -53,7 +55,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData:
     return verify_token(token)
 
 class RoleChecker:
-    def __init__(self, allowed_roles: List[UserRole]):
+    def __init__(self, allowed_roles: list[UserRole]):
         self.allowed_roles = allowed_roles
 
     def __call__(self, current_user: TokenData = Depends(get_current_user)) -> TokenData:

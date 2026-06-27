@@ -18,7 +18,7 @@ import logging
 from functools import lru_cache
 from typing import Any
 
-from pydantic import AnyUrl, Field, SecretStr, field_validator, model_validator
+from pydantic import Field, SecretStr, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 logger = logging.getLogger(__name__)
@@ -68,7 +68,7 @@ class DatabaseSettings(BaseSettings):
     )
 
     @model_validator(mode="after")
-    def assemble_database_url(self) -> "DatabaseSettings":
+    def assemble_database_url(self) -> DatabaseSettings:
         """Build the async database URL from individual components if not provided."""
         if not self.url:
             pwd = self.password.get_secret_value()
@@ -120,7 +120,7 @@ class RedisSettings(BaseSettings):
     retry_on_timeout: bool = Field(default=True, description="Retry on timeout")
 
     @model_validator(mode="after")
-    def assemble_redis_url(self) -> "RedisSettings":
+    def assemble_redis_url(self) -> RedisSettings:
         """Build Redis URL if not provided."""
         if not self.url or self.url == "redis://localhost:6379/0":
             pwd = self.password.get_secret_value()

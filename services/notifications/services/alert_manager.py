@@ -1,7 +1,8 @@
-from typing import Dict, Any, List
+from typing import Any
+
 
 class AlertManager:
-    def create_alert(self, severity: str, title: str, message: str) -> Dict[str, Any]:
+    def create_alert(self, severity: str, title: str, message: str) -> dict[str, Any]:
         return {
             "alert_id": "alert_mock_123",
             "severity": severity,

@@ -1,9 +1,8 @@
 import logging
 import sys
-import json
-import time
-from typing import Any, Dict
+
 import structlog
+
 
 def setup_logging(service_name: str, log_level: str = "INFO") -> None:
     shared_processors = [
@@ -17,9 +16,7 @@ def setup_logging(service_name: str, log_level: str = "INFO") -> None:
     ]
 
     structlog.configure(
-        processors=shared_processors + [
-            structlog.stdlib.ProcessorFormatter.wrap_for_formatter,
-        ],
+        processors=[*shared_processors, structlog.stdlib.ProcessorFormatter.wrap_for_formatter],
         logger_factory=structlog.stdlib.LoggerFactory(),
         cache_logger_on_first_use=True,
     )

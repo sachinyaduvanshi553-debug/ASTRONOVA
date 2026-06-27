@@ -1,5 +1,6 @@
+
 from astronova_core.utils.physics import compute_shi
-from typing import Dict
+
 
 class SolarHazardIndexCalculator:
     @staticmethod
@@ -18,7 +19,7 @@ class SolarHazardIndexCalculator:
         x_prob = probabilities.get("X", 0.0)
         m_prob = probabilities.get("M", 0.0)
         composite_prob = (x_prob * 0.7) + (m_prob * 0.3)
-        
+
         # Calculate score using shared core physics
         score = compute_shi(
             prob=composite_prob,
@@ -27,7 +28,7 @@ class SolarHazardIndexCalculator:
             sat_risk=sat_risk,
             impact_risk=impact_risk
         )
-        
+
         if score < 0.2:
             category = "Safe"
         elif score < 0.5:
@@ -36,7 +37,7 @@ class SolarHazardIndexCalculator:
             category = "High"
         else:
             category = "Extreme"
-            
+
         return {
             "score": score,
             "category": category,

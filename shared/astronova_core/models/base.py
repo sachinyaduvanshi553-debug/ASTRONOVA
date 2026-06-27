@@ -1,8 +1,10 @@
 import uuid
 from datetime import datetime
-from sqlalchemy import Column, DateTime, String
+
+from sqlalchemy import Column, DateTime
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import declarative_mixin
+
 
 @declarative_mixin
 class UUIDMixin:
@@ -16,7 +18,7 @@ class TimestampMixin:
 @declarative_mixin
 class SoftDeleteMixin:
     deleted_at = Column(DateTime, nullable=True)
-    
+
     @property
     def is_deleted(self) -> bool:
         return self.deleted_at is not None

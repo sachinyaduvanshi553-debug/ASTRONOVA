@@ -8,4 +8,4 @@ __version__ = "1.0.0"
 __author__ = "AstroNova Team, ISRO"
 __license__ = "MIT"
 
-__all__ = ["__version__", "__author__", "__license__"]
+__all__ = ["__author__", "__license__", "__version__"]

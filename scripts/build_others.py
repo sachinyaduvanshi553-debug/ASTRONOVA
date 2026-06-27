@@ -1,5 +1,6 @@
 import os
 
+
 def create_file(path, content):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, 'w', encoding='utf-8') as f:
@@ -266,7 +267,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     if form_data.username == "admin" and form_data.password == "admin123":
         access_token = create_access_token(data={"sub": "admin", "role": UserRole.ADMIN})
         return LoginResponse(access_token=access_token, token_type="bearer", role=UserRole.ADMIN)
-    
+
     raise HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
         detail="Incorrect username or password",
@@ -296,7 +297,7 @@ SERVICE_MAP = {
 async def proxy_request(service_name: str, endpoint: str, current_user: TokenData = Depends(get_current_user)):
     if service_name not in SERVICE_MAP:
         raise HTTPException(status_code=404, detail="Service not found")
-        
+
     url = f"{SERVICE_MAP[service_name]}/api/v1/{service_name}/{endpoint}"
     async with httpx.AsyncClient() as client:
         try:

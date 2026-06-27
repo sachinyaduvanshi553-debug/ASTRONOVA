@@ -1,5 +1,6 @@
 import os
 
+
 def create_file(path, content):
     dirname = os.path.dirname(path)
     if dirname:
@@ -108,14 +109,14 @@ const initialFluxData = Array.from({ length: 60 }, (_, i) => {
   // simulate quiescent background flux 1e-8 to 1e-7
   const base = 2e-8;
   const rand = Math.sin(i * 0.1) * 5e-9 + Math.random() * 2e-9;
-  
+
   // Inject M-class solar flare at index 35-50
   let flare = 0;
   if (i >= 35 && i <= 50) {
     const progress = (i - 35) / 15;
     flare = 1.2e-5 * Math.sin(progress * Math.PI) * Math.exp(-progress * 2);
   }
-  
+
   const soft = base + rand + flare;
   return {
     time: timeStr,
@@ -138,7 +139,7 @@ export default function Dashboard() {
   const [goesClass, setGoesClass] = useState('M1.4');
   const [shiScore, setShiScore] = useState(0.58);
   const [shiCategory, setShiCategory] = useState('High');
-  
+
   // Copilot State
   const [chatInput, setChatInput] = useState('');
   const [chatHistory, setChatHistory] = useState([
@@ -155,20 +156,20 @@ export default function Dashboard() {
       setFluxData((prev) => {
         const nextTime = new Date();
         const timeStr = `${String(nextTime.getHours()).padStart(2, '0')}:${String(nextTime.getMinutes()).padStart(2, '0')}:${String(nextTime.getSeconds()).padStart(2, '0')}`;
-        
+
         // Random fluctuation
         const base = 2e-8;
         const rand = Math.random() * 3e-9;
         let flare = 0;
-        
+
         // Occasional flare injection
         if (Math.random() > 0.85) {
           flare = (Math.random() * 5e-6) + 1e-6;
         }
-        
+
         const newSoft = base + rand + flare;
         const newHard = newSoft * 0.12 + Math.random() * 1e-10;
-        
+
         // Update current indicators
         setCurrentFlux(newSoft);
         const goesVal = newSoft < 1e-8 ? 'A0.0' :
@@ -177,11 +178,11 @@ export default function Dashboard() {
                         newSoft < 1e-5 ? `M${(newSoft/1e-5*10).toFixed(1)}` :
                         `X${(newSoft/1e-4*10).toFixed(1)}`;
         setGoesClass(goesVal);
-        
+
         const nextScore = Math.min(Math.max((newSoft * 2e4) + Math.random() * 0.1, 0.05), 0.98);
         setShiScore(nextScore);
         setShiCategory(nextScore < 0.2 ? 'Safe' : nextScore < 0.5 ? 'Moderate' : nextScore < 0.8 ? 'High' : 'Extreme');
-        
+
         return [...prev.slice(1), { time: timeStr, softFlux: newSoft, hardFlux: newHard }];
       });
     }, 4000);
@@ -220,7 +221,7 @@ export default function Dashboard() {
             <p className="text-xs text-gray-400">ISRO Solar Flare Forecasting & Space Weather Intelligence</p>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-6 text-sm">
           <div className="flex items-center gap-2 px-3 py-1 bg-blue-950/40 border border-blue-500/30 rounded-full text-blue-400">
             <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
@@ -254,7 +255,7 @@ export default function Dashboard() {
             <Activity className="w-5 h-5" />
             Live Solar Activity
           </button>
-          
+
           <button
             onClick={() => setActiveTab('forecast')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
@@ -266,7 +267,7 @@ export default function Dashboard() {
             <TrendingUp className="w-5 h-5" />
             Multi-Horizon Forecasting
           </button>
-          
+
           <button
             onClick={() => setActiveTab('impact')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
@@ -340,7 +341,7 @@ export default function Dashboard() {
 
         {/* CONTENT CONTAINER */}
         <main className="flex-1 overflow-y-auto p-6 bg-[#0b0f19]">
-          
+
           {/* ────────────────────────────────────────────────────────────────────────────── */}
           {/* TAB 1: LIVE SOLAR ACTIVITY */}
           {/* ────────────────────────────────────────────────────────────────────────────── */}
@@ -356,7 +357,7 @@ export default function Dashboard() {
                   </div>
                   <span className="text-[10px] text-blue-400 font-mono">1.0 - 8.0 Å band</span>
                 </div>
-                
+
                 <div className="glass-card p-4 rounded-xl flex flex-col justify-between">
                   <span className="text-xs text-gray-400 font-medium">Nowcast Classification</span>
                   <div className="my-2 flex items-baseline gap-2">
@@ -401,7 +402,7 @@ export default function Dashboard() {
                     <span className="flex items-center gap-1.5"><span className="w-2.5 h-2.5 rounded bg-pink-500 inline-block"></span>Hard X-Ray</span>
                   </div>
                 </div>
-                
+
                 <div className="h-96">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={fluxData}>
@@ -417,13 +418,13 @@ export default function Dashboard() {
                       </defs>
                       <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
                       <XAxis dataKey="time" stroke="#9ca3af" fontSize={11} tickLine={false} />
-                      <YAxis 
-                        scale="log" 
-                        domain={[1e-9, 1e-3]} 
-                        stroke="#9ca3af" 
-                        fontSize={11} 
+                      <YAxis
+                        scale="log"
+                        domain={[1e-9, 1e-3]}
+                        stroke="#9ca3af"
+                        fontSize={11}
                         tickLine={false}
-                        tickFormatter={(v) => v.toExponential(0)} 
+                        tickFormatter={(v) => v.toExponential(0)}
                       />
                       <Tooltip contentStyle={{ backgroundColor: '#111827', borderColor: '#374151', color: '#fff' }} />
                       <Area type="monotone" dataKey="softFlux" stroke="#3b82f6" strokeWidth={2} fillOpacity={1} fill="url(#colorSoft)" name="Soft X-Ray Flux" />
@@ -443,7 +444,7 @@ export default function Dashboard() {
               <div className="glass-panel p-6 rounded-xl border border-gray-800">
                 <h3 className="text-base font-bold text-white mb-2">Multi-Horizon Predictions</h3>
                 <p className="text-xs text-gray-400 mb-6">Probability estimates for different solar flare classes</p>
-                
+
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   {[5, 15, 30, 60].map((horizon, idx) => (
                     <div key={idx} className="glass-card p-4 rounded-lg flex flex-col justify-between">
@@ -474,12 +475,12 @@ export default function Dashboard() {
           {activeTab === 'impact' && (
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                
+
                 {/* SVG Continent Overlay representation */}
                 <div className="glass-panel p-6 rounded-xl border border-gray-800 md:col-span-2">
                   <h3 className="text-base font-bold text-white mb-2">Regional Risk Map</h3>
                   <p className="text-xs text-gray-400 mb-6">Day-side exposure risk levels overlaid on major sectors</p>
-                  
+
                   <div className="relative bg-[#0d1220] rounded-xl border border-gray-800 p-6 flex flex-col justify-center items-center h-80 overflow-hidden">
                     {/* SVG map placeholder containing simple continent outlines and danger zones */}
                     <svg className="w-full h-60 text-gray-800 opacity-60" fill="currentColor" viewBox="0 0 800 400">
@@ -492,7 +493,7 @@ export default function Dashboard() {
                       <circle cx="560" cy="140" r="30" className="fill-red-500/20 stroke-red-500 stroke-2 animate-ping" />
                       <circle cx="560" cy="140" r="10" className="fill-red-600" />
                     </svg>
-                    
+
                     <div className="absolute top-4 left-4 bg-gray-900/90 border border-gray-800 p-3 rounded-lg text-xs">
                       <div className="font-semibold text-white mb-1">Impact Center: South-Asia</div>
                       <div className="text-red-400">Flux Absorption: 18.2 dB</div>
@@ -505,7 +506,7 @@ export default function Dashboard() {
                   <div>
                     <h3 className="text-base font-bold text-white mb-2">System Disruption Indices</h3>
                     <p className="text-xs text-gray-400 mb-6">Estimated severity levels across telemetry and GPS receivers</p>
-                    
+
                     <div className="space-y-4">
                       {[
                         { name: 'GPS/GNSS Position Error', level: '+8.4m', color: 'text-orange-400' },
@@ -538,7 +539,7 @@ export default function Dashboard() {
                 <div className="glass-panel p-6 rounded-xl border border-gray-800">
                   <h3 className="text-base font-bold text-white mb-2">Satellite Catalog Risk Profiles</h3>
                   <p className="text-xs text-gray-400 mb-6">Real-time vulnerability mapping of ISRO satellites</p>
-                  
+
                   <div className="space-y-4">
                     {[
                       { name: 'INSAT-3D', type: 'Meteorological', orbit: 'GEO', risk: 0.38, status: 'Nominal' },
@@ -567,7 +568,7 @@ export default function Dashboard() {
                   <div>
                     <h3 className="text-base font-bold text-white mb-2">Orbit Vulnerability Profiles</h3>
                     <p className="text-xs text-gray-400 mb-6">Environmental radiation dose and drag factors</p>
-                    
+
                     <div className="space-y-6 my-4">
                       {[
                         { orbit: 'LEO (Low Earth Orbit)', score: 85, metric: 'Atmospheric drag index: Critical (+240%)' },
@@ -603,7 +604,7 @@ export default function Dashboard() {
               <div className="glass-panel p-6 rounded-xl border border-gray-800">
                 <h3 className="text-base font-bold text-white mb-2">ChromaDB Vector Matching</h3>
                 <p className="text-xs text-gray-400 mb-6">Historical solar weather profiles matching the current Soft X-ray gradient</p>
-                
+
                 <div className="space-y-4">
                   {[
                     { eventId: 'NOAA-8472', date: '2003-10-28', similarity: '94.2%', goesClass: 'X17.2', result: 'Extensive geomagnetic storm (Kp=9)' },
@@ -635,7 +636,7 @@ export default function Dashboard() {
                 <div className="glass-panel p-6 rounded-xl border border-gray-800">
                   <h3 className="text-base font-bold text-white mb-2">SHAP Global Feature Importance</h3>
                   <p className="text-xs text-gray-400 mb-6">Model parameters ranked by impact on forecast confidence</p>
-                  
+
                   <div className="h-60">
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={defaultXAIImportance} layout="vertical">
@@ -657,7 +658,7 @@ export default function Dashboard() {
                   <div>
                     <h3 className="text-base font-bold text-white mb-2">Local Attribution Report</h3>
                     <p className="text-xs text-gray-400 mb-6">Reasoning factors for the active M1.4 forecasting confidence</p>
-                    
+
                     <div className="space-y-4">
                       <div className="p-3 bg-emerald-950/20 border border-emerald-500/20 rounded-lg text-xs">
                         <div className="font-semibold text-emerald-400 mb-1">Attributing Positive Indicators</div>

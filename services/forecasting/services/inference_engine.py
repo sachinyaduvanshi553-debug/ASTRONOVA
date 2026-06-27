@@ -1,8 +1,11 @@
-import torch
+from typing import Any
+
 import numpy as np
+import torch
 from ml.models.bilstm import BiLSTMForecaster
-from astronova_core.utils.physics import apply_physics_constraints, GOES_THRESHOLDS
-from typing import Dict, Any, List
+
+from astronova_core.utils.physics import GOES_THRESHOLDS, apply_physics_constraints
+
 
 class InferenceEngine:
     def __init__(self):
@@ -11,7 +14,7 @@ class InferenceEngine:
         self.model.eval()
         self.classes = ["A", "B", "C", "M", "X"]
 
-    def predict(self, features: list, current_flux: float = 1e-7) -> Dict[str, Any]:
+    def predict(self, features: list, current_flux: float = 1e-7) -> dict[str, Any]:
         """
         Generates multi-horizon probabilistic predictions for solar flare activity.
         Includes quantile estimation (q10, q50, q90) and enforces physics-informed constraints.
@@ -32,7 +35,7 @@ class InferenceEngine:
                     x = torch.randn(1, 10, 4)
             else:
                 x = torch.randn(1, 10, 4)
-                
+
             probs = self.model(x).squeeze().tolist()
             # Handle single class output squeeze edge case
             if not isinstance(probs, list):
@@ -61,26 +64,26 @@ class InferenceEngine:
             val_span = class_range[1] - class_range[0]
             if np.isinf(val_span):
                 val_span = 1e-3  # Cap for extreme X-class
-            
+
             raw_peak_flux = base_val + (val_span * confidence)
-            
+
             # Apply physics-informed constraints
             # The rate of change must not exceed thermodynamic limits
             clamped_peak_flux = apply_physics_constraints(current_flux, raw_peak_flux, horizon)
-            
+
             # Uncertainty estimation: standard deviation is wider when confidence is low
             # sigma ranges from 0.05 (confidence = 1) to 0.45 (confidence = 0)
             sigma = 0.05 + 0.40 * (1.0 - confidence)
-            
+
             # Calculate Quantiles (log-normal assumption for solar flux)
             q10 = clamped_peak_flux * np.exp(-1.28 * sigma)
             q50 = clamped_peak_flux
             q90 = clamped_peak_flux * np.exp(1.28 * sigma)
-            
+
             predictions_by_horizon[str(horizon)] = {
                 "predicted_class": self.classes[int(np.argmax(probs))],
                 "confidence": confidence,
-                "probabilities": dict(zip(self.classes, probs)),
+                "probabilities": dict(zip(self.classes, probs, strict=False)),
                 "peak_flux_estimate": float(q50),
                 "quantile_10": float(q10),
                 "quantile_90": float(q90),

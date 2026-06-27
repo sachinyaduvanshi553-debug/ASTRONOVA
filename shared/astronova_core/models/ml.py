@@ -1,12 +1,15 @@
-from sqlalchemy import Column, DateTime, Float, String, Integer, Text, JSON
-from sqlalchemy.dialects.postgresql import UUID
 import uuid
 from datetime import datetime
+
+from sqlalchemy import JSON, Column, DateTime, Float, Integer, String
+from sqlalchemy.dialects.postgresql import UUID
+
 from astronova_core.database import Base
+
 
 class MLModel(Base):
     __tablename__ = "ml_models"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String(100), nullable=False)
     version = Column(String(50), nullable=False)
@@ -19,7 +22,7 @@ class MLModel(Base):
 
 class Prediction(Base):
     __tablename__ = "predictions"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     model_id = Column(UUID(as_uuid=True), nullable=False)
     timestamp = Column(DateTime, default=datetime.utcnow)

@@ -1,5 +1,6 @@
 import os
 
+
 def create_file(path, content):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, 'w', encoding='utf-8') as f:
@@ -13,7 +14,7 @@ class IngestionConfig:
     def __init__(self):
         self.settings = get_settings()
         self.upload_dir = "/app/data/uploads"
-        
+
 ingestion_config = IngestionConfig()
 """)
 
@@ -75,7 +76,7 @@ from astronova_core.database import Base
 
 class IngestionJob(Base):
     __tablename__ = "ingestion_jobs"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     status = Column(String(50), nullable=False, default="pending")  # pending, processing, completed, failed
     source_file = Column(String(255), nullable=False)
@@ -171,7 +172,7 @@ class IngestionService:
                     raise ValueError(f"Missing required column: {col}")
 
             df["time"] = pd.to_datetime(df["time"])
-            
+
             # Store in DB and publish to Kafka
             rows_stored = 0
             for _, row in df.iterrows():
@@ -187,7 +188,7 @@ class IngestionService:
                     source_file=os.path.basename(file_path)
                 )
                 await db.merge(db_obs)
-                
+
                 # Publish raw data to Kafka topic for Processing Service
                 self.producer.publish_observation(
                     key=obs_time.isoformat(),
@@ -206,7 +207,7 @@ class IngestionService:
             job.rows_ingested = rows_stored
             job.completed_at = datetime.utcnow()
             await db.commit()
-            
+
             # Publish ingestion complete event
             self.producer.publish_ingestion_complete(str(job.id), {"rows_ingested": rows_stored})
             logger.info("ingestion_job_success", job_id=str(job.id), rows=rows_stored)
@@ -268,10 +269,10 @@ async def upload_file(
     temp_dir = "/tmp/astronova_uploads"
     os.makedirs(temp_dir, exist_ok=True)
     file_path = os.path.join(temp_dir, f"{uuid.uuid4()}_{file.filename}")
-    
+
     with open(file_path, "wb") as f:
         f.write(await file.read())
-        
+
     file_format = file.filename.split(".")[-1]
     job = await ingest_service.ingest_file(file_path, file_format, db)
     return IngestionJobResponse(
@@ -325,15 +326,15 @@ async def get_observations(
         start_time = datetime.utcnow() - timedelta(hours=24)
     if not end_time:
         end_time = datetime.utcnow()
-        
+
     stmt = select(SolexsObservation).where(
         SolexsObservation.time >= start_time,
         SolexsObservation.time <= end_time
     ).order_by(desc(SolexsObservation.time)).limit(limit)
-    
+
     result = await db.execute(stmt)
     observations = result.scalars().all()
-    
+
     return [
         {
             "time": obs.time,
@@ -351,7 +352,7 @@ async def get_latest_observations(
     stmt = select(SolexsObservation).order_by(desc(SolexsObservation.time)).limit(limit)
     result = await db.execute(stmt)
     observations = result.scalars().all()
-    
+
     return [
         {
             "time": obs.time,

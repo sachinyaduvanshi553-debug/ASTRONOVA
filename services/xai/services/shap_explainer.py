@@ -1,7 +1,8 @@
-from typing import Dict, Any
+from typing import Any
+
 
 class SHAPExplainer:
-    def explain_prediction(self) -> Dict[str, Any]:
+    def explain_prediction(self) -> dict[str, Any]:
         # Top contributing features for solar flare prediction
         return {
             "global_feature_importance": {
