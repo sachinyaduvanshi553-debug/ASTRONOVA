@@ -262,6 +262,190 @@ make generate-data
 ```
 
 ---
+## 📂 Project Setup
+
+Below are step‑by‑step setup instructions for each major component of AstroNova.
+
+### Frontend (`frontend/`)
+
+```bash
+cd frontend
+npm install
+npm run dev   # starts Vite dev server at http://localhost:5173
+```
+
+### Machine Learning (`ml/`)
+
+```bash
+cd ml
+# Install Python dependencies
+pip install -r requirements.txt   # or use poetry/uv
+# Run training or inference scripts
+python -m ml.training.trainer   # example training
+```
+
+### Services (`services/`)
+
+```bash
+cd services
+# Install Python dependencies
+pip install -r requirements.txt
+# Start individual micro‑services (example)
+make dev-gateway      # API gateway on 8000
+make dev-ingestion    # ingestion service on 8001
+# ... repeat for other services as needed
+```
+
+### Shared Library (`shared/`)
+
+```bash
+cd shared
+pip install -e .   # editable install for shared utilities
+```
+
+### Monitoring (`monitoring/`)
+
+```bash
+cd monitoring
+docker compose up -d   # brings up Prometheus, Grafana, etc.
+```
+
+### Docker Compose (all)
+
+```bash
+make docker-up   # starts all containers: PostgreSQL, Redis, Kafka, MLflow, ChromaDB, Ollama, etc.
+```
+
+## 📸 Screenshots
+
+The `public/` folder contains UI screenshots. Below are previews:
+
+![Screenshot 1](public/Screenshot%202026-06-28%20140130.png)
+![Screenshot 2](public/Screenshot%202026-06-28%20140140.png)
+![Screenshot 3](public/Screenshot%202026-06-28%20140153.png)
+![Screenshot 4](public/Screenshot%202026-06-28%20140200.png)
+![Screenshot 5](public/Screenshot%202026-06-28%20140225.png)
+
+---
+
+## 🔄 Data Pipeline Flowchart
+
+```mermaid
+flowchart TD
+    A["SOLEXS Telemetry\nSoft X-ray 1-15 keV"] --> I["Ingestion Service\nPort 8001"]
+    B["HEL1OS Telemetry\nHard X-ray 10-150 keV"] --> I
+    C["GOES XRF Reference\nNOAA Real-time Feed"] --> I
+
+    I -->|"Kafka: astronova.raw.solexs"| P["Processing Service\nPort 8002"]
+    P -->|"Clean + Normalize + Interpolate"| P
+    P -->|"Kafka: astronova.processed"| F["Feature Service\nPort 8003"]
+
+    F -->|"Physics + ML Features"| F
+    F -->|"Kafka: astronova.features"| FC["Forecasting Service\nPort 8004"]
+
+    FC --> M1["BiLSTM"]
+    FC --> M2["CNN Nowcaster"]
+    FC --> M3["TFT"]
+    FC --> M4["XGBoost"]
+    FC --> ENS["Weighted Ensemble"]
+    M1 & M2 & M3 & M4 --> ENS
+
+    ENS -->|"Kafka: astronova.predictions"| EI["Earth Impact\nPort 8006"]
+    ENS --> SR["Satellite Risk\nPort 8007"]
+    ENS --> XAI["XAI Service\nPort 8005"]
+    ENS --> NOT["Notifications\nPort 8010"]
+
+    XAI -->|"SHAP + LIME + Attention"| DB["Dashboard\nFrontend"]
+    EI --> DB
+    SR --> DB
+
+    DB --> COP["LLM Copilot\nPort 8009"]
+    COP <--> RAG["RAG Service\nChromaDB + LLaMA 3.2"]
+```
+
+---
+
+## 🏗️ Full System Architecture
+
+```mermaid
+graph TB
+    subgraph INSTRUMENTS["Aditya-L1 Instruments"]
+        SOLEXS["SOLEXS\nSoft X-ray 1-15 keV"]
+        HEL1OS["HEL1OS\nHard X-ray 10-150 keV"]
+    end
+
+    subgraph EXTERNAL["External Data Sources"]
+        GOES["GOES XRF\nNOAA Real-time"]
+        NOAACAT["NOAA Flare Catalog"]
+        NASACME["NASA CME Catalog"]
+    end
+
+    subgraph GATEWAY["API Gateway (8000)"]
+        AUTH["JWT + RBAC Auth"]
+        RATELIMIT["Rate Limiter"]
+        ROUTER["API Router"]
+    end
+
+    subgraph PIPELINE["Data Pipeline"]
+        ING["Ingestion (8001)"]
+        PROC["Processing (8002)"]
+        FEAT["Feature Engineering (8003)"]
+    end
+
+    subgraph KAFKA["Apache Kafka Event Bus"]
+        K1["astronova.raw.solexs"]
+        K2["astronova.processed"]
+        K3["astronova.features"]
+        K4["astronova.predictions"]
+    end
+
+    subgraph AICORE["AI Core"]
+        FORE["Forecasting (8004)\nBiLSTM + CNN + TFT + XGBoost"]
+        XAI["XAI Service (8005)\nSHAP + LIME + Attention"]
+    end
+
+    subgraph INTEL["Intelligence Services"]
+        EI["Earth Impact (8006)"]
+        SR["Satellite Risk (8007)"]
+        NOT["Notifications (8010)"]
+    end
+
+    subgraph LLMRAG["LLM + RAG"]
+        RAG["RAG Service (8008)\nChromaDB"]
+        COP["Copilot (8009)\nLLaMA 3.2 via Ollama"]
+    end
+
+    subgraph STORAGE["Storage Layer"]
+        PG["PostgreSQL 16\n+ TimescaleDB"]
+        REDIS["Redis 7\nCache + PubSub"]
+        CHROMA["ChromaDB\nVector Store"]
+    end
+
+    subgraph FRONTEND["Frontend"]
+        DASH["Next.js 15 Dashboard\nReal-time Charts + Maps"]
+    end
+
+    subgraph OBS["Observability"]
+        PROM["Prometheus"]
+        GRAF["Grafana"]
+        MLFLOW["MLflow\nExperiment Tracking"]
+    end
+
+    INSTRUMENTS --> ING
+    EXTERNAL --> ING
+    ING --> K1 --> PROC --> K2 --> FEAT --> K3 --> FORE
+    FORE --> K4 --> EI & SR & NOT
+    FORE --> XAI
+    XAI & EI & SR --> DASH
+    DASH --> COP
+    COP <--> RAG
+    RAG <--> CHROMA
+    PIPELINE & AICORE & INTEL --> PG
+    GATEWAY --> PIPELINE
+    OBS -.-> AICORE & PIPELINE & INTEL
+```
+
+---
 
 ## ⚙️ Configuration
 
@@ -385,3 +569,4 @@ MIT License — see [LICENSE](LICENSE)
 ---
 
 *AstroNova — Watching the Sun, Protecting the Earth*
+
