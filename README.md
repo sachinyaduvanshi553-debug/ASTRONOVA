@@ -60,39 +60,20 @@ AstroNova ingests real-time X-ray flux telemetry from ISRO's **SOLEXS (Solar X-r
 | RAG Q&A | Context-aware space weather Q&A | < 3s |
 | Alert Delivery | Email + webhook notifications | < 5s |
 
-## 🟢 Current Project Status (V2 Verification Complete)
+## 🟢 Current Project Status & Roadmap
 
 The AstroNova system has successfully completed its core ML and Scientific V2 Verification Sprint.
-- **Data & Features**: ✅ Validated physics-informed feature engineering and synthetic/real GOES dataset pipelines.
-- **ML Models**: ✅ BiLSTM, XGBoost, and LightGBM ensemble models have been trained and generalized well (Generalization gap < 2%).
-- **Explainable AI (XAI)**: ✅ Integrated Gradients and SHAP provide real-time feature importance and satisfy the strict physical consistency constraints.
-- **API & Inference**: ✅ FastAPI endpoints (`/predict`, `/nowcast`, `/shi`, `/simulate`) are fully operational, deterministic, and latency-optimized.
-- **Pending Production Requirements**: ⚠️ Docker configuration (`Dockerfile`/`docker-compose`) and structured JSON logging are currently being finalized.
 
----
+### ✅ Currently Implemented (V2 Core)
+- **Data & Features**: Validated physics-informed feature engineering and synthetic/real GOES dataset pipelines.
+- **ML Models**: BiLSTM, XGBoost, and LightGBM ensemble models have been trained and generalized well (Generalization gap < 2%).
+- **Explainable AI (XAI)**: Integrated Gradients and SHAP provide real-time feature importance and satisfy the strict physical consistency constraints.
+- **API & Inference**: FastAPI endpoints (`/predict`, `/nowcast`, `/shi`, `/simulate`) are fully operational, deterministic, and latency-optimized.
 
-## 🌌 Predictive Solar Vision (Generative AI)
-
-As the ultimate frontier of AstroNova's capabilities, we are integrating a cutting-edge **Generative Solar Vision** module. While time-series ML models predict *when* and *how intense* a flare will be, this Deep Learning vision module predicts *what it will look like*. 
-
-By combining **ConvLSTM** (Convolutional Long Short-Term Memory) networks for spatiotemporal dynamics with **Diffusion Models**, AstroNova is capable of taking current magnetogram and extreme ultraviolet (EUV) imaging data and forecasting the visual construction and morphology of upcoming solar flares. 
-
-**Workflow:**
-1. **Multimodal Ingestion**: Captures sequential EUV imagery (e.g., AIA 193Å, SDO) alongside real-time X-ray flux telemetry.
-2. **Spatiotemporal Forecasting**: A ConvLSTM network encodes the fluid dynamics and magnetic complexities of the active solar region.
-3. **Morphology Generation**: A guided Latent Diffusion Model decodes the spatiotemporal latent space to generate high-fidelity, predictive future frames of the solar surface.
-4. **Impact Visualization**: Provides visual warning maps indicating exactly where on the solar disk the eruption will emerge, allowing for high-precision coronal mass ejection (CME) trajectory estimations.
-
----
-
-## 🔄 Dynamic Logging & Hindsight Data Engine
-
-To ensure continuous improvement and adaptation, AstroNova features a **Dynamic Logging and Data Collection Engine** designed to interface seamlessly with development tools like **Postman** and real-time production telemetry.
-
-**Key Features:**
-- **Dynamic API Logging**: All predictions, API requests (e.g., from Postman), and system telemetry are dynamically logged and routed directly into our structured Time-Series Database (TimescaleDB).
-- **The "Hindsight" Dataset**: This collected operational data acts as a continuous feedback loop. The system archives the real-time inputs alongside the actual observed solar outcomes to automatically curate a "Hindsight Dataset."
-- **Continuous Learning (Auto-Retraining)**: By leveraging this ever-growing Hindsight Dataset, AstroNova's ML and DL models can be periodically retrained. This allows the system to learn from its past predictions, correct drift, and progressively adapt to new solar cycles or anomalous weather events.
+### 🚀 Future Roadmap (Once Project is Complete)
+- **Production Infrastructure**: Docker configuration (`Dockerfile`/`docker-compose`), Kubernetes deployment, and structured JSON logging.
+- **Predictive Solar Vision (Generative AI)**: Utilizing ConvLSTM and Diffusion models to forecast the visual construction and morphology of upcoming solar flares based on real-time EUV imaging data.
+- **Dynamic Logging & Hindsight Data Engine**: Seamless integration with **Postman** to dynamically log all API requests and system telemetry into TimescaleDB. This data will be automatically curated into a **"Hindsight" Dataset** alongside actual observed outcomes, powering a continuous auto-retraining pipeline to adapt to new solar cycles.
 
 ---
 
@@ -371,35 +352,49 @@ The `public/` folder contains UI screenshots. Below are previews:
 
 ```mermaid
 flowchart TD
-    A["SOLEXS Telemetry\nSoft X-ray 1-15 keV"] --> I["Ingestion Service\nPort 8001"]
-    B["HEL1OS Telemetry\nHard X-ray 10-150 keV"] --> I
-    C["GOES XRF Reference\nNOAA Real-time Feed"] --> I
+    classDef implemented fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#000;
+    classDef planned fill:#fff3cd,stroke:#ffc107,stroke-width:2px,stroke-dasharray: 5 5,color:#000;
 
-    I -->|"Kafka: astronova.raw.solexs"| P["Processing Service\nPort 8002"]
+    subgraph Legend
+        L1[Currently Implemented]:::implemented
+        L2[Planned / Future]:::planned
+    end
+
+    A["SOLEXS Telemetry\nSoft X-ray 1-15 keV"]:::implemented --> I["Ingestion Service\nPort 8001"]:::implemented
+    B["HEL1OS Telemetry\nHard X-ray 10-150 keV"]:::implemented --> I
+    C["GOES XRF Reference\nNOAA Real-time Feed"]:::implemented --> I
+
+    I -->|"Kafka: astronova.raw.solexs"| P["Processing Service\nPort 8002"]:::implemented
     P -->|"Clean + Normalize + Interpolate"| P
-    P -->|"Kafka: astronova.processed"| F["Feature Service\nPort 8003"]
+    P -->|"Kafka: astronova.processed"| F["Feature Service\nPort 8003"]:::implemented
 
     F -->|"Physics + ML Features"| F
-    F -->|"Kafka: astronova.features"| FC["Forecasting Service\nPort 8004"]
+    F -->|"Kafka: astronova.features"| FC["Forecasting Service\nPort 8004"]:::implemented
 
-    FC --> M1["BiLSTM"]
-    FC --> M2["CNN Nowcaster"]
-    FC --> M3["TFT"]
-    FC --> M4["XGBoost"]
-    FC --> ENS["Weighted Ensemble"]
+    FC --> M1["BiLSTM"]:::implemented
+    FC --> M2["CNN Nowcaster"]:::implemented
+    FC --> M3["TFT"]:::implemented
+    FC --> M4["XGBoost"]:::implemented
+    FC --> ENS["Weighted Ensemble"]:::implemented
     M1 & M2 & M3 & M4 --> ENS
 
-    ENS -->|"Kafka: astronova.predictions"| EI["Earth Impact\nPort 8006"]
-    ENS --> SR["Satellite Risk\nPort 8007"]
-    ENS --> XAI["XAI Service\nPort 8005"]
-    ENS --> NOT["Notifications\nPort 8010"]
+    ENS -->|"Kafka: astronova.predictions"| EI["Earth Impact\nPort 8006"]:::implemented
+    ENS --> SR["Satellite Risk\nPort 8007"]:::implemented
+    ENS --> XAI["XAI Service\nPort 8005"]:::implemented
+    ENS --> NOT["Notifications\nPort 8010"]:::implemented
 
-    XAI -->|"SHAP + LIME + Attention"| DB["Dashboard\nFrontend"]
+    XAI -->|"SHAP + LIME + Attention"| DB["Dashboard\nFrontend"]:::implemented
     EI --> DB
     SR --> DB
 
-    DB --> COP["LLM Copilot\nPort 8009"]
-    COP <--> RAG["RAG Service\nChromaDB + LLaMA 3.2"]
+    DB --> COP["LLM Copilot\nPort 8009"]:::implemented
+    COP <--> RAG["RAG Service\nChromaDB + LLaMA 3.2"]:::implemented
+
+    %% Dynamic Logging & Hindsight Feature
+    POSTMAN["Postman / API Clients"]:::implemented -->|"API Requests"| GATEWAY["API Gateway"]:::implemented
+    GATEWAY -->|"Dynamic Logging"| TDB[("TimescaleDB\nTelemetry & Predictions")]:::planned
+    TDB -->|"Hindsight Pipeline"| AUTORETRAIN["Continuous Auto-Retraining"]:::planned
+    AUTORETRAIN -.->|"Model Updates"| FC
 ```
 
 ---
@@ -408,70 +403,90 @@ flowchart TD
 
 ```mermaid
 graph TB
+    classDef implemented fill:#d4edda,stroke:#28a745,stroke-width:2px,color:#000;
+    classDef planned fill:#fff3cd,stroke:#ffc107,stroke-width:2px,stroke-dasharray: 5 5,color:#000;
+
+    subgraph Legend
+        L1[Currently Implemented]:::implemented
+        L2[Planned / Future]:::planned
+    end
+
     subgraph INSTRUMENTS["Aditya-L1 Instruments"]
-        SOLEXS["SOLEXS\nSoft X-ray 1-15 keV"]
-        HEL1OS["HEL1OS\nHard X-ray 10-150 keV"]
+        SOLEXS["SOLEXS\nSoft X-ray 1-15 keV"]:::implemented
+        HEL1OS["HEL1OS\nHard X-ray 10-150 keV"]:::implemented
     end
 
     subgraph EXTERNAL["External Data Sources"]
-        GOES["GOES XRF\nNOAA Real-time"]
-        NOAACAT["NOAA Flare Catalog"]
-        NASACME["NASA CME Catalog"]
+        GOES["GOES XRF\nNOAA Real-time"]:::implemented
+        NOAACAT["NOAA Flare Catalog"]:::implemented
+        NASACME["NASA CME Catalog"]:::implemented
+        POSTMAN["Postman / API Clients"]:::implemented
     end
 
     subgraph GATEWAY["API Gateway (8000)"]
-        AUTH["JWT + RBAC Auth"]
-        RATELIMIT["Rate Limiter"]
-        ROUTER["API Router"]
+        AUTH["JWT + RBAC Auth"]:::implemented
+        RATELIMIT["Rate Limiter"]:::implemented
+        ROUTER["API Router"]:::implemented
     end
 
     subgraph PIPELINE["Data Pipeline"]
-        ING["Ingestion (8001)"]
-        PROC["Processing (8002)"]
-        FEAT["Feature Engineering (8003)"]
+        ING["Ingestion (8001)"]:::implemented
+        PROC["Processing (8002)"]:::implemented
+        FEAT["Feature Engineering (8003)"]:::implemented
     end
 
     subgraph KAFKA["Apache Kafka Event Bus"]
-        K1["astronova.raw.solexs"]
-        K2["astronova.processed"]
-        K3["astronova.features"]
-        K4["astronova.predictions"]
+        K1["astronova.raw.solexs"]:::implemented
+        K2["astronova.processed"]:::implemented
+        K3["astronova.features"]:::implemented
+        K4["astronova.predictions"]:::implemented
     end
 
     subgraph AICORE["AI Core"]
-        FORE["Forecasting (8004)\nBiLSTM + CNN + TFT + XGBoost"]
-        XAI["XAI Service (8005)\nSHAP + LIME + Attention"]
+        FORE["Forecasting (8004)\nBiLSTM + CNN + TFT + XGBoost"]:::implemented
+        XAI["XAI Service (8005)\nSHAP + LIME + Attention"]:::implemented
+    end
+
+    subgraph HINDSIGHT["Dynamic Logging & Hindsight"]
+        DYNLOG["Dynamic API Logger"]:::planned
+        AUTORETRAIN["Continuous Auto-Retraining"]:::planned
     end
 
     subgraph INTEL["Intelligence Services"]
-        EI["Earth Impact (8006)"]
-        SR["Satellite Risk (8007)"]
-        NOT["Notifications (8010)"]
+        EI["Earth Impact (8006)"]:::implemented
+        SR["Satellite Risk (8007)"]:::implemented
+        NOT["Notifications (8010)"]:::implemented
     end
 
     subgraph LLMRAG["LLM + RAG"]
-        RAG["RAG Service (8008)\nChromaDB"]
-        COP["Copilot (8009)\nLLaMA 3.2 via Ollama"]
+        RAG["RAG Service (8008)\nChromaDB"]:::implemented
+        COP["Copilot (8009)\nLLaMA 3.2 via Ollama"]:::implemented
     end
 
     subgraph STORAGE["Storage Layer"]
-        PG["PostgreSQL 16\n+ TimescaleDB"]
-        REDIS["Redis 7\nCache + PubSub"]
-        CHROMA["ChromaDB\nVector Store"]
+        PG["PostgreSQL 16\n+ TimescaleDB"]:::implemented
+        REDIS["Redis 7\nCache + PubSub"]:::implemented
+        CHROMA["ChromaDB\nVector Store"]:::implemented
     end
 
     subgraph FRONTEND["Frontend"]
-        DASH["Next.js 15 Dashboard\nReal-time Charts + Maps"]
+        DASH["Next.js 15 Dashboard\nReal-time Charts + Maps"]:::implemented
     end
 
     subgraph OBS["Observability"]
-        PROM["Prometheus"]
-        GRAF["Grafana"]
-        MLFLOW["MLflow\nExperiment Tracking"]
+        PROM["Prometheus"]:::planned
+        GRAF["Grafana"]:::planned
+        MLFLOW["MLflow\nExperiment Tracking"]:::implemented
     end
 
     INSTRUMENTS --> ING
     EXTERNAL --> ING
+    POSTMAN --> GATEWAY
+    GATEWAY --> DYNLOG
+    DYNLOG --> PG
+    PG -->|"Hindsight Dataset"| AUTORETRAIN
+    AUTORETRAIN -.->|"Update Weights"| FORE
+
     ING --> K1 --> PROC --> K2 --> FEAT --> K3 --> FORE
     FORE --> K4 --> EI & SR & NOT
     FORE --> XAI
