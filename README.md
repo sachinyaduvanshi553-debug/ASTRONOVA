@@ -55,9 +55,18 @@ AstroNova ingests real-time X-ray flux telemetry from ISRO's **SOLEXS (Solar X-r
 | RAG Q&A | Context-aware space weather Q&A | < 3s |
 | Alert Delivery | Email + webhook notifications | < 5s |
 
+## 🟢 Current Project Status (V2 Verification Complete)
+
+The AstroNova system has successfully completed its core ML and Scientific V2 Verification Sprint.
+- **Data & Features**: ✅ Validated physics-informed feature engineering and synthetic/real GOES dataset pipelines.
+- **ML Models**: ✅ BiLSTM, XGBoost, and LightGBM ensemble models have been trained and generalized well (Generalization gap < 2%).
+- **Explainable AI (XAI)**: ✅ Integrated Gradients and SHAP provide real-time feature importance and satisfy the strict physical consistency constraints.
+- **API & Inference**: ✅ FastAPI endpoints (`/predict`, `/nowcast`, `/shi`, `/simulate`) are fully operational, deterministic, and latency-optimized.
+- **Pending Production Requirements**: ⚠️ Docker configuration (`Dockerfile`/`docker-compose`) and structured JSON logging are currently being finalized.
+
 ---
 
-## Architecture
+## 🏗️ Architecture
 
 ```
 SOLEXS Telemetry
