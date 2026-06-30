@@ -1,6 +1,7 @@
-from pydantic import BaseModel, Field
 from datetime import datetime
-from typing import Optional, List
+
+from pydantic import BaseModel
+
 
 class IngestionJobResponse(BaseModel):
     job_id: str
@@ -8,7 +9,7 @@ class IngestionJobResponse(BaseModel):
     source_file: str
     rows_ingested: int
     started_at: datetime
-    completed_at: Optional[datetime] = None
+    completed_at: datetime | None = None
 
 class BulkIngestionRequest(BaseModel):
     directory_path: str

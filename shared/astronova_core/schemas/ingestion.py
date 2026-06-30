@@ -1,6 +1,7 @@
 from datetime import datetime
-from typing import Optional, List
+
 from pydantic import BaseModel, Field, field_validator
+
 
 class SolexsDataPoint(BaseModel):
     time: datetime
@@ -25,4 +26,4 @@ class IngestionResponse(BaseModel):
     job_id: str
     status: str
     rows_ingested: int
-    errors: Optional[List[str]] = None
+    errors: list[str] | None = None

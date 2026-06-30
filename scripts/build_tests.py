@@ -1,5 +1,6 @@
 import os
 
+
 def create_file(path, content):
     dirname = os.path.dirname(path)
     if dirname:
@@ -20,7 +21,7 @@ from astronova_core.models.timeseries import SolexsObservation
 async def test_ingest_file_csv_success():
     # Setup mock DB session
     db_session = MagicMock()
-    
+
     # Create temporary CSV file for testing
     csv_path = "test_data.csv"
     df = pd.DataFrame({
@@ -29,14 +30,14 @@ async def test_ingest_file_csv_success():
         "hard_xray_flux": [1.2e-9, 1.5e-9]
     })
     df.to_csv(csv_path, index=False)
-    
+
     try:
         service = IngestionService()
         # Mock kafka producer within the service
         service.producer = MagicMock()
-        
+
         job = await service.ingest_file(csv_path, "csv", db_session)
-        
+
         assert job.status == "completed"
         assert job.rows_ingested == 2
         assert db_session.add.called
@@ -55,13 +56,13 @@ async def test_ingest_file_missing_columns():
         "hard_xray_flux": [1.2e-9]
     })
     df.to_csv(csv_path, index=False)
-    
+
     try:
         service = IngestionService()
         service.producer = MagicMock()
-        
+
         job = await service.ingest_file(csv_path, "csv", db_session)
-        
+
         assert job.status == "failed"
         assert len(job.errors) > 0
         assert "Missing required column" in job.errors[0]
@@ -82,7 +83,7 @@ def test_nowcast_detection():
     res = service.analyze_nowcast(1e-6)
     assert res["is_flare"] is False
     assert "C" in res["goes_class"]
-    
+
     # Above M-class threshold
     res = service.analyze_nowcast(1.5e-5)
     assert res["is_flare"] is True
@@ -91,7 +92,7 @@ def test_nowcast_detection():
 def test_solar_hazard_index():
     probabilities = {"A": 0.05, "B": 0.05, "C": 0.1, "M": 0.5, "X": 0.3}
     gradient = 1.2e-5
-    
+
     shi = SolarHazardIndexCalculator.calculate_shi(probabilities, gradient)
     assert 0.0 <= shi["score"] <= 1.0
     assert shi["category"] in ["Safe", "Moderate", "High", "Extreme"]
@@ -100,7 +101,7 @@ def test_solar_hazard_index():
 def test_inference_engine_prediction():
     engine = InferenceEngine()
     res = engine.predict([])
-    
+
     assert "prediction" in res
     assert "horizon_minutes" in res["prediction"]
     assert "probabilities" in res["prediction"]

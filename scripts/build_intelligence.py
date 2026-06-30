@@ -1,5 +1,6 @@
 import os
 
+
 def create_file(path, content):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, 'w', encoding='utf-8') as f:
@@ -283,14 +284,14 @@ class SatelliteRiskCalculator:
         for sat in self.SATELLITES:
             orbit = "GEO" if sat.startswith("INSAT") or sat.startswith("GSAT") else "LEO"
             risk = severity * (0.8 if orbit == "LEO" else 0.6)
-            
+
             mitigations = []
             if risk > 0.4:
                 mitigations.append("Prepare backup attitude control systems")
             if risk > 0.7:
                 mitigations.append("Enter safe-hold mode")
                 mitigations.append("Disable non-essential instruments")
-                
+
             satellite_risks.append({
                 "satellite_id": sat,
                 "orbit_type": orbit,

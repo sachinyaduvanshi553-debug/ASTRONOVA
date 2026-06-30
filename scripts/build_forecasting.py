@@ -1,5 +1,6 @@
 import os
 
+
 def create_file(path, content):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, 'w', encoding='utf-8') as f:
@@ -185,10 +186,10 @@ class InferenceEngine:
         with torch.no_grad():
             x = torch.randn(1, 10, 4)
             probs = self.model(x).squeeze().tolist()
-            
+
         classes = ["A", "B", "C", "M", "X"]
         pred_class_idx = np.argmax(probs)
-        
+
         return {
             "prediction": {
                 "horizon_minutes": 30,
@@ -210,7 +211,7 @@ class NowcastingService:
     def analyze_nowcast(self, current_flux: float) -> dict:
         is_flare = self.detector.detect(current_flux)
         goes_class = classify_flare(current_flux)
-        
+
         return {
             "is_flare": is_flare,
             "goes_class": goes_class,
@@ -227,10 +228,10 @@ create_file("services/forecasting/services/solar_hazard_index.py", """class Sola
         # Weighted sum: 60% X-class prob, 30% M-class prob, 10% gradient factor
         x_prob = probabilities.get("X", 0.0)
         m_prob = probabilities.get("M", 0.0)
-        
+
         raw_score = (x_prob * 0.6) + (m_prob * 0.3) + min(abs(gradient) * 1e5, 0.1)
         score = min(max(raw_score, 0.0), 1.0)
-        
+
         if score < 0.2:
             category = "Safe"
         elif score < 0.5:
@@ -239,7 +240,7 @@ create_file("services/forecasting/services/solar_hazard_index.py", """class Sola
             category = "High"
         else:
             category = "Extreme"
-            
+
         return {
             "score": score,
             "category": category,
@@ -277,7 +278,7 @@ async def get_nowcast(current_flux: float = Query(..., description="Current obse
 async def get_shi(current_flux: float = Query(..., description="Current observed flux (W/m^2)")):
     res = nowcast_service.analyze_nowcast(current_flux)
     pred_res = inference_engine.predict([])
-    
+
     # Calculate gradient proxy
     gradient = current_flux * 0.05
     shi = SolarHazardIndexCalculator.calculate_shi(

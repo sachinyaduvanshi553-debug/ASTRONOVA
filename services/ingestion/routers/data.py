@@ -1,17 +1,18 @@
+from datetime import datetime, timedelta
+
 from fastapi import APIRouter, Depends, Query
+from sqlalchemy import desc, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, desc
+
 from astronova_core.database import get_db
 from astronova_core.models.timeseries import SolexsObservation
-from datetime import datetime, timedelta
-from typing import List, Optional
 
 router = APIRouter(prefix="/api/v1/data", tags=["data"])
 
 @router.get("/observations")
 async def get_observations(
-    start_time: Optional[datetime] = None,
-    end_time: Optional[datetime] = None,
+    start_time: datetime | None = None,
+    end_time: datetime | None = None,
     limit: int = Query(default=100, ge=1, le=1000),
     db: AsyncSession = Depends(get_db)
 ):
@@ -19,15 +20,15 @@ async def get_observations(
         start_time = datetime.utcnow() - timedelta(hours=24)
     if not end_time:
         end_time = datetime.utcnow()
-        
+
     stmt = select(SolexsObservation).where(
         SolexsObservation.time >= start_time,
         SolexsObservation.time <= end_time
     ).order_by(desc(SolexsObservation.time)).limit(limit)
-    
+
     result = await db.execute(stmt)
     observations = result.scalars().all()
-    
+
     return [
         {
             "time": obs.time,
@@ -45,7 +46,7 @@ async def get_latest_observations(
     stmt = select(SolexsObservation).order_by(desc(SolexsObservation.time)).limit(limit)
     result = await db.execute(stmt)
     observations = result.scalars().all()
-    
+
     return [
         {
             "time": obs.time,

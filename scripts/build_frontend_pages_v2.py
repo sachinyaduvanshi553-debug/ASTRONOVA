@@ -1,5 +1,6 @@
 import os
 
+
 def create_file(path, content):
     dirname = os.path.dirname(path)
     if dirname:
@@ -48,14 +49,14 @@ const initialFluxData = Array.from({ length: 60 }, (_, i) => {
   const timeStr = `${10 + Math.floor(i / 60)}:${String(i % 60).padStart(2, '0')}`;
   const base = 2e-8;
   const rand = Math.sin(i * 0.1) * 5e-9 + Math.random() * 2e-9;
-  
+
   // Inject M-class solar flare at index 35-50
   let flare = 0;
   if (i >= 35 && i <= 50) {
     const progress = (i - 35) / 15;
     flare = 1.2e-5 * Math.sin(progress * Math.PI) * Math.exp(-progress * 2);
   }
-  
+
   const soft = base + rand + flare;
   return {
     time: timeStr,
@@ -86,7 +87,7 @@ export default function Dashboard() {
   const [shiScore, setShiScore] = useState(0.58);
   const [shiCategory, setShiCategory] = useState('High');
   const [lifecyclePhase, setLifecyclePhase] = useState('Rise');
-  
+
   // Scenario Simulation States
   const [simulatedClass, setSimulatedClass] = useState('M5.0');
   const [simulatedValue, setSimulatedValue] = useState(5e-5);
@@ -110,18 +111,18 @@ export default function Dashboard() {
       setFluxData((prev) => {
         const nextTime = new Date();
         const timeStr = `${String(nextTime.getHours()).padStart(2, '0')}:${String(nextTime.getMinutes()).padStart(2, '0')}:${String(nextTime.getSeconds()).padStart(2, '0')}`;
-        
+
         const base = 2e-8;
         const rand = Math.random() * 3e-9;
         let flare = 0;
-        
+
         if (Math.random() > 0.85) {
           flare = (Math.random() * 5e-6) + 1e-6;
         }
-        
+
         const newSoft = base + rand + flare;
         const newHard = newSoft * 0.12 + Math.random() * 1e-10;
-        
+
         setCurrentFlux(newSoft);
         const goesVal = newSoft < 1e-8 ? 'A0.0' :
                         newSoft < 1e-7 ? `B${(newSoft/1e-7*10).toFixed(1)}` :
@@ -129,11 +130,11 @@ export default function Dashboard() {
                         newSoft < 1e-5 ? `M${(newSoft/1e-5*10).toFixed(1)}` :
                         `X${(newSoft/1e-4*10).toFixed(1)}`;
         setGoesClass(goesVal);
-        
+
         const nextScore = Math.min(Math.max((newSoft * 2e4) + Math.random() * 0.1, 0.05), 0.98);
         setShiScore(nextScore);
         setShiCategory(nextScore < 0.2 ? 'Safe' : nextScore < 0.5 ? 'Moderate' : nextScore < 0.8 ? 'High' : 'Extreme');
-        
+
         // Lifecycle Phase calculation
         setLifecyclePhase(newSoft > 1e-5 ? 'Rise' : (newSoft > 1e-6 ? 'Pre-flare' : 'Quiescent'));
 
@@ -165,14 +166,14 @@ export default function Dashboard() {
   const handleSimulate = (val: string) => {
     setIsSimulating(true);
     setGoesClass(val);
-    
+
     let fluxVal = 1e-5;
     if (val.startsWith('X')) {
       fluxVal = parseFloat(val.substring(1)) * 1e-4;
     } else if (val.startsWith('M')) {
       fluxVal = parseFloat(val.substring(1)) * 1e-5;
     }
-    
+
     setCurrentFlux(fluxVal);
     const calculatedScore = Math.min(0.35 + (fluxVal * 1.5e4), 0.98);
     setShiScore(calculatedScore);
@@ -191,7 +192,7 @@ export default function Dashboard() {
             <p className="text-xs text-gray-400">Aditya-L1 Space Weather Intelligence Console</p>
           </div>
         </div>
-        
+
         <div className="flex items-center gap-6 text-sm">
           <div className="flex items-center gap-2 px-3 py-1 bg-blue-950/40 border border-blue-500/30 rounded-full text-blue-400">
             <span className="w-2 h-2 rounded-full bg-blue-400 animate-pulse"></span>
@@ -223,7 +224,7 @@ export default function Dashboard() {
             <Compass className="w-5 h-5" />
             ISRO Mission Console
           </button>
-          
+
           <button
             onClick={() => setActiveTab('live')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
@@ -235,7 +236,7 @@ export default function Dashboard() {
             <Activity className="w-5 h-5" />
             Aditya-L1 Telemetry
           </button>
-          
+
           <button
             onClick={() => setActiveTab('simulation')}
             className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all ${
@@ -271,7 +272,7 @@ export default function Dashboard() {
             <MessageSquare className="w-5 h-5" />
             Mission AI Copilot
           </button>
-          
+
           <div className="mt-auto border-t border-gray-800 pt-4 flex flex-col gap-2">
             <div className="p-3 bg-red-950/20 border border-red-500/20 rounded-lg flex items-start gap-2 text-xs">
               <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
@@ -331,12 +332,12 @@ export default function Dashboard() {
 
               {/* MISSION CONSOLE SUMMARY MATRIX */}
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                
+
                 {/* Visual Map/Earth Impact */}
                 <div className="glass-panel p-6 rounded-xl border border-gray-800 md:col-span-2">
                   <h3 className="text-base font-bold text-white mb-2">ISRO Geospatial Earth Impact</h3>
                   <p className="text-xs text-gray-400 mb-6">NavIC/D-layer absorption projection over South-Asia quadrant</p>
-                  
+
                   <div className="relative bg-[#0d1220] rounded-xl border border-gray-800 p-6 flex flex-col justify-center items-center h-72 overflow-hidden">
                     <svg className="w-full h-56 text-gray-800 opacity-60" fill="currentColor" viewBox="0 0 800 400">
                       <path d="M120 80h100v100H120zM140 180h80v150h-80z" />
@@ -345,7 +346,7 @@ export default function Dashboard() {
                       <circle cx="560" cy="140" r="30" className="fill-red-500/20 stroke-red-500 stroke-2 animate-ping" />
                       <circle cx="560" cy="140" r="10" className="fill-red-600" />
                     </svg>
-                    
+
                     <div className="absolute top-4 left-4 bg-gray-900/90 border border-gray-800 p-3 rounded-lg text-xs">
                       <div className="font-semibold text-white mb-1">Impact Center: South-Asia</div>
                       <div className="text-red-400">NavIC Scintillation Index (S4): 0.74</div>
@@ -359,7 +360,7 @@ export default function Dashboard() {
                   <div>
                     <h3 className="text-base font-bold text-white mb-2">Operational Guidelines</h3>
                     <p className="text-xs text-gray-400 mb-6">Actionable satellite & comms mitigations</p>
-                    
+
                     <div className="space-y-4">
                       {[
                         { title: 'GSAT GEO Satellites', action: 'Safing/Amber: Prepare backup gyro systems', color: 'text-orange-400' },
@@ -395,18 +396,18 @@ export default function Dashboard() {
                     <p className="text-xs text-gray-400">Aligned Soft X-Ray (SoLEXS) and Hard X-Ray (HEL1OS) fluxes</p>
                   </div>
                 </div>
-                
+
                 <div className="h-96">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={fluxData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
                       <XAxis dataKey="time" stroke="#9ca3af" fontSize={11} />
-                      <YAxis 
-                        scale="log" 
-                        domain={[1e-9, 1e-3]} 
-                        stroke="#9ca3af" 
-                        fontSize={11} 
-                        tickFormatter={(v) => v.toExponential(0)} 
+                      <YAxis
+                        scale="log"
+                        domain={[1e-9, 1e-3]}
+                        stroke="#9ca3af"
+                        fontSize={11}
+                        tickFormatter={(v) => v.toExponential(0)}
                       />
                       <Tooltip contentStyle={{ backgroundColor: '#111827', borderColor: '#374151' }} />
                       <Area type="monotone" dataKey="softFlux" stroke="#3b82f6" strokeWidth={2} fillOpacity={0.1} fill="#3b82f6" name="SoLEXS Soft X-Ray" />
@@ -426,7 +427,7 @@ export default function Dashboard() {
               <div className="glass-panel p-6 rounded-xl border border-gray-800">
                 <h3 className="text-base font-bold text-white mb-2">Risk Scenario Simulator</h3>
                 <p className="text-xs text-gray-400 mb-6">Simulate customized solar flare eruptions to test operational limits</p>
-                
+
                 <div className="flex gap-4 mb-8">
                   {['C5.0', 'M1.0', 'M5.0', 'X1.0', 'X5.0'].map((val) => (
                     <button
@@ -486,7 +487,7 @@ export default function Dashboard() {
               <div className="glass-panel p-6 rounded-xl border border-gray-800">
                 <h3 className="text-base font-bold text-white mb-2">Research Leaderboard</h3>
                 <p className="text-xs text-gray-400 mb-6">Cross-validation benchmarks calculated on NOAA & Aditya-L1 historical events</p>
-                
+
                 <div className="overflow-x-auto">
                   <table className="w-full text-left text-xs">
                     <thead>

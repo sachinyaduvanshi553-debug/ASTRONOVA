@@ -1,6 +1,6 @@
 from fastapi import APIRouter
-from services.notifications.services.alert_manager import AlertManager
 from pydantic import BaseModel
+from services.notifications.services.alert_manager import AlertManager
 
 router = APIRouter(prefix="/api/v1/notify", tags=["alerts"])
 manager = AlertManager()

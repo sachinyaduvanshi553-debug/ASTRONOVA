@@ -1,5 +1,6 @@
 import os
 
+
 def create_file(path, content):
     os.makedirs(os.path.dirname(path), exist_ok=True)
     with open(path, 'w', encoding='utf-8') as f:
@@ -173,7 +174,7 @@ class TimestampMixin:
 @declarative_mixin
 class SoftDeleteMixin:
     deleted_at = Column(DateTime, nullable=True)
-    
+
     @property
     def is_deleted(self) -> bool:
         return self.deleted_at is not None
@@ -185,7 +186,7 @@ from astronova_core.database import Base
 
 class SolexsObservation(Base):
     __tablename__ = "solexs_observations"
-    
+
     time = Column(DateTime, primary_key=True)
     soft_xray_flux = Column(Float, nullable=False)
     hard_xray_flux = Column(Float, nullable=False)
@@ -197,7 +198,7 @@ class SolexsObservation(Base):
 
 class ProcessedObservation(Base):
     __tablename__ = "processed_observations"
-    
+
     time = Column(DateTime, primary_key=True)
     cleaned_soft_flux = Column(Float, nullable=False)
     cleaned_hard_flux = Column(Float, nullable=False)
@@ -215,7 +216,7 @@ from astronova_core.database import Base
 
 class FlareEvent(Base):
     __tablename__ = "flare_events"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     detected_at = Column(DateTime, default=datetime.utcnow)
     goes_class = Column(String(10), nullable=False)
@@ -226,7 +227,7 @@ class FlareEvent(Base):
 
 class Alert(Base):
     __tablename__ = "alerts"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     severity = Column(String(20), nullable=False)  # info, warning, critical, extreme
     title = Column(String(100), nullable=False)
@@ -237,7 +238,7 @@ class Alert(Base):
 
 class AuditLog(Base):
     __tablename__ = "audit_logs"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     user_id = Column(String(100), nullable=False)
     action = Column(String(100), nullable=False)
@@ -256,7 +257,7 @@ from astronova_core.database import Base
 
 class MLModel(Base):
     __tablename__ = "ml_models"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     name = Column(String(100), nullable=False)
     version = Column(String(50), nullable=False)
@@ -269,7 +270,7 @@ class MLModel(Base):
 
 class Prediction(Base):
     __tablename__ = "predictions"
-    
+
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     model_id = Column(UUID(as_uuid=True), nullable=False)
     timestamp = Column(DateTime, default=datetime.utcnow)

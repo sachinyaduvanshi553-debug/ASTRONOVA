@@ -1,13 +1,15 @@
 import os
 import uuid
-from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, status, BackgroundTasks
-from sqlalchemy.ext.asyncio import AsyncSession
-from services.ingestion.services.ingestion_service import IngestionService
-from services.ingestion.schemas import IngestionJobResponse, BulkIngestionRequest
+
+from fastapi import APIRouter, Depends, File, HTTPException, UploadFile
 from services.ingestion.models import IngestionJob
-from astronova_core.database import get_db
-from astronova_core.security import get_current_user, UserRole, RoleChecker
+from services.ingestion.schemas import IngestionJobResponse
+from services.ingestion.services.ingestion_service import IngestionService
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from astronova_core.database import get_db
+from astronova_core.security import RoleChecker, UserRole
 
 router = APIRouter(prefix="/api/v1/ingest", tags=["ingestion"])
 ingest_service = IngestionService()
@@ -22,10 +24,10 @@ async def upload_file(
     temp_dir = "/tmp/astronova_uploads"
     os.makedirs(temp_dir, exist_ok=True)
     file_path = os.path.join(temp_dir, f"{uuid.uuid4()}_{file.filename}")
-    
+
     with open(file_path, "wb") as f:
         f.write(await file.read())
-        
+
     file_format = file.filename.split(".")[-1]
     job = await ingest_service.ingest_file(file_path, file_format, db)
     return IngestionJobResponse(

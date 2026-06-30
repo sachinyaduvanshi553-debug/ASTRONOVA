@@ -1,8 +1,9 @@
-from fastapi import FastAPI, Depends
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from services.gateway.routers import auth, proxy
+
 from astronova_core.logging import setup_logging
 from astronova_core.metrics import metrics_router
-from fastapi.middleware.cors import CORSMiddleware
 
 setup_logging("gateway")
 

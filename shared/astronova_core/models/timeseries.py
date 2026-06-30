@@ -1,9 +1,11 @@
-from sqlalchemy import Column, DateTime, Float, String, Integer, Boolean
+from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String
+
 from astronova_core.database import Base
+
 
 class SolexsObservation(Base):
     __tablename__ = "solexs_observations"
-    
+
     time = Column(DateTime, primary_key=True)
     soft_xray_flux = Column(Float, nullable=False)
     hard_xray_flux = Column(Float, nullable=False)
@@ -15,7 +17,7 @@ class SolexsObservation(Base):
 
 class ProcessedObservation(Base):
     __tablename__ = "processed_observations"
-    
+
     time = Column(DateTime, primary_key=True)
     cleaned_soft_flux = Column(Float, nullable=False)
     cleaned_hard_flux = Column(Float, nullable=False)

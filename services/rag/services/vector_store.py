@@ -1,7 +1,8 @@
-from typing import List, Dict, Any
+from typing import Any
+
 
 class SpaceWeatherVectorStore:
-    def search(self, query: str) -> List[Dict[str, Any]]:
+    def search(self, query: str) -> list[dict[str, Any]]:
         # Mock semantic search results
         return [
             {

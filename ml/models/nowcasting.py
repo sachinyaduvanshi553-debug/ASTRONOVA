@@ -1,4 +1,3 @@
-import numpy as np
 
 class ThresholdDetector:
     def __init__(self, threshold: float = 1e-5):

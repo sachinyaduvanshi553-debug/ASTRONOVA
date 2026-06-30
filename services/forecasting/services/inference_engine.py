@@ -1,5 +1,7 @@
-import torch
+from typing import Any
+
 import numpy as np
+import torch
 from ml.models.bilstm import BiLSTMForecaster
 from ml.models.xgboost_model import XGBoostForecaster
 from ml.models.lightgbm_model import LightGBMForecaster

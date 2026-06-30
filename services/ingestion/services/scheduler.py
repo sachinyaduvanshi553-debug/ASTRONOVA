@@ -1,5 +1,5 @@
-from apscheduler.schedulers.asyncio import AsyncScheduler
 from apscheduler.schedulers.background import BackgroundScheduler
+
 from astronova_core.logging import get_logger
 
 logger = get_logger("ingestion-scheduler")

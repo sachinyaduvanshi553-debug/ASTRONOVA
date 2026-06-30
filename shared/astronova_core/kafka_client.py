@@ -1,6 +1,8 @@
 import json
-from typing import Any, Dict
-from confluent_kafka import Producer, Consumer
+from typing import Any
+
+from confluent_kafka import Producer
+
 from astronova_core.config import get_settings
 from astronova_core.logging import get_logger
 
@@ -15,7 +17,7 @@ class AstroNovaProducer:
         }
         self.producer = Producer(conf)
 
-    def send_message(self, topic: str, key: str, value: Dict[str, Any]) -> None:
+    def send_message(self, topic: str, key: str, value: dict[str, Any]) -> None:
         try:
             self.producer.produce(
                 topic,

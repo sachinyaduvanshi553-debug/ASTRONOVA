@@ -1,12 +1,14 @@
 import os
-import pandas as pd
 import uuid
 from datetime import datetime
-from sqlalchemy.ext.asyncio import AsyncSession
+
+import pandas as pd
 from services.ingestion.models import IngestionJob
 from services.ingestion.services.kafka_producer import DataProducer
-from astronova_core.models.timeseries import SolexsObservation
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from astronova_core.logging import get_logger
+from astronova_core.models.timeseries import SolexsObservation
 
 logger = get_logger("ingestion-service")
 
@@ -42,7 +44,7 @@ class IngestionService:
                     raise ValueError(f"Missing required column: {col}")
 
             df["time"] = pd.to_datetime(df["time"])
-            
+
             # Store in DB and publish to Kafka
             rows_stored = 0
             for _, row in df.iterrows():
@@ -58,7 +60,7 @@ class IngestionService:
                     source_file=os.path.basename(file_path)
                 )
                 await db.merge(db_obs)
-                
+
                 # Publish raw data to Kafka topic for Processing Service
                 self.producer.publish_observation(
                     key=obs_time.isoformat(),
@@ -77,7 +79,7 @@ class IngestionService:
             job.rows_ingested = rows_stored
             job.completed_at = datetime.utcnow()
             await db.commit()
-            
+
             # Publish ingestion complete event
             self.producer.publish_ingestion_complete(str(job.id), {"rows_ingested": rows_stored})
             logger.info("ingestion_job_success", job_id=str(job.id), rows=rows_stored)
