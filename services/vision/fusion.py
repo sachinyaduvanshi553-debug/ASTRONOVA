@@ -46,7 +46,9 @@ class FusionNetwork(nn.Module):
         
         # Apply Cross Attention
         # query: (B, H*W, C), key: (B, 1, C), value: (B, 1, C)
-        attn_out, _ = self.attn(Q, K, V) # (B, H*W, C)
+        attn_out, attn_weights = self.attn(Q, K, V) # (B, H*W, C), (B, H*W, 1)
+        self.attention_weights = attn_weights # Store for XAI
+
         
         # Reshape back to spatial dimensions
         attn_out = attn_out.permute(0, 2, 1).view(B, C, H, W)
