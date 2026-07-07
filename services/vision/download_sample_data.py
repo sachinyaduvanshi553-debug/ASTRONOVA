@@ -303,7 +303,7 @@ def main():
         print(f"\n  ⚠  {total_fail} image(s) could not be acquired or generated.")
     if total_synth > 0 and total_real == 0:
         print(
-            "\n  ℹ  All images are synthetic. This is expected if SDO servers"
+        "\n  [INFO]  All images are synthetic. This is expected if SDO servers"
             "\n     are unreachable. Synthetic images use physics-based limb"
             "\n     darkening, active regions, and coronal loops."
         )

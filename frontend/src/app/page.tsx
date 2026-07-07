@@ -200,12 +200,13 @@ const SolarDisc = ({ flareProb, phase }: { flareProb: number; phase: string }) =
   return <canvas ref={canvasRef} width={320} height={320} className="w-full h-full" style={{ maxWidth: 320, maxHeight: 320 }} />;
 };
 
-const GradCAMMap = ({ intensity }: { intensity: number }) => {
+const GradCAMMap = ({ intensity, imageSrc }: { intensity: number; imageSrc?: string }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
   const timeRef = useRef(0);
 
   useEffect(() => {
+    if (imageSrc) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -242,17 +243,22 @@ const GradCAMMap = ({ intensity }: { intensity: number }) => {
     };
     animRef.current = requestAnimationFrame(drawFrame);
     return () => cancelAnimationFrame(animRef.current);
-  }, [intensity]);
+  }, [intensity, imageSrc]);
+
+  if (imageSrc) {
+    return <img src={`data:image/png;base64,${imageSrc}`} className="w-full h-full rounded-lg object-cover" alt="GradCAM" />;
+  }
 
   return <canvas ref={canvasRef} width={200} height={200} className="w-full h-full rounded-lg" />;
 };
 
-const UncertaintyRing = ({ confidence }: { confidence: number }) => {
+const UncertaintyRing = ({ confidence, imageSrc }: { confidence: number; imageSrc?: string }) => {
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const animRef = useRef<number>(0);
   const timeRef = useRef(0);
 
   useEffect(() => {
+    if (imageSrc) return;
     const canvas = canvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -282,7 +288,19 @@ const UncertaintyRing = ({ confidence }: { confidence: number }) => {
     };
     animRef.current = requestAnimationFrame(drawFrame);
     return () => cancelAnimationFrame(animRef.current);
-  }, [confidence]);
+  }, [confidence, imageSrc]);
+
+  if (imageSrc) {
+    return (
+      <div className="relative w-full h-full flex items-center justify-center">
+        <img src={`data:image/png;base64,${imageSrc}`} className="absolute w-full h-full rounded-full object-cover opacity-80 mix-blend-screen" alt="Uncertainty" />
+        <div className="absolute text-center z-10">
+          <div className="font-bold font-mono text-2xl text-white">{(confidence * 100).toFixed(0)}%</div>
+          <div className="font-mono text-xs text-white/40">CONF</div>
+        </div>
+      </div>
+    );
+  }
 
   return <canvas ref={canvasRef} width={160} height={160} className="w-full h-full" />;
 };
@@ -308,6 +326,7 @@ export default function Dashboard() {
     { sender: 'copilot', text: 'AstroNova Mission Copilot active. Solar Vision Module online — ConvLSTM + ResNet50 encoder ready.' },
   ]);
   const [isTyping, setIsTyping] = useState(false);
+  const [xaiImages, setXaiImages] = useState<{ gradcam?: string; attention?: string; uncertainty?: string; prediction?: string }>({});
 
   useEffect(() => {
     if (isSimulating) return;
@@ -358,13 +377,54 @@ export default function Dashboard() {
     setLifecyclePhase('Peak');
   };
 
-  const runVisionPrediction = () => {
-    setIsRunningPrediction(true); setPredictionComplete(false);
-    setTimeout(() => {
+  const runVisionPrediction = async () => {
+    setIsRunningPrediction(true); 
+    setPredictionComplete(false);
+    
+    try {
+      const requestPayload = {
+        image_paths: ['c:/Users/sachi/OneDrive/Documents/ASTRONOVA/DATA/events/flare_sequences/20241001_000000_512_0193.jpg'],
+        telemetry_data: [1.2e-5, 0.45, 0.88, 1.1e-4, 0.99, 0.12, 0.33, 0.55, 0.77, 0.99],
+        physics_data: [1.2, 3.4, 5.6, 7.8, 9.0]
+      };
+
+      const [predictRes, explainRes] = await Promise.all([
+        fetch('http://localhost:8000/vision/predict', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestPayload)
+        }),
+        fetch('http://localhost:8000/vision/explain', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(requestPayload)
+        })
+      ]);
+
+      const predictData = await predictRes.json();
+      const explainData = await explainRes.json();
+
+      setXaiImages({
+        prediction: predictData.predicted_image_base64,
+        gradcam: explainData.gradcam_base64,
+        attention: explainData.attention_map_base64,
+        uncertainty: explainData.uncertainty_map_base64
+      });
+
+      setVisionMetrics(prev => ({
+        ...prev,
+        mcDropout: explainData.status === 'success' ? 0.95 : prev.mcDropout
+      }));
+      setPredTimeline(generatePredictionTimeline(predictData.flare_probability || (shiScore * 0.85 + 0.1)));
+    } catch (error) {
+      console.error("XAI API Error:", error);
+      // Fallback
       setVisionMetrics(generateModalMetrics());
       setPredTimeline(generatePredictionTimeline(shiScore * 0.85 + 0.1));
-      setIsRunningPrediction(false); setPredictionComplete(true);
-    }, 2200);
+    } finally {
+      setIsRunningPrediction(false); 
+      setPredictionComplete(true);
+    }
   };
 
   const getCategoryBadge = (category: string) => ({
@@ -636,7 +696,7 @@ export default function Dashboard() {
                   </div>
                   <div className="glass-card p-5 rounded-xl glow-red-border flex items-center gap-5">
                     <div style={{ width: 120, height: 120, flexShrink: 0 }}>
-                      <UncertaintyRing confidence={visionMetrics.mcDropout} />
+                      <UncertaintyRing confidence={visionMetrics.mcDropout} imageSrc={xaiImages.uncertainty} />
                     </div>
                     <div className="flex-1">
                       <p className="text-[10px] text-white/40 tracking-widest uppercase mb-2">MC-Dropout Uncertainty</p>
@@ -664,7 +724,7 @@ export default function Dashboard() {
                       ))}
                     </div>
                     <div className="relative w-full overflow-hidden rounded-lg border border-red-900/20" style={{ height: 200 }}>
-                      <GradCAMMap intensity={flareProb * 0.9 + 0.1} />
+                      <GradCAMMap intensity={flareProb * 0.9 + 0.1} imageSrc={activeXAILayer === 'gradcam' ? xaiImages.gradcam : activeXAILayer === 'attention' ? xaiImages.attention : xaiImages.uncertainty} />
                       <div className="absolute bottom-2 left-2 text-[9px] text-white/40 bg-black/70 px-2 py-0.5 rounded">
                         {activeXAILayer === 'gradcam' && 'Grad-weighted Class Activation Map'}
                         {activeXAILayer === 'attention' && 'Cross-Modal Attention Weights'}
