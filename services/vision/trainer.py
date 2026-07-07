@@ -90,28 +90,24 @@ if __name__ == "__main__":
     from .losses import CombinedLoss
     from .dataset import SolarImageDataset
     
-    print("Initializing dummy dataset and model for dry-run...")
-    dataset = SolarImageDataset(image_dir="dummy", sequence_length=2)
-    # create a dummy dataloader returning one random batch
-    class DummyLoader:
-        def __init__(self):
-            self.batch = {
-                'image': torch.randn(2, 2, 3, 256, 256),
-                'telemetry': torch.randn(2, 10),
-                'physics': torch.randn(2, 5),
-                'target': torch.randn(2, 3, 256, 256)
-            }
-        def __iter__(self):
-            yield self.batch
-        def __len__(self):
-            return 1
-            
-    loader = DummyLoader()
-    model = MultimodalSolarModel(pretrained_encoder=False)
-    criterion = CombinedLoss()
-    optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+    print("Initializing authentic dataset and model for dry-run...")
+    dataset = SolarImageDataset(
+        image_dir="DATA/events/flare_sequences",
+        goes_csv_path="DATA/cleaned/goes/goes_xrs_oct2024_jan2025.csv",
+        sequence_length=2
+    )
     
-    trainer = Trainer(model, criterion, optimizer, device='cpu')
-    print("Running 1 epoch dry-run...")
-    loss, metrics = trainer.train_epoch(loader)
-    print(f"Dry-run completed successfully. Loss: {loss:.4f}, Metrics: {metrics}")
+    if len(dataset) == 0:
+        print("Dataset is empty! Make sure download_sample_data.py has finished running.")
+    else:
+        # Create DataLoader
+        loader = DataLoader(dataset, batch_size=2, shuffle=False)
+        
+        model = MultimodalSolarModel(pretrained_encoder=False)
+        criterion = CombinedLoss()
+        optimizer = torch.optim.Adam(model.parameters(), lr=1e-4)
+        
+        trainer = Trainer(model, criterion, optimizer, device='cpu')
+        print(f"Running 1 epoch dry-run on {len(dataset)} authentic samples...")
+        loss, metrics = trainer.train_epoch(loader)
+        print(f"Dry-run completed successfully. Loss: {loss:.4f}, Metrics: {metrics}")
