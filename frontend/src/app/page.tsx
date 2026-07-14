@@ -327,6 +327,13 @@ export default function Dashboard() {
   ]);
   const [isTyping, setIsTyping] = useState(false);
   const [xaiImages, setXaiImages] = useState<{ gradcam?: string; attention?: string; uncertainty?: string; prediction?: string }>({});
+  const [currentTime, setCurrentTime] = useState<string>('--:--:--');
+
+  useEffect(() => {
+    setCurrentTime(new Date().toUTCString().slice(17, 25));
+    const timer = setInterval(() => setCurrentTime(new Date().toUTCString().slice(17, 25)), 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   useEffect(() => {
     if (isSimulating) return;
@@ -475,7 +482,7 @@ export default function Dashboard() {
           </div>
           <div className="flex items-center gap-2 text-green-400/40 font-mono text-xs">
             <Clock className="w-4 h-4 text-red-500/60" />
-            UTC: {new Date().toUTCString().slice(17, 25)}
+            UTC: {currentTime}
           </div>
         </div>
       </header>
