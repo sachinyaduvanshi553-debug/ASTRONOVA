@@ -1,0 +1,9 @@
+INFO:     Started server process [17852]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
+INFO:     127.0.0.1:62334 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:62334 - "GET / HTTP/1.1" 200 OK
+%3|1784006208.717|FAIL|astronova-producer#producer-1| [thrd:localhost:9092/bootstrap]: localhost:9092/bootstrap: Connect to ipv6#[::1]:9092 failed: Unknown error (after 2053ms in state CONNECT)
+%3|1784006211.715|FAIL|astronova-producer#producer-1| [thrd:localhost:9092/bootstrap]: localhost:9092/bootstrap: Connect to ipv4#127.0.0.1:9092 failed: Unknown error (after 2023ms in state CONNECT)
+%3|1784006214.745|FAIL|astronova-producer#producer-1| [thrd:localhost:9092/bootstrap]: localhost:9092/bootstrap: Connect to ipv4#127.0.0.1:9092 failed: Unknown error (after 2017ms in state CONNECT, 1 identical error(s) suppressed)

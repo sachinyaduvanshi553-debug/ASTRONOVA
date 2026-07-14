@@ -69,10 +69,10 @@ The AstroNova system has successfully completed its core ML and Scientific V2 Ve
 - **ML Models**: BiLSTM, XGBoost, and LightGBM ensemble models have been trained and generalized well (Generalization gap < 2%).
 - **Explainable AI (XAI)**: Integrated Gradients and SHAP provide real-time feature importance and satisfy the strict physical consistency constraints.
 - **API & Inference**: FastAPI endpoints (`/predict`, `/nowcast`, `/shi`, `/simulate`) are fully operational, deterministic, and latency-optimized.
+- **Predictive Solar Vision**: A completely operational end-to-end multimodal AI platform converting historical SDO sequences + telemetry into future structural predictions and precise classifications via a Dual-Head ResNet50 + Transformer Refiner architecture, with full ONNX export and XAI overlays.
 
 ### 🚀 Future Roadmap (Once Project is Complete)
 - **Production Infrastructure**: Docker configuration (`Dockerfile`/`docker-compose`), Kubernetes deployment, and structured JSON logging.
-- **Predictive Solar Vision (Generative AI)**: Utilizing ConvLSTM and Diffusion models to forecast the visual construction and morphology of upcoming solar flares based on real-time EUV imaging data.
 - **Dynamic Logging & Hindsight Data Engine**: Seamless integration with **Postman** to dynamically log all API requests and system telemetry into TimescaleDB. This data will be automatically curated into a **"Hindsight" Dataset** alongside actual observed outcomes, powering a continuous auto-retraining pipeline to adapt to new solar cycles.
 
 ---

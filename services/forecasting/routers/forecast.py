@@ -198,3 +198,73 @@ async def evaluate_models():
 @router.get("/health")
 def health():
     return {"status": "healthy"}
+
+@router.get("/image-inference")
+async def get_image_inference(flare_id: str):
+    import os
+    import sys
+    import torch
+    import pandas as pd
+    
+    # Ensure root is in path
+    root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
+    if root_dir not in sys.path:
+        sys.path.append(root_dir)
+        
+    try:
+        from scripts.train_image_features import ImageFeaturesMLP
+    except ImportError:
+        return {"error": "Could not import ImageFeaturesMLP"}
+        
+    model_path = os.path.join(root_dir, "models/image_features/mlp_model.pt")
+    csv_131 = os.path.join(root_dir, "data/features/spectral/image_features_131.csv")
+    csv_193 = os.path.join(root_dir, "data/features/spectral/image_features_193.csv")
+    
+    if not os.path.exists(model_path):
+        return {"error": "Model not found. Train the model first."}
+        
+    model = ImageFeaturesMLP(input_size=2560, num_classes=5)
+    model.load_state_dict(torch.load(model_path))
+    model.eval()
+    
+    try:
+        df_131 = pd.read_csv(csv_131)
+        df_193 = pd.read_csv(csv_193)
+    except Exception as e:
+        return {"error": f"Failed to load datasets: {str(e)}"}
+        
+    # Match the flare ID
+    row_131 = df_131[df_131['flare_id'] == flare_id]
+    if row_131.empty:
+        return {"error": f"Flare ID {flare_id} not found in 131 dataset."}
+        
+    sample_time = row_131['timestamp'].iloc[0]
+    time_rounded = pd.to_datetime(sample_time).round('10min')
+    df_193['time_rounded'] = pd.to_datetime(df_193['timestamp']).dt.round('10min')
+    row_193 = df_193[(df_193['flare_id'] == flare_id) & (df_193['time_rounded'] == time_rounded)]
+    
+    if row_193.empty:
+        return {"error": f"Matching 193 dataset sequence not found for Flare ID {flare_id}."}
+        
+    # Extract
+    f131_cols = [f'f{i}' for i in range(1280)]
+    f193_cols = [f'f{i}' for i in range(1280)]
+    
+    features_131 = row_131.iloc[0][f131_cols].values.astype(float)
+    features_193 = row_193.iloc[0][f193_cols].values.astype(float)
+    
+    import numpy as np
+    combined = np.concatenate([features_131, features_193])
+    input_tensor = torch.tensor(combined, dtype=torch.float32).unsqueeze(0)
+    
+    with torch.no_grad():
+        logits = model(input_tensor)
+        probs = torch.softmax(logits, dim=1).numpy()[0]
+        pred_class = int(np.argmax(probs))
+        
+    return {
+        "flare_id": flare_id,
+        "timestamp": sample_time,
+        "predicted_class": pred_class,
+        "probabilities": [float(p) for p in probs]
+    }

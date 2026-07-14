@@ -1,6 +1,7 @@
 import torch
 import numpy as np
 import cv2
+from typing import Optional
 
 class XAIVisualizer:
     """
@@ -22,7 +23,6 @@ class XAIVisualizer:
         of the image encoder (ResNet50 backbone) to capture gradients and activations
         for GradCAM.
         """
-        # We hook into the final projection layer of the image encoder
         target_layer = self.model.image_encoder.proj
         
         def forward_hook(module, input, output):
@@ -35,102 +35,220 @@ class XAIVisualizer:
         target_layer.register_full_backward_hook(backward_hook)
 
     def generate_attention_map(self, image_sequence, telemetry, physics):
-        """
-        Extracts the cross-attention map from the FusionNetwork.
-        This shows which spatial regions of the image the model focused on 
-        based on the temporal and physics context.
-        """
         self.model.eval()
         with torch.no_grad():
             _ = self.model(image_sequence, telemetry, physics)
             
-        # Retrieve attention weights from the fusion layer
-        # attn_weights shape: (B, H*W, 1) or similar depending on multihead setup
         attn_weights = self.model.fusion.attention_weights
-        
-        # Assuming batch size 1 for visualization
-        attn_weights = attn_weights[0] # (H*W, 1) or (num_heads, H*W, 1)
+        attn_weights = attn_weights[0] 
         
         if len(attn_weights.shape) == 3:
-            # Average across heads if necessary
             attn_weights = torch.mean(attn_weights, dim=0)
             
-        # The sequence length of query was H*W
         H = W = int(np.sqrt(attn_weights.shape[0]))
         attention_map = attn_weights.view(H, W).cpu().numpy()
-        
-        # Normalize between 0 and 1
         attention_map = (attention_map - np.min(attention_map)) / (np.max(attention_map) - np.min(attention_map) + 1e-8)
-        
-        # Resize to original image size (assuming 512x512 target size for visualization)
         attention_map_resized = cv2.resize(attention_map, (512, 512), interpolation=cv2.INTER_CUBIC)
         return attention_map_resized
 
     def generate_uncertainty_map(self, image_sequence, telemetry, physics, num_samples=10):
-        """
-        Authentic Monte Carlo Dropout for uncertainty estimation.
-        Runs the model multiple times with dropout enabled to measure prediction variance.
-        """
-        # Ensure we have a dropout layer active, otherwise MC Dropout won't work
-        # To make it truly authentic, the model needs dropout. Assuming the model has some,
-        # or we just rely on the existing eval/train difference (like BatchNorm).
-        self.model.train() # Enable stochastic behavior
+        self.model.train() 
         predictions = []
         with torch.no_grad():
             for _ in range(num_samples):
                 preds = self.model(image_sequence, telemetry, physics)
-                predictions.append(preds.cpu().numpy())
+                if isinstance(preds, dict):
+                    predictions.append(preds['predicted_image'].cpu().numpy())
+                else:
+                    predictions.append(preds.cpu().numpy())
                 
         predictions = np.stack(predictions)
-        # Calculate variance across the sample dimension (dim 0)
-        variance = np.var(predictions, axis=0) # (B, C, H, W)
-        
-        # Return variance map for the first item in the batch
-        # We can average across color channels to get a single spatial uncertainty map
-        spatial_uncertainty = np.mean(variance[0], axis=0) # (H, W)
-        
-        # Normalize
+        variance = np.var(predictions, axis=0) 
+        spatial_uncertainty = np.mean(variance[0], axis=0) 
         spatial_uncertainty = (spatial_uncertainty - np.min(spatial_uncertainty)) / (np.max(spatial_uncertainty) - np.min(spatial_uncertainty) + 1e-8)
         return spatial_uncertainty
 
     def generate_gradcam(self, image_sequence, telemetry, physics, target_channel=0):
-        """
-        Authentic GradCAM implementation for the image generation model.
-        Instead of a classification score, we backpropagate the mean pixel value 
-        of a specific target channel (e.g., predicting specific features).
-        """
         self.model.eval()
         self.model.zero_grad()
         
-        # Forward pass
-        # Enable gradient computation for the input
         image_sequence.requires_grad_(True)
         preds = self.model(image_sequence, telemetry, physics)
         
-        # We use the mean of the predicted image as the "score" to backpropagate
-        # Or specifically the mean of one channel
-        score = preds[0, target_channel, :, :].mean()
+        if isinstance(preds, dict):
+            score = preds['predicted_image'][0, target_channel, :, :].mean()
+        else:
+            score = preds[0, target_channel, :, :].mean()
         
-        # Backward pass
         score.backward()
         
-        # Get gradients and activations from the hooked layer
-        gradients = self.gradients[0].cpu().data.numpy() # (C, H_f, W_f)
-        activations = self.activations[0].cpu().data.numpy() # (C, H_f, W_f)
+        gradients = self.gradients[0].cpu().data.numpy() 
+        activations = self.activations[0].cpu().data.numpy() 
         
-        # Global average pooling on the gradients
-        weights = np.mean(gradients, axis=(1, 2)) # (C,)
+        weights = np.mean(gradients, axis=(1, 2)) 
         
-        # Weight the activations
-        cam = np.zeros(activations.shape[1:], dtype=np.float32) # (H_f, W_f)
+        cam = np.zeros(activations.shape[1:], dtype=np.float32) 
         for i, w in enumerate(weights):
             cam += w * activations[i, :, :]
             
-        # Apply ReLU to only keep features that have a positive influence
         cam = np.maximum(cam, 0)
-        
-        # Normalize and resize
         cam = (cam - np.min(cam)) / (np.max(cam) - np.min(cam) + 1e-8)
         cam_resized = cv2.resize(cam, (512, 512), interpolation=cv2.INTER_CUBIC)
         
         return cam_resized
+
+    def integrated_gradients(
+        self, 
+        image_sequence: torch.Tensor, 
+        telemetry: torch.Tensor, 
+        physics: torch.Tensor,
+        target_output: str = 'image',  # 'image', 'class', 'flux'
+        n_steps: int = 50,
+        baseline: Optional[torch.Tensor] = None,
+    ) -> np.ndarray:
+        """Integrated Gradients attribution."""
+        self.model.eval()
+        if baseline is None:
+            baseline = torch.zeros_like(image_sequence)
+            
+        baseline.requires_grad_(True)
+        image_sequence.requires_grad_(True)
+        
+        alphas = torch.linspace(0, 1, steps=n_steps, device=image_sequence.device)
+        
+        integral = torch.zeros_like(image_sequence)
+        
+        for alpha in alphas:
+            interpolated = baseline + alpha * (image_sequence - baseline)
+            interpolated.requires_grad_(True)
+            interpolated.retain_grad()
+            
+            out = self.model(interpolated, telemetry, physics)
+            
+            if target_output == 'image':
+                score = out['predicted_image'].mean() if isinstance(out, dict) else out.mean()
+            elif target_output == 'class':
+                score = out['class_probs'][0, out['class_probs'].argmax()].mean()
+            elif target_output == 'flux':
+                score = out['reg_output'].mean()
+                
+            score.backward()
+            integral += interpolated.grad / n_steps
+            
+        attribution = (image_sequence - baseline) * integral
+        attr_np = attribution[0].detach().cpu().numpy()
+        
+        # Spatial importance across time and channels
+        spatial_attr = np.mean(np.abs(attr_np), axis=(0, 1)) # (H, W)
+        spatial_attr = (spatial_attr - np.min(spatial_attr)) / (np.max(spatial_attr) - np.min(spatial_attr) + 1e-8)
+        
+        return spatial_attr
+
+    def temporal_importance(
+        self,
+        image_sequence: torch.Tensor,
+        telemetry: torch.Tensor,
+        physics: torch.Tensor,
+    ) -> np.ndarray:
+        """Compute importance of each frame via occlusion."""
+        self.model.eval()
+        with torch.no_grad():
+            base_out = self.model(image_sequence, telemetry, physics)
+            if isinstance(base_out, dict):
+                base_pred = base_out['predicted_image']
+            else:
+                base_pred = base_out
+                
+        T = image_sequence.shape[1]
+        importances = np.zeros(T)
+        
+        for t in range(T):
+            occluded_seq = image_sequence.clone()
+            occluded_seq[:, t, :, :, :] = 0.0
+            
+            with torch.no_grad():
+                occ_out = self.model(occluded_seq, telemetry, physics)
+                if isinstance(occ_out, dict):
+                    occ_pred = occ_out['predicted_image']
+                else:
+                    occ_pred = occ_out
+                    
+            diff = torch.nn.functional.mse_loss(base_pred, occ_pred).item()
+            importances[t] = diff
+            
+        # Normalize to sum to 1
+        if np.sum(importances) > 0:
+            importances = importances / np.sum(importances)
+            
+        return importances
+
+    def physics_feature_importance(
+        self,
+        image_sequence: torch.Tensor,
+        telemetry: torch.Tensor,
+        physics: torch.Tensor,
+        feature_names: Optional[list] = None,
+    ) -> dict:
+        """Compute importance of each telemetry/physics feature via ablation."""
+        self.model.eval()
+        with torch.no_grad():
+            base_out = self.model(image_sequence, telemetry, physics)
+            base_score = base_out['reg_output'].item() if isinstance(base_out, dict) else base_out.mean().item()
+            
+        telemetry_dim = telemetry.shape[1]
+        physics_dim = physics.shape[1]
+        
+        if feature_names is None:
+            feature_names = [f"t_{i}" for i in range(telemetry_dim)] + [f"p_{i}" for i in range(physics_dim)]
+            
+        importances = {}
+        idx = 0
+        
+        # Telemetry ablation
+        for i in range(telemetry_dim):
+            occ_tel = telemetry.clone()
+            occ_tel[:, i] = 0.0
+            with torch.no_grad():
+                occ_out = self.model(image_sequence, occ_tel, physics)
+                occ_score = occ_out['reg_output'].item() if isinstance(occ_out, dict) else occ_out.mean().item()
+            importances[feature_names[idx]] = abs(base_score - occ_score)
+            idx += 1
+            
+        # Physics ablation
+        for i in range(physics_dim):
+            occ_phys = physics.clone()
+            occ_phys[:, i] = 0.0
+            with torch.no_grad():
+                occ_out = self.model(image_sequence, telemetry, occ_phys)
+                occ_score = occ_out['reg_output'].item() if isinstance(occ_out, dict) else occ_out.mean().item()
+            importances[feature_names[idx]] = abs(base_score - occ_score)
+            idx += 1
+            
+        # Normalize
+        total = sum(importances.values())
+        if total > 0:
+            for k in importances:
+                importances[k] /= total
+                
+        return importances
+
+    def generate_overlay_heatmap(
+        self,
+        original_image: np.ndarray,
+        heatmap: np.ndarray,
+        colormap: int = cv2.COLORMAP_JET,
+        alpha: float = 0.4,
+    ) -> np.ndarray:
+        """Overlay a heatmap on the original image with alpha blending."""
+        if len(original_image.shape) == 2:
+            original_image = cv2.cvtColor(original_image, cv2.COLOR_GRAY2BGR)
+        elif original_image.shape[2] == 4:
+            original_image = cv2.cvtColor(original_image, cv2.COLOR_BGRA2BGR)
+            
+        orig_resized = cv2.resize(original_image, (heatmap.shape[1], heatmap.shape[0]))
+        
+        heat_norm = np.uint8(heatmap * 255)
+        color_heatmap = cv2.applyColorMap(heat_norm, colormap)
+        
+        overlay = cv2.addWeighted(color_heatmap, alpha, orig_resized, 1 - alpha, 0)
+        return overlay

@@ -6,10 +6,20 @@ from astronova_core.metrics import metrics_router
 
 setup_logging("forecasting-service")
 
+from fastapi.middleware.cors import CORSMiddleware
+
 app = FastAPI(
     title="AstroNova Forecasting Service",
     description="Service for nowcasting and multi-horizon solar flare forecasting.",
     version="1.0.0"
+)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
 app.include_router(forecast.router)
