@@ -2,8 +2,8 @@ C:\Users\sachi\AppData\Local\Programs\Python\Python313\Lib\site-packages\torchvi
   warnings.warn(
 C:\Users\sachi\AppData\Local\Programs\Python\Python313\Lib\site-packages\torchvision\models\_utils.py:223: UserWarning: Arguments other than a weight enum or `None` for 'weights' are deprecated since 0.13 and may be removed in the future. The current behavior is equivalent to passing `weights=None`.
   warnings.warn(msg)
-INFO:     Started server process [13700]
+INFO:     Started server process [29432]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8014 (Press CTRL+C to quit)
-INFO:     127.0.0.1:62353 - "GET /health HTTP/1.1" 200 OK
+INFO:     127.0.0.1:54114 - "GET /health HTTP/1.1" 200 OK

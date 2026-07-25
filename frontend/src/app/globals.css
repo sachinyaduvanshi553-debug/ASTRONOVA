@@ -79,3 +79,71 @@
   background: rgba(255, 0, 0, 0.3);
   color: #ffffff;
 }
+
+/* Background Image Blur Overlay */
+.bg-blurred-container {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background-image: url('/BGIMAGE.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  filter: blur(8px) brightness(0.35) contrast(1.1);
+  transform: scale(1.05);
+}
+
+.bg-radial-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  background: radial-gradient(circle at 50% 50%, rgba(0, 0, 0, 0.3) 0%, rgba(0, 0, 0, 0.85) 100%),
+              linear-gradient(180deg, rgba(5, 5, 5, 0.6) 0%, rgba(0, 0, 0, 0.95) 100%);
+  pointer-events: none;
+}
+
+/* Modern Card Hover Effects */
+.gallery-card {
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.35s cubic-bezier(0.16, 1, 0.3, 1), border-color 0.35s ease;
+}
+
+.gallery-card:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 16px 32px rgba(255, 0, 0, 0.25), 0 0 20px rgba(255, 100, 0, 0.2);
+  border-color: rgba(255, 0, 0, 0.45);
+}
+
+.img-zoom {
+  transition: transform 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gallery-card:hover .img-zoom {
+  transform: scale(1.08);
+}
+
+/* Gallery card entrance animation */
+@keyframes fadeSlideUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.gallery-card {
+  animation: fadeSlideUp 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Lightbox entrance */
+@keyframes lightboxFadeIn {
+  from { opacity: 0; transform: scale(0.96); }
+  to   { opacity: 1; transform: scale(1); }
+}
+
+.lightbox-panel {
+  animation: lightboxFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
