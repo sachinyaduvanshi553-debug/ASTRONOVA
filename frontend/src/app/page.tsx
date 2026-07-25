@@ -502,19 +502,31 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [isSimulating]);
 
-  const handleSendMessage = (e: React.FormEvent) => {
+  const handleSendMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!chatInput.trim()) return;
-    setChatHistory((prev) => [...prev, { sender: 'user', text: chatInput }]);
+    const query = chatInput.trim();
+    if (!query) return;
+    setChatHistory((prev) => [...prev, { sender: 'user', text: query }]);
     setChatInput('');
     setIsTyping(true);
-    setTimeout(() => {
-      let reply = 'Solar Vision Module shows AR 13780 with complex magnetic structure. ConvLSTM forecasts 73% M-class probability within +6h. GradCAM highlights polarity inversion line as primary activation zone.';
-      if (chatInput.toLowerCase().includes('vision') || chatInput.toLowerCase().includes('image')) reply = 'Multimodal encoder (ResNet50 + ConvLSTM) achieved SSIM=0.87 on SDO validation set. Attention weights confirm model focuses on active region boundaries during M-class prediction.';
-      else if (chatInput.toLowerCase().includes('shielding') || chatInput.toLowerCase().includes('gsat')) reply = 'GSAT assets in GEO recommended for non-essential transponder power safing. X-class escalation window in 18-26 minutes.';
-      setChatHistory((prev) => [...prev, { sender: 'copilot', text: reply }]);
+
+    try {
+      const res = await fetch('http://localhost:8011/api/v1/copilot/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query })
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setChatHistory((prev) => [...prev, { sender: 'copilot', text: data.answer }]);
+      } else {
+        setChatHistory((prev) => [...prev, { sender: 'copilot', text: 'Error: Failed to connect to Copilot.' }]);
+      }
+    } catch (error) {
+      setChatHistory((prev) => [...prev, { sender: 'copilot', text: 'Error: Copilot service is unreachable.' }]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   const handleSimulate = (val: string) => {

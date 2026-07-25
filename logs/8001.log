@@ -1,10 +1,10 @@
-INFO:     Started server process [3088]
+INFO:     Started server process [1336]
 INFO:     Waiting for application startup.
 INFO:     Application startup complete.
 INFO:     Uvicorn running on http://0.0.0.0:8001 (Press CTRL+C to quit)
-INFO:     127.0.0.1:54096 - "GET /health HTTP/1.1" 404 Not Found
-INFO:     127.0.0.1:54096 - "GET / HTTP/1.1" 200 OK
-%3|1784008464.098|FAIL|astronova-producer#producer-1| [thrd:localhost:9092/bootstrap]: localhost:9092/bootstrap: Connect to ipv4#127.0.0.1:9092 failed: Unknown error (after 2042ms in state CONNECT)
-%3|1784008467.107|FAIL|astronova-producer#producer-1| [thrd:localhost:9092/bootstrap]: localhost:9092/bootstrap: Connect to ipv6#[::1]:9092 failed: Unknown error (after 2038ms in state CONNECT)
-%3|1784008470.099|FAIL|astronova-producer#producer-1| [thrd:localhost:9092/bootstrap]: localhost:9092/bootstrap: Connect to ipv4#127.0.0.1:9092 failed: Unknown error (after 2019ms in state CONNECT)
-%3|1784008473.143|FAIL|astronova-producer#producer-1| [thrd:localhost:9092/bootstrap]: localhost:9092/bootstrap: Connect to ipv4#127.0.0.1:9092 failed: Unknown error (after 2048ms in state CONNECT, 1 identical error(s) suppressed)
+INFO:     127.0.0.1:53164 - "GET /health HTTP/1.1" 404 Not Found
+INFO:     127.0.0.1:53164 - "GET / HTTP/1.1" 200 OK
+%3|1784983423.340|FAIL|astronova-producer#producer-1| [thrd:localhost:9092/bootstrap]: localhost:9092/bootstrap: Connect to ipv4#127.0.0.1:9092 failed: Unknown error (after 2055ms in state CONNECT)
+%3|1784983426.325|FAIL|astronova-producer#producer-1| [thrd:localhost:9092/bootstrap]: localhost:9092/bootstrap: Connect to ipv4#127.0.0.1:9092 failed: Unknown error (after 2028ms in state CONNECT, 1 identical error(s) suppressed)
+%3|1784983429.364|FAIL|astronova-producer#producer-1| [thrd:localhost:9092/bootstrap]: localhost:9092/bootstrap: Connect to ipv6#[::1]:9092 failed: Unknown error (after 2035ms in state CONNECT)
+%3|1784983432.389|FAIL|astronova-producer#producer-1| [thrd:localhost:9092/bootstrap]: localhost:9092/bootstrap: Connect to ipv4#127.0.0.1:9092 failed: Unknown error (after 2046ms in state CONNECT)
