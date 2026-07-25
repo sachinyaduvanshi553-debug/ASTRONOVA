@@ -1,6 +1,6 @@
 from fastapi import APIRouter
 from pydantic import BaseModel
-from services.copilot.services.rag_chain import SpaceWeatherRAGChain
+from services.copilot.core.rag_chain import SpaceWeatherRAGChain
 
 router = APIRouter(prefix="/api/v1/copilot", tags=["copilot"])
 chain = SpaceWeatherRAGChain()

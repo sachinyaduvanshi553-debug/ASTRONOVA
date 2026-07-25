@@ -9,42 +9,42 @@
 }
 
 /* ─── ISRO MISSION CONTROL THEME ─── */
-/* Palette: Black (#000000), White (#FFFFFF), Red (#FF0000) */
+/* Palette: Black (#000000), White (#FFFFFF) */
 
-/* Glass panels — dark matte black with subtle red glow border */
+/* Glass panels — dark matte black with subtle white glow border */
 .glass-panel {
   background: rgba(10, 10, 10, 0.92);
   backdrop-filter: blur(16px);
-  border: 1px solid rgba(255, 0, 0, 0.12);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .glass-card {
   background: rgba(18, 18, 18, 0.85);
   backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 0, 0, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
-/* Red glow variants */
-.glow-red {
-  box-shadow: 0 0 20px rgba(255, 0, 0, 0.15), 0 0 40px rgba(255, 0, 0, 0.05);
+/* White glow variants */
+.glow-white {
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.1), 0 0 40px rgba(255, 255, 255, 0.05);
 }
 
-.glow-red-strong {
-  box-shadow: 0 0 20px rgba(255, 0, 0, 0.3), 0 0 60px rgba(255, 0, 0, 0.1);
+.glow-white-strong {
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.2), 0 0 60px rgba(255, 255, 255, 0.1);
 }
 
-.glow-red-border {
-  box-shadow: inset 0 0 0 1px rgba(255, 0, 0, 0.15), 0 0 15px rgba(255, 0, 0, 0.08);
+.glow-white-border {
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.15), 0 0 15px rgba(255, 255, 255, 0.08);
 }
 
 /* Pulse animation for live indicators */
-@keyframes pulse-red {
-  0%, 100% { opacity: 1; box-shadow: 0 0 4px rgba(255, 0, 0, 0.6); }
-  50% { opacity: 0.5; box-shadow: 0 0 12px rgba(255, 0, 0, 0.9); }
+@keyframes pulse-white {
+  0%, 100% { opacity: 1; box-shadow: 0 0 4px rgba(255, 255, 255, 0.4); }
+  50% { opacity: 0.5; box-shadow: 0 0 12px rgba(255, 255, 255, 0.6); }
 }
 
-.animate-pulse-red {
-  animation: pulse-red 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+.animate-pulse-white {
+  animation: pulse-white 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 }
 
 /* Subtle scan-line effect for mission-control feel */
@@ -54,10 +54,10 @@
 }
 
 /* Alert level colors */
-.alert-low { color: rgba(255, 255, 255, 0.7); }
-.alert-moderate { color: #ff6b6b; }
-.alert-high { color: #ff0000; }
-.alert-critical { color: #cc0000; }
+.alert-low { color: rgba(255, 255, 255, 0.5); }
+.alert-moderate { color: rgba(255, 255, 255, 0.7); }
+.alert-high { color: rgba(255, 255, 255, 0.9); }
+.alert-critical { color: rgba(255, 255, 255, 1); font-weight: bold; text-shadow: 0 0 8px rgba(255,255,255,0.8); }
 
 /* Scrollbar styling */
 ::-webkit-scrollbar {
@@ -67,16 +67,16 @@
   background: #0a0a0a;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 0, 0, 0.25);
+  background: rgba(255, 255, 255, 0.25);
   border-radius: 3px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(255, 0, 0, 0.45);
+  background: rgba(255, 255, 255, 0.45);
 }
 
 /* Selection highlight */
 ::selection {
-  background: rgba(255, 0, 0, 0.3);
+  background: rgba(255, 255, 255, 0.3);
   color: #ffffff;
 }
 
@@ -89,7 +89,7 @@
   background-size: cover;
   background-position: center;
   background-repeat: no-repeat;
-  filter: blur(8px) brightness(0.35) contrast(1.1);
+  filter: blur(8px) brightness(0.35) contrast(1.1) grayscale(100%);
   transform: scale(1.05);
 }
 
@@ -109,8 +109,8 @@
 
 .gallery-card:hover {
   transform: translateY(-6px) scale(1.02);
-  box-shadow: 0 16px 32px rgba(255, 0, 0, 0.25), 0 0 20px rgba(255, 100, 0, 0.2);
-  border-color: rgba(255, 0, 0, 0.45);
+  box-shadow: 0 16px 32px rgba(255, 255, 255, 0.15), 0 0 20px rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.45);
 }
 
 .img-zoom {
@@ -146,4 +146,3 @@
 .lightbox-panel {
   animation: lightboxFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
-

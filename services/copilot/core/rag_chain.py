@@ -17,7 +17,7 @@ class SpaceWeatherRAGChain:
         self.model_name = os.getenv("GEMINI_MODEL", "gemini-1.5-flash")
         
         # Load Ollama configuration
-        ollama_settings = self.settings.ollama()
+        ollama_settings = self.settings.ollama
         self.ollama_url = getattr(ollama_settings, "base_url", "http://localhost:11434")
         self.ollama_model = getattr(ollama_settings, "model", "llama3.2:3b")
 

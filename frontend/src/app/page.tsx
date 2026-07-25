@@ -325,8 +325,8 @@ const UncertaintyRing = ({ confidence, imageSrc }: { confidence: number; imageSr
       <div className="relative w-full h-full flex items-center justify-center">
         <img src={`data:image/png;base64,${imageSrc}`} className="absolute w-full h-full rounded-full object-cover opacity-80 mix-blend-screen" alt="Uncertainty" />
         <div className="absolute text-center z-10">
-          <div className="font-bold font-mono text-2xl text-green-400">{(confidence * 100).toFixed(0)}%</div>
-          <div className="font-mono text-xs text-green-400/40">CONF</div>
+          <div className="font-bold font-mono text-2xl text-neutral-400">{(confidence * 100).toFixed(0)}%</div>
+          <div className="font-mono text-xs text-neutral-400/40">CONF</div>
         </div>
       </div>
     );
@@ -511,7 +511,7 @@ export default function Dashboard() {
     setIsTyping(true);
 
     try {
-      const res = await fetch('http://localhost:8011/api/v1/copilot/chat', {
+      const res = await fetch('http://localhost:8009/api/v1/copilot/chat', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ query })
@@ -591,11 +591,11 @@ export default function Dashboard() {
   };
 
   const getCategoryBadge = (category: string) => ({
-    Safe: 'bg-green-900/30 text-green-400/80 border-green-500/30',
-    Moderate: 'bg-red-950/40 text-red-300 border-red-400/20',
-    High: 'bg-red-900/50 text-red-400 border-red-500/30',
-    Extreme: 'bg-red-800/60 text-red-300 border-red-600/40',
-  } as Record<string, string>)[category] || 'bg-green-900/30 text-green-400/80 border-green-500/30';
+    Safe: 'bg-neutral-900/30 text-neutral-400/80 border-neutral-500/30',
+    Moderate: 'bg-neutral-950/40 text-neutral-300 border-neutral-400/20',
+    High: 'bg-neutral-900/50 text-neutral-400 border-neutral-500/30',
+    Extreme: 'bg-neutral-800/60 text-neutral-300 border-neutral-600/40',
+  } as Record<string, string>)[category] || 'bg-neutral-900/30 text-neutral-400/80 border-neutral-500/30';
 
   const flareProb = predTimeline.find(p => p.label === predictionHorizon)?.flareProbability ?? 0.72;
 
@@ -611,24 +611,24 @@ export default function Dashboard() {
 
 
   return (
-    <div className="min-h-screen flex flex-col bg-transparent text-green-400 relative">
+    <div className="min-h-screen flex flex-col bg-transparent text-neutral-400 relative">
       <div className="bg-blurred-container" />
       <div className="bg-radial-overlay" />
-      <header className="glass-panel sticky top-0 z-50 flex items-center justify-between px-6 py-4 border-b border-red-900/30">
+      <header className="glass-panel sticky top-0 z-50 flex items-center justify-between px-6 py-4 border-b border-neutral-900/30">
 
         <div className="flex items-center gap-3">
           <div className="relative">
-            <Compass className="w-8 h-8 text-red-500" />
-            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse-red" />
+            <Compass className="w-8 h-8 text-neutral-500" />
+            <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 bg-neutral-500 rounded-full animate-pulse-white" />
           </div>
           <div>
-            <h1 className="text-xl font-bold tracking-[0.15em] text-green-400 uppercase">AstroNova</h1>
-            <p className="text-[10px] text-green-400/40 tracking-widest uppercase">Aditya-L1 Space Weather Intelligence Console</p>
+            <h1 className="text-xl font-bold tracking-[0.15em] text-neutral-400 uppercase">AstroNova</h1>
+            <p className="text-[10px] text-neutral-400/40 tracking-widest uppercase">Aditya-L1 Space Weather Intelligence Console</p>
           </div>
         </div>
         <div className="flex items-center gap-4 text-sm">
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-red-950/30 border border-red-500/20 rounded-full text-red-400">
-            <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-neutral-950/30 border border-neutral-500/20 rounded-full text-neutral-400">
+            <span className="w-2 h-2 rounded-full bg-neutral-500 animate-pulse" />
             <span className="text-[11px] tracking-wide">SoLEXS &amp; HEL1OS Calibrated</span>
           </div>
           {activeTab === 'vision' && (
@@ -637,15 +637,15 @@ export default function Dashboard() {
               <span className="text-[11px] tracking-wide">Vision Module Active</span>
             </div>
           )}
-          <div className="flex items-center gap-2 px-3 py-1.5 bg-green-950/20 border border-green-500/20 rounded-full text-green-400/60">
-            <span className="w-2 h-2 rounded-full bg-green-950/200 animate-pulse" />
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-neutral-950/20 border border-neutral-500/20 rounded-full text-neutral-400/60">
+            <span className="w-2 h-2 rounded-full bg-neutral-950/200 animate-pulse" />
             <span className="text-[11px] tracking-wide">Phase: {lifecyclePhase}</span>
           </div>
-          <div className="flex items-center gap-2 text-green-400/40 font-mono text-xs">
-            <Clock className="w-4 h-4 text-red-500/60" />
+          <div className="flex items-center gap-2 text-neutral-400/40 font-mono text-xs">
+            <Clock className="w-4 h-4 text-neutral-500/60" />
             UTC: {currentTime}
           </div>
-          <label className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-red-600/80 hover:bg-red-600 text-white rounded-full text-xs font-bold tracking-wide transition-all glow-red-strong">
+          <label className="cursor-pointer flex items-center gap-1.5 px-3 py-1.5 bg-neutral-600/80 hover:bg-neutral-600 text-white rounded-full text-xs font-bold tracking-wide transition-all glow-white-strong">
             <Upload className="w-3.5 h-3.5" />
             <span>Upload Solar Data</span>
             <input type="file" accept=".jpg,.jpeg,.png,.fits,.tiff,.csv,.json,.txt" onChange={(e) => { handleFileUpload(e); setActiveTab('vision'); }} className="hidden" />
@@ -655,26 +655,26 @@ export default function Dashboard() {
 
 
       <div className="flex-1 flex overflow-hidden">
-        <aside className="w-64 border-r border-red-900/20 bg-[#050505] flex flex-col p-4 gap-1">
+        <aside className="w-64 border-r border-neutral-900/20 bg-[#050505] flex flex-col p-4 gap-1">
           {NAV_ITEMS.map(({ id, icon: Icon, label }) => (
             <button
               key={id}
               id={`nav-${id}`}
               onClick={() => setActiveTab(id)}
               className={`w-full flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200 ${
-                activeTab === id ? 'bg-red-950/40 text-red-400 border-l-4 border-red-500 glow-red-border' : 'text-green-400/40 hover:bg-green-950/20 hover:text-green-400/80 border-l-4 border-transparent'
+                activeTab === id ? 'bg-neutral-950/40 text-neutral-400 border-l-4 border-neutral-500 glow-white-border' : 'text-neutral-400/40 hover:bg-neutral-950/20 hover:text-neutral-400/80 border-l-4 border-transparent'
               }`}
             >
               <Icon className="w-5 h-5" />
               {label}
             </button>
           ))}
-          <div className="mt-auto border-t border-red-900/20 pt-4">
-            <div className="p-3 bg-red-950/20 border border-red-500/15 rounded-lg flex items-start gap-2 text-xs glow-red-border">
-              <AlertTriangle className="w-5 h-5 text-red-500 shrink-0" />
+          <div className="mt-auto border-t border-neutral-900/20 pt-4">
+            <div className="p-3 bg-neutral-950/20 border border-neutral-500/15 rounded-lg flex items-start gap-2 text-xs glow-white-border">
+              <AlertTriangle className="w-5 h-5 text-neutral-500 shrink-0" />
               <div>
-                <h4 className="font-semibold text-red-400 tracking-wide">Comms Blackout Alert</h4>
-                <p className="text-[10px] text-green-400/30 mt-0.5">NavIC degradation forecast index high over South-Asia.</p>
+                <h4 className="font-semibold text-neutral-400 tracking-wide">Comms Blackout Alert</h4>
+                <p className="text-[10px] text-neutral-400/30 mt-0.5">NavIC degradation forecast index high over South-Asia.</p>
               </div>
             </div>
           </div>
@@ -686,13 +686,13 @@ export default function Dashboard() {
             <div className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                 {[
-                  { label: 'Solar Hazard Index', value: shiScore.toFixed(2), valueClass: 'text-red-500', sub: <div className="w-full bg-green-950/20 rounded-full h-1.5 mt-1"><div className="bg-gradient-to-r from-red-900 via-red-500 to-red-400 h-1.5 rounded-full transition-all duration-1000" style={{ width: `${shiScore * 100}%` }} /></div>, badge: shiCategory },
-                  { label: 'GOES Nowcast Class', value: goesClass, valueClass: 'text-green-400', sub: <span className="text-[10px] text-green-400/30">Confidence bounds: +-8%</span> },
-                  { label: 'Time-to-Flare', value: '22', valueClass: 'text-green-400 text-3xl', sub: <span className="text-[10px] text-red-400/60">Dynamic lead-time optimization</span> },
-                  { label: 'Telemetry Source', value: 'Aditya-L1 L1', valueClass: 'text-red-400 text-lg', sub: <span className="text-[10px] text-green-400/30 font-mono">FITS / CDF synchronization</span> },
+                  { label: 'Solar Hazard Index', value: shiScore.toFixed(2), valueClass: 'text-neutral-500', sub: <div className="w-full bg-neutral-950/20 rounded-full h-1.5 mt-1"><div className="bg-gradient-to-r from-neutral-900 via-neutral-500 to-neutral-400 h-1.5 rounded-full transition-all duration-1000" style={{ width: `${shiScore * 100}%` }} /></div>, badge: shiCategory },
+                  { label: 'GOES Nowcast Class', value: goesClass, valueClass: 'text-neutral-400', sub: <span className="text-[10px] text-neutral-400/30">Confidence bounds: +-8%</span> },
+                  { label: 'Time-to-Flare', value: '22', valueClass: 'text-neutral-400 text-3xl', sub: <span className="text-[10px] text-neutral-400/60">Dynamic lead-time optimization</span> },
+                  { label: 'Telemetry Source', value: 'Aditya-L1 L1', valueClass: 'text-neutral-400 text-lg', sub: <span className="text-[10px] text-neutral-400/30 font-mono">FITS / CDF synchronization</span> },
                 ].map((card, i) => (
-                  <div key={i} className="glass-card p-5 rounded-xl flex flex-col justify-between glow-red-border">
-                    <span className="text-[10px] text-green-400/40 font-medium tracking-widest uppercase">{card.label}</span>
+                  <div key={i} className="glass-card p-5 rounded-xl flex flex-col justify-between glow-white-border">
+                    <span className="text-[10px] text-neutral-400/40 font-medium tracking-widest uppercase">{card.label}</span>
                     <div className="my-3 flex items-center justify-between">
                       <span className={`text-4xl font-extrabold font-mono tabular-nums ${card.valueClass}`}>{card.value}</span>
                       {card.badge && <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold border tracking-wider uppercase ${getCategoryBadge(card.badge)}`}>{card.badge}</span>}
@@ -702,26 +702,26 @@ export default function Dashboard() {
                 ))}
               </div>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="glass-panel p-6 rounded-xl border border-red-900/20 md:col-span-2 glow-red">
-                  <h3 className="text-sm font-bold text-green-400 tracking-widest uppercase mb-1">ISRO Geospatial Earth Impact</h3>
-                  <p className="text-[10px] text-green-400/30 mb-6">NavIC/D-layer absorption projection over South-Asia quadrant</p>
-                  <div className="relative bg-[#050505] rounded-xl border border-red-900/15 p-6 flex flex-col justify-center items-center h-72 overflow-hidden">
+                <div className="glass-panel p-6 rounded-xl border border-neutral-900/20 md:col-span-2 glow-white">
+                  <h3 className="text-sm font-bold text-neutral-400 tracking-widest uppercase mb-1">ISRO Geospatial Earth Impact</h3>
+                  <p className="text-[10px] text-neutral-400/30 mb-6">NavIC/D-layer absorption projection over South-Asia quadrant</p>
+                  <div className="relative bg-[#050505] rounded-xl border border-neutral-900/15 p-6 flex flex-col justify-center items-center h-72 overflow-hidden">
                     <svg className="w-full h-56 opacity-40" fill="currentColor" viewBox="0 0 800 400">
-                      <path d="M120 80h100v100H120zM140 180h80v150h-80z" className="text-green-400/10" />
-                      <path d="M380 60h100v120H380zM390 180h90v160h-90z" className="text-green-400/10" />
-                      <path d="M500 40h180v160H500z" className="text-green-400/10" />
-                      <circle cx="560" cy="140" r="30" className="fill-red-500/20 stroke-red-500 stroke-2 animate-ping" />
-                      <circle cx="560" cy="140" r="10" className="fill-red-600" />
+                      <path d="M120 80h100v100H120zM140 180h80v150h-80z" className="text-neutral-400/10" />
+                      <path d="M380 60h100v120H380zM390 180h90v160h-90z" className="text-neutral-400/10" />
+                      <path d="M500 40h180v160H500z" className="text-neutral-400/10" />
+                      <circle cx="560" cy="140" r="30" className="fill-neutral-500/20 stroke-neutral-500 stroke-2 animate-ping" />
+                      <circle cx="560" cy="140" r="10" className="fill-neutral-600" />
                     </svg>
-                    <div className="absolute top-4 left-4 bg-black/80 border border-red-900/30 p-3 rounded-lg text-xs">
-                      <div className="font-semibold text-green-400 mb-1">Impact Center: South-Asia</div>
-                      <div className="text-red-400">NavIC Scintillation Index (S4): 0.74</div>
-                      <div className="text-green-400/40">Absorption ceiling: 22 MHz</div>
+                    <div className="absolute top-4 left-4 bg-black/80 border border-neutral-900/30 p-3 rounded-lg text-xs">
+                      <div className="font-semibold text-neutral-400 mb-1">Impact Center: South-Asia</div>
+                      <div className="text-neutral-400">NavIC Scintillation Index (S4): 0.74</div>
+                      <div className="text-neutral-400/40">Absorption ceiling: 22 MHz</div>
                     </div>
                   </div>
                 </div>
-                <div className="glass-panel p-6 rounded-xl border border-red-900/20">
-                  <h3 className="text-sm font-bold text-green-400 tracking-widest uppercase mb-4">Operational Guidelines</h3>
+                <div className="glass-panel p-6 rounded-xl border border-neutral-900/20">
+                  <h3 className="text-sm font-bold text-neutral-400 tracking-widest uppercase mb-4">Operational Guidelines</h3>
                   <div className="space-y-3">
                     {[
                       { title: 'GSAT GEO Satellites', action: 'Safing/Amber: Prepare backup gyro systems' },
@@ -729,9 +729,9 @@ export default function Dashboard() {
                       { title: 'Aviation Transponders', action: 'Route redirection advisory on South-Asia' },
                       { title: 'Power Grid Operators', action: 'Inductive current load warning S4=0.7' },
                     ].map((item, idx) => (
-                      <div key={idx} className="text-xs pb-3 border-b border-red-900/10">
-                        <div className="font-semibold text-green-400/80">{item.title}</div>
-                        <div className="text-[11px] mt-0.5 text-red-400/70">{item.action}</div>
+                      <div key={idx} className="text-xs pb-3 border-b border-neutral-900/10">
+                        <div className="font-semibold text-neutral-400/80">{item.title}</div>
+                        <div className="text-[11px] mt-0.5 text-neutral-400/70">{item.action}</div>
                       </div>
                     ))}
                   </div>
@@ -742,8 +742,8 @@ export default function Dashboard() {
 
           {activeTab === 'live' && (
             <div className="space-y-6">
-              <div className="glass-panel p-6 rounded-xl border border-red-900/20 glow-red">
-                <h3 className="text-sm font-bold text-green-400 tracking-widest uppercase mb-6">Aditya-L1 Real-Time Sync</h3>
+              <div className="glass-panel p-6 rounded-xl border border-neutral-900/20 glow-white">
+                <h3 className="text-sm font-bold text-neutral-400 tracking-widest uppercase mb-6">Aditya-L1 Real-Time Sync</h3>
                 <div className="h-96">
                   <ResponsiveContainer width="100%" height="100%">
                     <AreaChart data={fluxData}>
@@ -757,8 +757,8 @@ export default function Dashboard() {
                   </ResponsiveContainer>
                 </div>
               </div>
-              <div className="glass-panel p-6 rounded-xl border border-red-900/20">
-                <h3 className="text-sm font-bold text-green-400 tracking-widest uppercase mb-4">Feature Importance - XAI</h3>
+              <div className="glass-panel p-6 rounded-xl border border-neutral-900/20">
+                <h3 className="text-sm font-bold text-neutral-400 tracking-widest uppercase mb-4">Feature Importance - XAI</h3>
                 <div className="h-48">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={defaultXAIImportance} layout="vertical">
@@ -779,21 +779,21 @@ export default function Dashboard() {
             <div className="space-y-6">
               <div className="flex flex-wrap items-center justify-between gap-4">
                 <div>
-                  <h2 className="text-base font-bold text-green-400 tracking-widest uppercase">Solar Vision Prediction Module</h2>
-                  <p className="text-[10px] text-green-400/30 mt-0.5">Multimodal ConvLSTM + ResNet50 Encoder · Cross-Modal Fusion · GradCAM XAI · SSIM/FID/PSNR Metrics</p>
+                  <h2 className="text-base font-bold text-neutral-400 tracking-widest uppercase">Solar Vision Prediction Module</h2>
+                  <p className="text-[10px] text-neutral-400/30 mt-0.5">Multimodal ConvLSTM + ResNet50 Encoder · Cross-Modal Fusion · GradCAM XAI · SSIM/FID/PSNR Metrics</p>
                 </div>
                 <div className="flex items-center gap-3">
                   <select id="instrument-select" value={selectedInstrument} onChange={e => setSelectedInstrument(e.target.value)}
-                    className="bg-[#0a0a0a] border border-red-900/30 text-green-400/70 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-red-500/50">
+                    className="bg-[#0a0a0a] border border-neutral-900/30 text-neutral-400/70 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-neutral-500/50">
                     {['SDO AIA 304A', 'SDO AIA 171A', 'SDO HMI Magnetogram', 'SOHO LASCO C2', 'Aditya-L1 SoLEXS'].map(inst => <option key={inst}>{inst}</option>)}
                   </select>
                   <select id="horizon-select" value={predictionHorizon} onChange={e => setPredictionHorizon(e.target.value)}
-                    className="bg-[#0a0a0a] border border-red-900/30 text-green-400/70 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-red-500/50">
+                    className="bg-[#0a0a0a] border border-neutral-900/30 text-neutral-400/70 text-xs rounded-lg px-3 py-2 focus:outline-none focus:border-neutral-500/50">
                     {['+30min', '+1h', '+3h', '+6h', '+12h', '+24h'].map(h => <option key={h}>{h}</option>)}
                   </select>
                   <button id="run-prediction-btn" onClick={runVisionPrediction} disabled={isRunningPrediction}
                     className={`flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-bold tracking-widest uppercase transition-all ${
-                      isRunningPrediction ? 'bg-red-950/40 text-red-400/50 cursor-not-allowed' : 'bg-red-600 hover:bg-red-700 text-green-400 glow-red-strong'
+                      isRunningPrediction ? 'bg-neutral-950/40 text-neutral-400/50 cursor-not-allowed' : 'bg-neutral-600 hover:bg-neutral-700 text-neutral-400 glow-white-strong'
                     }`}>
                     {isRunningPrediction ? <><RefreshCw className="w-4 h-4 animate-spin" /> Running...</> : <><Zap className="w-4 h-4" /> Run Prediction</>}
                   </button>
@@ -801,22 +801,22 @@ export default function Dashboard() {
               </div>
 
               {/* Solar Data Upload & Flare Origination Prediction Panel */}
-              <div className="glass-panel p-6 rounded-xl border border-red-900/40 glow-red">
+              <div className="glass-panel p-6 rounded-xl border border-neutral-900/40 glow-white">
                 <div className="flex flex-col lg:flex-row items-center justify-between gap-6">
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
                       <Sparkles className="w-5 h-5 text-yellow-400 animate-pulse" />
-                      <h3 className="text-sm font-bold text-green-400 tracking-widest uppercase">
+                      <h3 className="text-sm font-bold text-neutral-400 tracking-widest uppercase">
                         Upload Solar Data for Instant Flare Origination Prediction
                       </h3>
                     </div>
-                    <p className="text-xs text-green-400/60 leading-relaxed">
-                      Upload any Solar Image (<code className="text-red-400 font-mono">.fits, .png, .jpg, .tiff</code>) or Time-Series Telemetry (<code className="text-red-400 font-mono">.csv, .json</code>). The AstroNova AI model will immediately analyze magnetic reconnection and predict next flare origination timing, GOES class, active region, and Earth impact.
+                    <p className="text-xs text-neutral-400/60 leading-relaxed">
+                      Upload any Solar Image (<code className="text-neutral-400 font-mono">.fits, .png, .jpg, .tiff</code>) or Time-Series Telemetry (<code className="text-neutral-400 font-mono">.csv, .json</code>). The AstroNova AI model will immediately analyze magnetic reconnection and predict next flare origination timing, GOES class, active region, and Earth impact.
                     </p>
                   </div>
                   <div className="w-full lg:w-auto flex flex-col sm:flex-row items-center gap-3">
                     <label className={`cursor-pointer flex items-center justify-center gap-3 px-6 py-3.5 rounded-xl border font-bold text-xs tracking-wider uppercase transition-all duration-300 ${
-                      isUploading ? 'bg-red-950/40 border-red-500/40 text-red-400' : 'bg-red-600 hover:bg-red-700 border-red-400 text-white glow-red-strong'
+                      isUploading ? 'bg-neutral-950/40 border-neutral-500/40 text-neutral-400' : 'bg-neutral-600 hover:bg-neutral-700 border-neutral-400 text-white glow-white-strong'
                     }`}>
                       {isUploading ? (
                         <><RefreshCw className="w-4 h-4 animate-spin" /> Ingesting &amp; Predicting...</>
@@ -829,52 +829,52 @@ export default function Dashboard() {
                 </div>
 
                 {uploadResult && (
-                  <div className="mt-6 border-t border-red-900/30 pt-6 space-y-6">
+                  <div className="mt-6 border-t border-neutral-900/30 pt-6 space-y-6">
                     {/* Header Banner */}
-                    <div className="flex items-center justify-between bg-red-950/30 border border-red-500/30 p-4 rounded-xl">
+                    <div className="flex items-center justify-between bg-neutral-950/30 border border-neutral-500/30 p-4 rounded-xl">
                       <div className="flex items-center gap-3">
-                        <CheckCircle className="w-6 h-6 text-green-400 shrink-0" />
+                        <CheckCircle className="w-6 h-6 text-neutral-400 shrink-0" />
                         <div>
-                          <h4 className="text-xs font-bold text-green-400 uppercase tracking-widest">
+                          <h4 className="text-xs font-bold text-neutral-400 uppercase tracking-widest">
                             Solar Analysis Complete: {uploadResult.filename}
                           </h4>
-                          <p className="text-[10px] text-green-400/40 font-mono mt-0.5">
+                          <p className="text-[10px] text-neutral-400/40 font-mono mt-0.5">
                             Payload Type: {uploadResult.file_type} · Ingested at {uploadResult.processed_at?.slice(11, 19)} UTC
                           </p>
                         </div>
                       </div>
-                      <span className="px-3 py-1 bg-red-600/30 border border-red-500 text-red-300 text-xs font-bold font-mono rounded-full">
+                      <span className="px-3 py-1 bg-neutral-600/30 border border-neutral-500 text-neutral-300 text-xs font-bold font-mono rounded-full">
                         {uploadResult.predicted_flare?.goes_class} EST
                       </span>
                     </div>
 
                     {/* Origination & Impact Details Grid */}
                     <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-                      <div className="bg-black/50 p-4 rounded-xl border border-red-900/20 glow-red-border">
-                        <span className="text-[10px] text-green-400/40 tracking-widest uppercase block mb-1">Next Flare Origination Window</span>
-                        <div className="text-2xl font-bold font-mono text-red-400 my-1">{uploadResult.next_flare_origination?.estimated_window}</div>
-                        <span className="text-[10px] text-green-400/40 font-mono">Confidence: {(uploadResult.next_flare_origination?.precursor_confidence * 100).toFixed(0)}%</span>
+                      <div className="bg-black/50 p-4 rounded-xl border border-neutral-900/20 glow-white-border">
+                        <span className="text-[10px] text-neutral-400/40 tracking-widest uppercase block mb-1">Next Flare Origination Window</span>
+                        <div className="text-2xl font-bold font-mono text-neutral-400 my-1">{uploadResult.next_flare_origination?.estimated_window}</div>
+                        <span className="text-[10px] text-neutral-400/40 font-mono">Confidence: {(uploadResult.next_flare_origination?.precursor_confidence * 100).toFixed(0)}%</span>
                       </div>
-                      <div className="bg-black/50 p-4 rounded-xl border border-red-900/20 glow-red-border">
-                        <span className="text-[10px] text-green-400/40 tracking-widest uppercase block mb-1">Predicted GOES Class</span>
+                      <div className="bg-black/50 p-4 rounded-xl border border-neutral-900/20 glow-white-border">
+                        <span className="text-[10px] text-neutral-400/40 tracking-widest uppercase block mb-1">Predicted GOES Class</span>
                         <div className="text-3xl font-extrabold font-mono text-yellow-400 my-1">{uploadResult.predicted_flare?.goes_class}</div>
-                        <span className="text-[10px] text-green-400/40 font-mono">Flux: {uploadResult.predicted_flare?.peak_soft_xray_flux_w_m2?.toExponential(2)} W/m²</span>
+                        <span className="text-[10px] text-neutral-400/40 font-mono">Flux: {uploadResult.predicted_flare?.peak_soft_xray_flux_w_m2?.toExponential(2)} W/m²</span>
                       </div>
-                      <div className="bg-black/50 p-4 rounded-xl border border-red-900/20 glow-red-border">
-                        <span className="text-[10px] text-green-400/40 tracking-widest uppercase block mb-1">Active Region Origin</span>
-                        <div className="text-xl font-bold font-mono text-red-400 my-1">{uploadResult.active_region?.id}</div>
-                        <span className="text-[10px] text-green-400/40 font-mono">Coords: {uploadResult.active_region?.coordinates?.heliodetic} ({uploadResult.active_region?.magnetic_complexity})</span>
+                      <div className="bg-black/50 p-4 rounded-xl border border-neutral-900/20 glow-white-border">
+                        <span className="text-[10px] text-neutral-400/40 tracking-widest uppercase block mb-1">Active Region Origin</span>
+                        <div className="text-xl font-bold font-mono text-neutral-400 my-1">{uploadResult.active_region?.id}</div>
+                        <span className="text-[10px] text-neutral-400/40 font-mono">Coords: {uploadResult.active_region?.coordinates?.heliodetic} ({uploadResult.active_region?.magnetic_complexity})</span>
                       </div>
-                      <div className="bg-black/50 p-4 rounded-xl border border-red-900/20 glow-red-border">
-                        <span className="text-[10px] text-green-400/40 tracking-widest uppercase block mb-1">Earth Impact &amp; CME Arrival</span>
-                        <div className="text-lg font-bold font-mono text-red-400 my-1">{uploadResult.earth_impact?.radio_blackout_scale}</div>
-                        <span className="text-[10px] text-green-400/40 font-mono">CME ETA: ~{uploadResult.earth_impact?.cme_estimated_arrival_hours}h ({uploadResult.earth_impact?.cme_speed_km_s} km/s)</span>
+                      <div className="bg-black/50 p-4 rounded-xl border border-neutral-900/20 glow-white-border">
+                        <span className="text-[10px] text-neutral-400/40 tracking-widest uppercase block mb-1">Earth Impact &amp; CME Arrival</span>
+                        <div className="text-lg font-bold font-mono text-neutral-400 my-1">{uploadResult.earth_impact?.radio_blackout_scale}</div>
+                        <span className="text-[10px] text-neutral-400/40 font-mono">CME ETA: ~{uploadResult.earth_impact?.cme_estimated_arrival_hours}h ({uploadResult.earth_impact?.cme_speed_km_s} km/s)</span>
                       </div>
                     </div>
 
                     {/* Summary Advisory Text */}
-                    <div className="p-4 bg-[#0a0a0a] border border-red-900/20 rounded-xl text-xs text-green-400/80 leading-relaxed font-mono">
-                      <span className="text-red-400 font-bold">Space Weather Executive Summary: </span>
+                    <div className="p-4 bg-[#0a0a0a] border border-neutral-900/20 rounded-xl text-xs text-neutral-400/80 leading-relaxed font-mono">
+                      <span className="text-neutral-400 font-bold">Space Weather Executive Summary: </span>
                       {uploadResult.summary_advisory}
                     </div>
                   </div>
@@ -883,11 +883,11 @@ export default function Dashboard() {
 
 
               <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-                <div className="glass-panel p-5 rounded-xl border border-red-900/20 glow-red flex flex-col items-center gap-4">
+                <div className="glass-panel p-5 rounded-xl border border-neutral-900/20 glow-white flex flex-col items-center gap-4">
                   <div className="flex items-center justify-between w-full">
                     <div>
-                      <h3 className="text-xs font-bold text-green-400 tracking-widest uppercase">Live Solar Disc</h3>
-                      <p className="text-[10px] text-green-400/30 mt-0.5">{selectedInstrument}</p>
+                      <h3 className="text-xs font-bold text-neutral-400 tracking-widest uppercase">Live Solar Disc</h3>
+                      <p className="text-[10px] text-neutral-400/30 mt-0.5">{selectedInstrument}</p>
                     </div>
                     <div className={`px-2 py-1 rounded-full text-[9px] font-bold border tracking-wider uppercase ${getCategoryBadge(shiCategory)}`}>{shiCategory}</div>
                   </div>
@@ -895,22 +895,22 @@ export default function Dashboard() {
                     <SolarDisc flareProb={flareProb} phase={lifecyclePhase} />
                     <div className="absolute top-2 right-2 flex flex-col gap-1">
                       {ACTIVE_REGIONS.map(ar => (
-                        <div key={ar.id} className="bg-black/80 border border-red-900/30 px-2 py-1 rounded text-[9px]">
-                          <span className="text-red-400 font-mono">{ar.id}</span>
-                          <span className="text-green-400/40 ml-1">{ar.arClass}</span>
+                        <div key={ar.id} className="bg-black/80 border border-neutral-900/30 px-2 py-1 rounded text-[9px]">
+                          <span className="text-neutral-400 font-mono">{ar.id}</span>
+                          <span className="text-neutral-400/40 ml-1">{ar.arClass}</span>
                         </div>
                       ))}
                     </div>
                   </div>
-                  <div className="w-full border-t border-red-900/20 pt-3">
-                    <p className="text-[10px] text-green-400/30 tracking-widest uppercase mb-2">Active Regions</p>
+                  <div className="w-full border-t border-neutral-900/20 pt-3">
+                    <p className="text-[10px] text-neutral-400/30 tracking-widest uppercase mb-2">Active Regions</p>
                     <div className="space-y-1.5">
                       {ACTIVE_REGIONS.map((ar, i) => (
                         <div key={ar.id} className="flex items-center justify-between text-[10px]">
-                          <span className={`font-mono ${i === 0 ? 'text-red-400' : 'text-green-400/50'}`}>{ar.id}</span>
-                          <span className="text-green-400/40">{ar.arClass}</span>
-                          <span className="text-green-400/30">{ar.area} uH</span>
-                          <span className={`font-bold ${i === 0 ? 'text-red-400' : 'text-green-400/40'}`}>{ar.hale}</span>
+                          <span className={`font-mono ${i === 0 ? 'text-neutral-400' : 'text-neutral-400/50'}`}>{ar.id}</span>
+                          <span className="text-neutral-400/40">{ar.arClass}</span>
+                          <span className="text-neutral-400/30">{ar.area} uH</span>
+                          <span className={`font-bold ${i === 0 ? 'text-neutral-400' : 'text-neutral-400/40'}`}>{ar.hale}</span>
                         </div>
                       ))}
                     </div>
@@ -918,23 +918,23 @@ export default function Dashboard() {
                 </div>
 
                 <div className="flex flex-col gap-4">
-                  <div className="glass-card p-5 rounded-xl glow-red-border">
+                  <div className="glass-card p-5 rounded-xl glow-white-border">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-[10px] text-green-400/40 tracking-widest uppercase">Flare Probability ({predictionHorizon})</span>
-                      <span className={`text-[10px] font-bold ${flareProb > 0.7 ? 'text-red-400' : flareProb > 0.4 ? 'text-yellow-400' : 'text-green-400/50'}`}>
+                      <span className="text-[10px] text-neutral-400/40 tracking-widest uppercase">Flare Probability ({predictionHorizon})</span>
+                      <span className={`text-[10px] font-bold ${flareProb > 0.7 ? 'text-neutral-400' : flareProb > 0.4 ? 'text-yellow-400' : 'text-neutral-400/50'}`}>
                         {flareProb > 0.7 ? 'HIGH RISK' : flareProb > 0.4 ? 'MODERATE' : 'LOW'}
                       </span>
                     </div>
-                    <div className="text-5xl font-extrabold text-red-400 font-mono tabular-nums mb-3">{(flareProb * 100).toFixed(1)}%</div>
-                    <div className="w-full bg-green-950/20 rounded-full h-3 overflow-hidden">
+                    <div className="text-5xl font-extrabold text-neutral-400 font-mono tabular-nums mb-3">{(flareProb * 100).toFixed(1)}%</div>
+                    <div className="w-full bg-neutral-950/20 rounded-full h-3 overflow-hidden">
                       <div className="h-3 rounded-full transition-all duration-1000" style={{ width: `${flareProb * 100}%`, background: 'linear-gradient(90deg, #7f0000, #cc0000, #ff4400)' }} />
                     </div>
-                    <div className="flex justify-between text-[9px] text-green-400/20 mt-1"><span>Low</span><span>Moderate</span><span>High</span><span>Extreme</span></div>
+                    <div className="flex justify-between text-[9px] text-neutral-400/20 mt-1"><span>Low</span><span>Moderate</span><span>High</span><span>Extreme</span></div>
                   </div>
-                  <div className="glass-card p-5 rounded-xl glow-red-border">
+                  <div className="glass-card p-5 rounded-xl glow-white-border">
                     <div className="flex items-center justify-between mb-3">
-                      <span className="text-[10px] text-green-400/40 tracking-widest uppercase">Image Quality Metrics</span>
-                      <span className={`text-[9px] px-2 py-0.5 rounded-full border ${predictionComplete ? 'text-green-400 border-green-400/30 bg-green-900/20' : 'text-green-400/30 border-green-500/20'}`}>{predictionComplete ? 'VALIDATED' : 'PENDING'}</span>
+                      <span className="text-[10px] text-neutral-400/40 tracking-widest uppercase">Image Quality Metrics</span>
+                      <span className={`text-[9px] px-2 py-0.5 rounded-full border ${predictionComplete ? 'text-neutral-400 border-neutral-400/30 bg-neutral-900/20' : 'text-neutral-400/30 border-neutral-500/20'}`}>{predictionComplete ? 'VALIDATED' : 'PENDING'}</span>
                     </div>
                     <div className="grid grid-cols-2 gap-3">
                       {[
@@ -943,70 +943,70 @@ export default function Dashboard() {
                         { label: 'MAE', value: visionMetrics.mae.toFixed(4), good: visionMetrics.mae < 0.05, unit: '' },
                         { label: 'FID', value: visionMetrics.fid.toFixed(1), good: visionMetrics.fid < 20, unit: '' },
                       ].map(m => (
-                        <div key={m.label} className="bg-black/40 rounded-lg p-3 border border-red-900/10">
-                          <div className="text-[9px] text-green-400/30 tracking-widest uppercase mb-1">{m.label}</div>
-                          <div className={`text-xl font-bold font-mono tabular-nums ${m.good ? 'text-green-400' : 'text-red-400'}`}>{m.value}<span className="text-xs text-green-400/30">{m.unit}</span></div>
+                        <div key={m.label} className="bg-black/40 rounded-lg p-3 border border-neutral-900/10">
+                          <div className="text-[9px] text-neutral-400/30 tracking-widest uppercase mb-1">{m.label}</div>
+                          <div className={`text-xl font-bold font-mono tabular-nums ${m.good ? 'text-neutral-400' : 'text-neutral-400'}`}>{m.value}<span className="text-xs text-neutral-400/30">{m.unit}</span></div>
                         </div>
                       ))}
                     </div>
                   </div>
-                  <div className="glass-card p-5 rounded-xl glow-red-border flex items-center gap-5">
+                  <div className="glass-card p-5 rounded-xl glow-white-border flex items-center gap-5">
                     <div style={{ width: 120, height: 120, flexShrink: 0 }}>
                       <UncertaintyRing confidence={visionMetrics.mcDropout} imageSrc={xaiImages.uncertainty} />
                     </div>
                     <div className="flex-1">
-                      <p className="text-[10px] text-green-400/40 tracking-widest uppercase mb-2">MC-Dropout Uncertainty</p>
-                      <p className="text-xs text-green-400/60 leading-relaxed">Monte Carlo Dropout with <span className="text-green-400 font-semibold">5 stochastic passes</span>. Variance-based epistemic uncertainty estimation.</p>
+                      <p className="text-[10px] text-neutral-400/40 tracking-widest uppercase mb-2">MC-Dropout Uncertainty</p>
+                      <p className="text-xs text-neutral-400/60 leading-relaxed">Monte Carlo Dropout with <span className="text-neutral-400 font-semibold">5 stochastic passes</span>. Variance-based epistemic uncertainty estimation.</p>
                       <div className="mt-3 flex gap-2 text-[9px]">
-                        <span className="px-2 py-1 bg-red-950/40 border border-red-900/30 rounded text-red-400 font-mono">sigma^2 = {(1 - visionMetrics.mcDropout).toFixed(4)}</span>
-                        <span className="px-2 py-1 bg-green-950/20 border border-green-500/20 rounded text-green-400/40">passes: 5</span>
+                        <span className="px-2 py-1 bg-neutral-950/40 border border-neutral-900/30 rounded text-neutral-400 font-mono">sigma^2 = {(1 - visionMetrics.mcDropout).toFixed(4)}</span>
+                        <span className="px-2 py-1 bg-neutral-950/20 border border-neutral-500/20 rounded text-neutral-400/40">passes: 5</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 <div className="flex flex-col gap-4">
-                  <div className="glass-panel p-5 rounded-xl border border-red-900/20 flex-1">
-                    <h3 className="text-xs font-bold text-green-400 tracking-widest uppercase mb-1">Explainability Maps</h3>
-                    <p className="text-[10px] text-green-400/30 mb-4">GradCAM · Cross-Attention · Uncertainty</p>
+                  <div className="glass-panel p-5 rounded-xl border border-neutral-900/20 flex-1">
+                    <h3 className="text-xs font-bold text-neutral-400 tracking-widest uppercase mb-1">Explainability Maps</h3>
+                    <p className="text-[10px] text-neutral-400/30 mb-4">GradCAM · Cross-Attention · Uncertainty</p>
                     <div className="flex gap-1 mb-4">
                       {(['gradcam', 'attention', 'uncertainty'] as const).map(layer => (
                         <button key={layer} id={`xai-${layer}-btn`} onClick={() => setActiveXAILayer(layer)}
                           className={`flex-1 py-1.5 rounded text-[9px] font-bold tracking-wider uppercase transition-all ${
-                            activeXAILayer === layer ? 'bg-red-600 text-green-400' : 'bg-green-950/20 text-green-400/30 hover:text-green-400/60'
+                            activeXAILayer === layer ? 'bg-neutral-600 text-neutral-400' : 'bg-neutral-950/20 text-neutral-400/30 hover:text-neutral-400/60'
                           }`}>
                           {layer === 'gradcam' ? 'GradCAM' : layer === 'attention' ? 'Attention' : 'Uncertainty'}
                         </button>
                       ))}
                     </div>
-                    <div className="relative w-full overflow-hidden rounded-lg border border-red-900/20" style={{ height: 200 }}>
+                    <div className="relative w-full overflow-hidden rounded-lg border border-neutral-900/20" style={{ height: 200 }}>
                       <GradCAMMap intensity={flareProb * 0.9 + 0.1} imageSrc={activeXAILayer === 'gradcam' ? xaiImages.gradcam : activeXAILayer === 'attention' ? xaiImages.attention : xaiImages.uncertainty} />
-                      <div className="absolute bottom-2 left-2 text-[9px] text-green-400/40 bg-black/70 px-2 py-0.5 rounded">
+                      <div className="absolute bottom-2 left-2 text-[9px] text-neutral-400/40 bg-black/70 px-2 py-0.5 rounded">
                         {activeXAILayer === 'gradcam' && 'Grad-weighted Class Activation Map'}
                         {activeXAILayer === 'attention' && 'Cross-Modal Attention Weights'}
                         {activeXAILayer === 'uncertainty' && 'Epistemic Uncertainty Heatmap'}
                       </div>
-                      <div className="absolute top-2 right-2 text-[9px] text-red-400 bg-black/70 px-2 py-0.5 rounded font-mono">MAX: {(visionMetrics.gradcamMax * 100).toFixed(0)}%</div>
+                      <div className="absolute top-2 right-2 text-[9px] text-neutral-400 bg-black/70 px-2 py-0.5 rounded font-mono">MAX: {(visionMetrics.gradcamMax * 100).toFixed(0)}%</div>
                     </div>
                     <div className="mt-2 flex items-center gap-2">
-                      <span className="text-[9px] text-green-400/20">0%</span>
+                      <span className="text-[9px] text-neutral-400/20">0%</span>
                       <div className="flex-1 h-1.5 rounded-full" style={{ background: 'linear-gradient(90deg, #000, #7f0000, #ff4400, #ffcc00)' }} />
-                      <span className="text-[9px] text-green-400/20">100%</span>
+                      <span className="text-[9px] text-neutral-400/20">100%</span>
                     </div>
                   </div>
-                  <div className="glass-card p-5 rounded-xl glow-red-border">
-                    <p className="text-[10px] text-green-400/40 tracking-widest uppercase mb-3">Fusion Module Status</p>
+                  <div className="glass-card p-5 rounded-xl glow-white-border">
+                    <p className="text-[10px] text-neutral-400/40 tracking-widest uppercase mb-3">Fusion Module Status</p>
                     <div className="space-y-2">
                       {[
-                        { label: 'ResNet50 Spatial Encoder', status: 'ACTIVE', color: 'text-green-400' },
-                        { label: 'ConvLSTM Temporal (T=5)', status: 'ACTIVE', color: 'text-green-400' },
-                        { label: 'Physics Encoder (15-dim)', status: 'ACTIVE', color: 'text-green-400' },
-                        { label: 'Cross-Attn Fusion (4-head)', status: 'ACTIVE', color: 'text-green-400' },
-                        { label: 'U-Net Decoder', status: 'ACTIVE', color: 'text-green-400' },
+                        { label: 'ResNet50 Spatial Encoder', status: 'ACTIVE', color: 'text-neutral-400' },
+                        { label: 'ConvLSTM Temporal (T=5)', status: 'ACTIVE', color: 'text-neutral-400' },
+                        { label: 'Physics Encoder (15-dim)', status: 'ACTIVE', color: 'text-neutral-400' },
+                        { label: 'Cross-Attn Fusion (4-head)', status: 'ACTIVE', color: 'text-neutral-400' },
+                        { label: 'U-Net Decoder', status: 'ACTIVE', color: 'text-neutral-400' },
                         { label: 'Diffusion Refinement', status: 'STANDBY', color: 'text-yellow-600' },
                       ].map(item => (
                         <div key={item.label} className="flex items-center justify-between text-[10px]">
-                          <span className="text-green-400/50">{item.label}</span>
+                          <span className="text-neutral-400/50">{item.label}</span>
                           <span className={`font-bold font-mono ${item.color}`}>{item.status}</span>
                         </div>
                       ))}
@@ -1015,11 +1015,11 @@ export default function Dashboard() {
                 </div>
               </div>
 
-              <div className="glass-panel p-6 rounded-xl border border-red-900/20">
+              <div className="glass-panel p-6 rounded-xl border border-neutral-900/20">
                 <div className="flex items-center justify-between mb-4">
                   <div>
-                    <h3 className="text-sm font-bold text-green-400 tracking-widest uppercase">Multi-Horizon Prediction Timeline</h3>
-                    <p className="text-[10px] text-green-400/30 mt-0.5">Flare probability, model confidence, and SSIM across forecast windows</p>
+                    <h3 className="text-sm font-bold text-neutral-400 tracking-widest uppercase">Multi-Horizon Prediction Timeline</h3>
+                    <p className="text-[10px] text-neutral-400/30 mt-0.5">Flare probability, model confidence, and SSIM across forecast windows</p>
                   </div>
                 </div>
                 <div className="h-64">
@@ -1038,9 +1038,9 @@ export default function Dashboard() {
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="glass-panel p-6 rounded-xl border border-red-900/20">
-                  <h3 className="text-xs font-bold text-green-400 tracking-widest uppercase mb-1">Cross-Instrument Performance</h3>
-                  <p className="text-[10px] text-green-400/30 mb-4">Normalized metric comparison — SDO, SOHO, Aditya-L1</p>
+                <div className="glass-panel p-6 rounded-xl border border-neutral-900/20">
+                  <h3 className="text-xs font-bold text-neutral-400 tracking-widest uppercase mb-1">Cross-Instrument Performance</h3>
+                  <p className="text-[10px] text-neutral-400/30 mb-4">Normalized metric comparison — SDO, SOHO, Aditya-L1</p>
                   <div className="h-56">
                     <ResponsiveContainer width="100%" height="100%">
                       <RadarChart data={radarData}>
@@ -1055,25 +1055,25 @@ export default function Dashboard() {
                     </ResponsiveContainer>
                   </div>
                 </div>
-                <div className="glass-panel p-6 rounded-xl border border-red-900/20">
-                  <h3 className="text-xs font-bold text-green-400 tracking-widest uppercase mb-1">Active Region Analysis</h3>
-                  <p className="text-[10px] text-green-400/30 mb-4">Vision-extracted magnetic complexity &amp; flare probability</p>
+                <div className="glass-panel p-6 rounded-xl border border-neutral-900/20">
+                  <h3 className="text-xs font-bold text-neutral-400 tracking-widest uppercase mb-1">Active Region Analysis</h3>
+                  <p className="text-[10px] text-neutral-400/30 mb-4">Vision-extracted magnetic complexity &amp; flare probability</p>
                   <div className="space-y-4">
                     {ACTIVE_REGIONS.map((ar, i) => {
                       const prob = i === 0 ? flareProb : i === 1 ? flareProb * 0.45 : flareProb * 0.15;
                       return (
-                        <div key={ar.id} className="border border-red-900/15 rounded-lg p-3 bg-black/30">
+                        <div key={ar.id} className="border border-neutral-900/15 rounded-lg p-3 bg-black/30">
                           <div className="flex items-center justify-between mb-2">
-                            <span className={`text-xs font-bold font-mono ${i === 0 ? 'text-red-400' : 'text-green-400/60'}`}>{ar.id}</span>
-                            <span className="text-[9px] text-green-400/30">Class {ar.arClass} · {ar.area} uH</span>
+                            <span className={`text-xs font-bold font-mono ${i === 0 ? 'text-neutral-400' : 'text-neutral-400/60'}`}>{ar.id}</span>
+                            <span className="text-[9px] text-neutral-400/30">Class {ar.arClass} · {ar.area} uH</span>
                           </div>
                           <div className="flex items-center gap-2">
-                            <div className="flex-1 bg-green-950/20 rounded-full h-1.5">
+                            <div className="flex-1 bg-neutral-950/20 rounded-full h-1.5">
                               <div className="h-1.5 rounded-full transition-all duration-1000" style={{ width: `${prob * 100}%`, background: i === 0 ? '#cc0000' : i === 1 ? '#884400' : '#444' }} />
                             </div>
-                            <span className="text-[10px] font-mono text-green-400/50 w-10 text-right">{(prob * 100).toFixed(0)}%</span>
+                            <span className="text-[10px] font-mono text-neutral-400/50 w-10 text-right">{(prob * 100).toFixed(0)}%</span>
                           </div>
-                          <div className="flex items-center justify-between mt-1.5 text-[9px] text-green-400/25">
+                          <div className="flex items-center justify-between mt-1.5 text-[9px] text-neutral-400/25">
                             <span>Max: {ar.hale}</span><span>Vision conf: {95 - i * 8}%</span>
                           </div>
                         </div>
@@ -1094,19 +1094,19 @@ export default function Dashboard() {
                 {/* Gallery Header */}
                 <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
                   <div>
-                    <h2 className="text-base font-bold text-green-400 tracking-widest uppercase">Aditya-L1 Solar Observatory</h2>
-                    <p className="text-[10px] text-green-400/30 mt-0.5">Images captured by ISRO Aditya-L1 mission instruments — SoLEXS · HEL1OS · SUIT · VELC · ASPEX · MAG</p>
+                    <h2 className="text-base font-bold text-neutral-400 tracking-widest uppercase">Aditya-L1 Solar Observatory</h2>
+                    <p className="text-[10px] text-neutral-400/30 mt-0.5">Images captured by ISRO Aditya-L1 mission instruments — SoLEXS · HEL1OS · SUIT · VELC · ASPEX · MAG</p>
                   </div>
                   <div className="flex items-center gap-2 flex-wrap">
-                    <Filter className="w-3.5 h-3.5 text-red-400/60" />
+                    <Filter className="w-3.5 h-3.5 text-neutral-400/60" />
                     {galleryCategories.map(cat => (
                       <button
                         key={cat}
                         onClick={() => setGalleryCategory(cat)}
                         className={`px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase border transition-all duration-200 ${
                           galleryCategory === cat
-                            ? 'bg-red-600 border-red-500 text-white glow-red-strong'
-                            : 'bg-transparent border-red-900/30 text-green-400/40 hover:text-green-400/80 hover:border-red-500/40'
+                            ? 'bg-neutral-600 border-neutral-500 text-white glow-white-strong'
+                            : 'bg-transparent border-neutral-900/30 text-neutral-400/40 hover:text-neutral-400/80 hover:border-neutral-500/40'
                         }`}
                       >
                         {cat}
@@ -1116,17 +1116,17 @@ export default function Dashboard() {
                 </div>
 
                 {/* Stats Bar */}
-                <div className="flex items-center gap-6 px-4 py-3 glass-panel rounded-xl border border-red-900/20">
+                <div className="flex items-center gap-6 px-4 py-3 glass-panel rounded-xl border border-neutral-900/20">
                   <div className="flex items-center gap-2">
-                    <Grid className="w-4 h-4 text-red-400/60" />
-                    <span className="text-[11px] text-green-400/50 tracking-wider">{filteredImages.length} Images</span>
+                    <Grid className="w-4 h-4 text-neutral-400/60" />
+                    <span className="text-[11px] text-neutral-400/50 tracking-wider">{filteredImages.length} Images</span>
                   </div>
-                  <div className="w-px h-4 bg-red-900/30" />
+                  <div className="w-px h-4 bg-neutral-900/30" />
                   <div className="flex items-center gap-2">
-                    <span className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
-                    <span className="text-[11px] text-green-400/50 tracking-wider">Live Mission Data — Aditya-L1 @ L1 Halo Orbit</span>
+                    <span className="w-2 h-2 rounded-full bg-neutral-500 animate-pulse" />
+                    <span className="text-[11px] text-neutral-400/50 tracking-wider">Live Mission Data — Aditya-L1 @ L1 Halo Orbit</span>
                   </div>
-                  <div className="ml-auto flex items-center gap-2 text-[10px] text-green-400/30">
+                  <div className="ml-auto flex items-center gap-2 text-[10px] text-neutral-400/30">
                     <Search className="w-3.5 h-3.5" />
                     <span>Click any image to expand</span>
                   </div>
@@ -1137,7 +1137,7 @@ export default function Dashboard() {
                   {filteredImages.map((img, idx) => (
                     <div
                       key={img.id}
-                      className="gallery-card relative overflow-hidden rounded-xl border border-red-900/20 bg-[#0a0a0a] cursor-pointer group"
+                      className="gallery-card relative overflow-hidden rounded-xl border border-neutral-900/20 bg-[#0a0a0a] cursor-pointer group"
                       style={{ animationDelay: `${idx * 60}ms` }}
                       onClick={() => setSelectedLightbox(img)}
                     >
@@ -1153,19 +1153,19 @@ export default function Dashboard() {
                         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
                         {/* Top Badge */}
                         <div className="absolute top-2 left-2 flex gap-1">
-                          <span className="px-2 py-0.5 bg-red-600/80 backdrop-blur-sm text-white text-[9px] font-bold rounded-full tracking-wider uppercase border border-red-400/30">
+                          <span className="px-2 py-0.5 bg-neutral-600/80 backdrop-blur-sm text-white text-[9px] font-bold rounded-full tracking-wider uppercase border border-neutral-400/30">
                             {img.category}
                           </span>
                         </div>
                         {/* Expand Icon */}
                         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                          <div className="w-7 h-7 bg-black/70 backdrop-blur-sm rounded-full flex items-center justify-center border border-red-900/30">
-                            <Maximize2 className="w-3.5 h-3.5 text-green-400" />
+                          <div className="w-7 h-7 bg-black/70 backdrop-blur-sm rounded-full flex items-center justify-center border border-neutral-900/30">
+                            <Maximize2 className="w-3.5 h-3.5 text-neutral-400" />
                           </div>
                         </div>
                         {/* Wavelength overlay on hover */}
                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-300">
-                          <span className="px-3 py-1.5 bg-black/80 backdrop-blur-sm border border-red-500/30 text-red-400 text-[10px] font-mono rounded-full">
+                          <span className="px-3 py-1.5 bg-black/80 backdrop-blur-sm border border-neutral-500/30 text-neutral-400 text-[10px] font-mono rounded-full">
                             λ {img.wavelength}
                           </span>
                         </div>
@@ -1173,12 +1173,12 @@ export default function Dashboard() {
 
                       {/* Card Info */}
                       <div className="p-3">
-                        <h3 className="text-[11px] font-bold text-green-400 leading-tight line-clamp-2 mb-1 group-hover:text-green-300 transition-colors">{img.title}</h3>
-                        <p className="text-[9px] text-green-400/40 mb-2 font-mono">{img.instrument}</p>
-                        <p className="text-[9px] text-green-400/30 leading-relaxed line-clamp-2">{img.description}</p>
-                        <div className="flex items-center justify-between mt-3 pt-2 border-t border-red-900/10">
-                          <span className="text-[9px] text-green-400/25 font-mono">{img.date}</span>
-                          <span className="text-[9px] text-red-400/50 font-mono">{img.id}</span>
+                        <h3 className="text-[11px] font-bold text-neutral-400 leading-tight line-clamp-2 mb-1 group-hover:text-neutral-300 transition-colors">{img.title}</h3>
+                        <p className="text-[9px] text-neutral-400/40 mb-2 font-mono">{img.instrument}</p>
+                        <p className="text-[9px] text-neutral-400/30 leading-relaxed line-clamp-2">{img.description}</p>
+                        <div className="flex items-center justify-between mt-3 pt-2 border-t border-neutral-900/10">
+                          <span className="text-[9px] text-neutral-400/25 font-mono">{img.date}</span>
+                          <span className="text-[9px] text-neutral-400/50 font-mono">{img.id}</span>
                         </div>
                       </div>
                     </div>
@@ -1192,14 +1192,14 @@ export default function Dashboard() {
                     style={{ background: 'rgba(0,0,0,0.92)', backdropFilter: 'blur(12px)' }}
                     onClick={(e) => { if (e.target === e.currentTarget) setSelectedLightbox(null); }}
                   >
-                    <div className="relative max-w-5xl w-full glass-panel rounded-2xl border border-red-900/30 overflow-hidden" style={{ maxHeight: '90vh' }}>
+                    <div className="relative max-w-5xl w-full glass-panel rounded-2xl border border-neutral-900/30 overflow-hidden" style={{ maxHeight: '90vh' }}>
                       {/* Header */}
-                      <div className="flex items-center justify-between p-4 border-b border-red-900/20">
+                      <div className="flex items-center justify-between p-4 border-b border-neutral-900/20">
                         <div>
-                          <span className="px-2 py-0.5 bg-red-600/30 border border-red-500/40 text-red-300 text-[9px] font-bold rounded-full tracking-widest uppercase mr-2">
+                          <span className="px-2 py-0.5 bg-neutral-600/30 border border-neutral-500/40 text-neutral-300 text-[9px] font-bold rounded-full tracking-widest uppercase mr-2">
                             {selectedLightbox.category}
                           </span>
-                          <span className="text-[10px] text-green-400/40 font-mono">{selectedLightbox.id} · {selectedLightbox.date}</span>
+                          <span className="text-[10px] text-neutral-400/40 font-mono">{selectedLightbox.id} · {selectedLightbox.date}</span>
                         </div>
                         <div className="flex items-center gap-2">
                           <button
@@ -1210,14 +1210,14 @@ export default function Dashboard() {
                               a.download = selectedLightbox.id + '.jpg';
                               a.click();
                             }}
-                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-green-950/30 border border-green-500/20 text-green-400/50 hover:text-green-400 hover:border-green-500/40 transition-all"
+                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-neutral-950/30 border border-neutral-500/20 text-neutral-400/50 hover:text-neutral-400 hover:border-neutral-500/40 transition-all"
                             title="Download"
                           >
                             <Download className="w-3.5 h-3.5" />
                           </button>
                           <button
                             onClick={() => setSelectedLightbox(null)}
-                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-red-950/30 border border-red-900/30 text-red-400/60 hover:text-red-400 hover:border-red-500/40 transition-all"
+                            className="w-8 h-8 flex items-center justify-center rounded-lg bg-neutral-950/30 border border-neutral-900/30 text-neutral-400/60 hover:text-neutral-400 hover:border-neutral-500/40 transition-all"
                           >
                             <X className="w-4 h-4" />
                           </button>
@@ -1237,7 +1237,7 @@ export default function Dashboard() {
                           {currentLightboxIndex > 0 && (
                             <button
                               onClick={(e) => { e.stopPropagation(); setSelectedLightbox(filteredImages[currentLightboxIndex - 1]); }}
-                              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/70 border border-red-900/30 text-green-400/60 hover:text-green-400 hover:border-red-500/50 transition-all"
+                              className="absolute left-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/70 border border-neutral-900/30 text-neutral-400/60 hover:text-neutral-400 hover:border-neutral-500/50 transition-all"
                             >
                               ‹
                             </button>
@@ -1245,21 +1245,21 @@ export default function Dashboard() {
                           {currentLightboxIndex < filteredImages.length - 1 && (
                             <button
                               onClick={(e) => { e.stopPropagation(); setSelectedLightbox(filteredImages[currentLightboxIndex + 1]); }}
-                              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/70 border border-red-900/30 text-green-400/60 hover:text-green-400 hover:border-red-500/50 transition-all"
+                              className="absolute right-3 top-1/2 -translate-y-1/2 w-10 h-10 flex items-center justify-center rounded-full bg-black/70 border border-neutral-900/30 text-neutral-400/60 hover:text-neutral-400 hover:border-neutral-500/50 transition-all"
                             >
                               ›
                             </button>
                           )}
                           {/* Image counter */}
-                          <div className="absolute bottom-3 right-3 px-2 py-1 bg-black/70 border border-red-900/20 rounded-full text-[9px] text-green-400/40 font-mono">
+                          <div className="absolute bottom-3 right-3 px-2 py-1 bg-black/70 border border-neutral-900/20 rounded-full text-[9px] text-neutral-400/40 font-mono">
                             {currentLightboxIndex + 1} / {filteredImages.length}
                           </div>
                         </div>
 
                         {/* Details Sidebar */}
-                        <div className="w-full md:w-72 flex-shrink-0 overflow-y-auto border-t md:border-t-0 md:border-l border-red-900/20 p-5 space-y-4">
-                          <h3 className="text-sm font-bold text-green-400 leading-tight">{selectedLightbox.title}</h3>
-                          <p className="text-[11px] text-green-400/60 leading-relaxed">{selectedLightbox.description}</p>
+                        <div className="w-full md:w-72 flex-shrink-0 overflow-y-auto border-t md:border-t-0 md:border-l border-neutral-900/20 p-5 space-y-4">
+                          <h3 className="text-sm font-bold text-neutral-400 leading-tight">{selectedLightbox.title}</h3>
+                          <p className="text-[11px] text-neutral-400/60 leading-relaxed">{selectedLightbox.description}</p>
                           <div className="space-y-2">
                             {[
                               { label: 'Instrument', value: selectedLightbox.instrument },
@@ -1268,22 +1268,22 @@ export default function Dashboard() {
                               { label: 'Image ID', value: selectedLightbox.id },
                               { label: 'Category', value: selectedLightbox.category },
                             ].map(({ label, value }) => (
-                              <div key={label} className="flex flex-col gap-0.5 pb-2 border-b border-red-900/10">
-                                <span className="text-[9px] text-green-400/30 tracking-widest uppercase">{label}</span>
-                                <span className="text-[11px] font-mono text-green-400/80">{value}</span>
+                              <div key={label} className="flex flex-col gap-0.5 pb-2 border-b border-neutral-900/10">
+                                <span className="text-[9px] text-neutral-400/30 tracking-widest uppercase">{label}</span>
+                                <span className="text-[11px] font-mono text-neutral-400/80">{value}</span>
                               </div>
                             ))}
                           </div>
                           {/* Thumbnail strip */}
                           <div>
-                            <p className="text-[9px] text-green-400/20 tracking-widest uppercase mb-2">More in {galleryCategory === 'All' ? 'Gallery' : galleryCategory}</p>
+                            <p className="text-[9px] text-neutral-400/20 tracking-widest uppercase mb-2">More in {galleryCategory === 'All' ? 'Gallery' : galleryCategory}</p>
                             <div className="flex gap-1.5 flex-wrap">
                               {filteredImages.slice(0, 6).map(img => (
                                 <button
                                   key={img.id}
                                   onClick={() => setSelectedLightbox(img)}
                                   className={`w-12 h-10 rounded overflow-hidden border transition-all ${
-                                    img.id === selectedLightbox.id ? 'border-red-500 opacity-100' : 'border-red-900/20 opacity-50 hover:opacity-80 hover:border-red-500/50'
+                                    img.id === selectedLightbox.id ? 'border-neutral-500 opacity-100' : 'border-neutral-900/20 opacity-50 hover:opacity-80 hover:border-neutral-500/50'
                                   }`}
                                 >
                                   <img src={img.src} alt={img.title} className="w-full h-full object-cover" />
@@ -1302,27 +1302,27 @@ export default function Dashboard() {
 
           {activeTab === 'simulation' && (
             <div className="space-y-6">
-              <div className="glass-panel p-6 rounded-xl border border-red-900/20 glow-red">
-                <h3 className="text-sm font-bold text-green-400 tracking-widest uppercase mb-6">Risk Scenario Simulator</h3>
+              <div className="glass-panel p-6 rounded-xl border border-neutral-900/20 glow-white">
+                <h3 className="text-sm font-bold text-neutral-400 tracking-widest uppercase mb-6">Risk Scenario Simulator</h3>
                 <div className="flex gap-3 mb-8">
                   {['C5.0', 'M1.0', 'M5.0', 'X1.0', 'X5.0'].map((val) => (
                     <button key={val} onClick={() => handleSimulate(val)}
                       className={`px-5 py-2.5 rounded-lg text-xs font-bold tracking-wider uppercase transition-all duration-200 ${
-                        goesClass === val ? 'bg-red-600 text-green-400 glow-red-strong' : 'bg-green-950/20 text-green-400/40 hover:text-green-400 hover:bg-green-900/30 border border-green-500/20'
+                        goesClass === val ? 'bg-neutral-600 text-neutral-400 glow-white-strong' : 'bg-neutral-950/20 text-neutral-400/40 hover:text-neutral-400 hover:bg-neutral-900/30 border border-neutral-500/20'
                       }`}>{val}</button>
                   ))}
-                  {isSimulating && <button onClick={() => setIsSimulating(false)} className="px-5 py-2.5 bg-red-950/40 text-red-400 border border-red-500/20 rounded-lg text-xs font-bold tracking-wider uppercase">Reset</button>}
+                  {isSimulating && <button onClick={() => setIsSimulating(false)} className="px-5 py-2.5 bg-neutral-950/40 text-neutral-400 border border-neutral-500/20 rounded-lg text-xs font-bold tracking-wider uppercase">Reset</button>}
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {[
-                    { label: 'Solar Hazard Index', value: shiScore.toFixed(2), valueClass: 'text-red-500', badge: true },
-                    { label: 'GPS Position Error', value: goesClass.startsWith('X') ? '14.8' : goesClass.startsWith('M') ? '5.4' : '1.5', valueClass: 'text-green-400', unit: 'm' },
-                    { label: 'NavIC Scintillation (S4)', value: goesClass.startsWith('X') ? '0.85' : goesClass.startsWith('M') ? '0.45' : '0.15', valueClass: 'text-red-400' },
+                    { label: 'Solar Hazard Index', value: shiScore.toFixed(2), valueClass: 'text-neutral-500', badge: true },
+                    { label: 'GPS Position Error', value: goesClass.startsWith('X') ? '14.8' : goesClass.startsWith('M') ? '5.4' : '1.5', valueClass: 'text-neutral-400', unit: 'm' },
+                    { label: 'NavIC Scintillation (S4)', value: goesClass.startsWith('X') ? '0.85' : goesClass.startsWith('M') ? '0.45' : '0.15', valueClass: 'text-neutral-400' },
                   ].map((card, i) => (
-                    <div key={i} className="glass-card p-5 rounded-xl glow-red-border">
-                      <span className="text-[10px] text-green-400/40 block mb-2 tracking-widest uppercase">{card.label}</span>
+                    <div key={i} className="glass-card p-5 rounded-xl glow-white-border">
+                      <span className="text-[10px] text-neutral-400/40 block mb-2 tracking-widest uppercase">{card.label}</span>
                       <div className={`text-4xl font-extrabold font-mono tabular-nums mb-2 ${card.valueClass}`}>
-                        {card.value}{card.unit && <span className="text-sm text-green-400/40 ml-1">{card.unit}</span>}
+                        {card.value}{card.unit && <span className="text-sm text-neutral-400/40 ml-1">{card.unit}</span>}
                       </div>
                       {card.badge && <span className={`text-[10px] font-bold border px-2.5 py-1 rounded-full tracking-wider uppercase ${getCategoryBadge(shiCategory)}`}>{shiCategory}</span>}
                     </div>
@@ -1333,17 +1333,17 @@ export default function Dashboard() {
           )}
 
           {activeTab === 'research' && (
-            <div className="glass-panel p-6 rounded-xl border border-red-900/20">
-              <h3 className="text-sm font-bold text-green-400 tracking-widest uppercase mb-6">Research Leaderboard</h3>
+            <div className="glass-panel p-6 rounded-xl border border-neutral-900/20">
+              <h3 className="text-sm font-bold text-neutral-400 tracking-widest uppercase mb-6">Research Leaderboard</h3>
               <table className="w-full text-left text-xs">
-                <thead><tr className="border-b border-red-900/20 text-green-400/40">{['Model','TSS','Lead Time','F1 Score','Accuracy'].map(h => <th key={h} className="py-3 px-4 tracking-wider uppercase text-[10px]">{h}</th>)}</tr></thead>
+                <thead><tr className="border-b border-neutral-900/20 text-neutral-400/40">{['Model','TSS','Lead Time','F1 Score','Accuracy'].map(h => <th key={h} className="py-3 px-4 tracking-wider uppercase text-[10px]">{h}</th>)}</tr></thead>
                 <tbody>{benchmarkLeaderboard.map((item, idx) => (
-                  <tr key={idx} className="border-b border-red-900/10 hover:bg-white/[0.02] transition-colors">
-                    <td className="py-3 px-4 font-semibold text-green-400/80">{item.model}</td>
-                    <td className="py-3 px-4 text-red-400 font-bold font-mono">{item.tss.toFixed(2)}</td>
-                    <td className="py-3 px-4 font-mono text-green-400/60">{item.leadTime}</td>
-                    <td className="py-3 px-4 font-mono text-green-400/60">{item.f1.toFixed(2)}</td>
-                    <td className="py-3 px-4 font-mono text-green-400/60">{(item.accuracy * 100).toFixed(0)}%</td>
+                  <tr key={idx} className="border-b border-neutral-900/10 hover:bg-white/[0.02] transition-colors">
+                    <td className="py-3 px-4 font-semibold text-neutral-400/80">{item.model}</td>
+                    <td className="py-3 px-4 text-neutral-400 font-bold font-mono">{item.tss.toFixed(2)}</td>
+                    <td className="py-3 px-4 font-mono text-neutral-400/60">{item.leadTime}</td>
+                    <td className="py-3 px-4 font-mono text-neutral-400/60">{item.f1.toFixed(2)}</td>
+                    <td className="py-3 px-4 font-mono text-neutral-400/60">{(item.accuracy * 100).toFixed(0)}%</td>
                   </tr>
                 ))}</tbody>
               </table>
@@ -1351,13 +1351,13 @@ export default function Dashboard() {
           )}
 
           {activeTab === 'copilot' && (
-            <div className="glass-panel rounded-xl border border-red-900/20 flex flex-col h-[520px]">
-              <div className="p-4 border-b border-red-900/20 flex items-center justify-between">
+            <div className="glass-panel rounded-xl border border-neutral-900/20 flex flex-col h-[520px]">
+              <div className="p-4 border-b border-neutral-900/20 flex items-center justify-between">
                 <div>
-                  <h3 className="text-sm font-bold text-green-400 tracking-widest uppercase">Space Weather Copilot</h3>
-                  <p className="text-[10px] text-green-400/30 mt-0.5">Grounded to space weather literature, ISRO manuals &amp; Solar Vision outputs</p>
+                  <h3 className="text-sm font-bold text-neutral-400 tracking-widest uppercase">Space Weather Copilot</h3>
+                  <p className="text-[10px] text-neutral-400/30 mt-0.5">Grounded to space weather literature, ISRO manuals &amp; Solar Vision outputs</p>
                 </div>
-                <div className="text-[10px] text-red-400 flex items-center gap-1.5">
+                <div className="text-[10px] text-neutral-400 flex items-center gap-1.5">
                   <Database className="w-4 h-4" />
                   <span className="tracking-wider uppercase">RAG Active</span>
                 </div>
@@ -1366,17 +1366,17 @@ export default function Dashboard() {
                 {chatHistory.map((msg, idx) => (
                   <div key={idx} className={`flex ${msg.sender === 'user' ? 'justify-end' : 'justify-start'}`}>
                     <div className={`max-w-[70%] p-3 rounded-lg text-xs leading-relaxed ${
-                      msg.sender === 'user' ? 'bg-red-600 text-green-400 rounded-br-none' : 'bg-[#0a0a0a] text-green-400/80 border border-red-900/20 rounded-bl-none'
+                      msg.sender === 'user' ? 'bg-neutral-600 text-neutral-400 rounded-br-none' : 'bg-[#0a0a0a] text-neutral-400/80 border border-neutral-900/20 rounded-bl-none'
                     }`}>{msg.text}</div>
                   </div>
                 ))}
-                {isTyping && <div className="flex justify-start"><div className="bg-[#0a0a0a] text-green-400/40 border border-red-900/20 p-3 rounded-lg text-xs animate-pulse">Analyzing query &amp; vector documents...</div></div>}
+                {isTyping && <div className="flex justify-start"><div className="bg-[#0a0a0a] text-neutral-400/40 border border-neutral-900/20 p-3 rounded-lg text-xs animate-pulse">Analyzing query &amp; vector documents...</div></div>}
               </div>
-              <form onSubmit={handleSendMessage} className="p-4 border-t border-red-900/20 flex gap-2">
+              <form onSubmit={handleSendMessage} className="p-4 border-t border-neutral-900/20 flex gap-2">
                 <input type="text" id="copilot-input" value={chatInput} onChange={(e) => setChatInput(e.target.value)}
                   placeholder="Ask about solar flares, vision predictions, or NOAA catalogs..."
-                  className="flex-1 bg-[#050505] border border-red-900/20 rounded-lg px-4 py-2.5 text-xs text-green-400 placeholder-white/20 focus:outline-none focus:border-red-500/40 transition-colors" />
-                <button type="submit" className="px-5 py-2.5 bg-red-600 hover:bg-red-700 text-green-400 rounded-lg text-xs font-bold tracking-widest uppercase transition-colors">Send</button>
+                  className="flex-1 bg-[#050505] border border-neutral-900/20 rounded-lg px-4 py-2.5 text-xs text-neutral-400 placeholder-white/20 focus:outline-none focus:border-neutral-500/40 transition-colors" />
+                <button type="submit" className="px-5 py-2.5 bg-neutral-600 hover:bg-neutral-700 text-neutral-400 rounded-lg text-xs font-bold tracking-widest uppercase transition-colors">Send</button>
               </form>
             </div>
           )}
