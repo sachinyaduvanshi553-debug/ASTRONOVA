@@ -30,4 +30,4 @@ onnxruntime
 pytest
 pytest-cov
 pytest-asyncio
-google-generativeai
+google-genai
