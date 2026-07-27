@@ -3,6 +3,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from services.ml.inference import load_model, predict
 from services.vision.api import router as vision_router
+from services.gateway.routers.dynamic_logging import router as dynamic_logging_router
+from astronova_core.dynamic_logging import DynamicLoggingMiddleware
 
 app = FastAPI(title="Solar Flare AI API")
 
@@ -13,8 +15,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+app.add_middleware(DynamicLoggingMiddleware, service_name="main_api")
 
 app.include_router(vision_router)
+app.include_router(dynamic_logging_router)
 
 model = None
 

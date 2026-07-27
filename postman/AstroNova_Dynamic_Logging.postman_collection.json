@@ -1,0 +1,317 @@
+{
+	"info": {
+		"_postman_id": "a9b8c7d6-e5f4-4a3b-2c1d-0e9f8a7b6c5d",
+		"name": "AstroNova Dynamic Logging & Dynamic Database",
+		"description": "Postman Collection for dynamic log level management, request/response logging, and dynamic database schema inspection and queries in AstroNova.",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+	},
+	"item": [
+		{
+			"name": "1. Authentication",
+			"item": [
+				{
+					"name": "Login / Get Token",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/x-www-form-urlencoded"
+							}
+						],
+						"body": {
+							"mode": "urlencoded",
+							"urlencoded": [
+								{
+									"key": "username",
+									"value": "admin",
+									"type": "text"
+								},
+								{
+									"key": "password",
+									"value": "admin123",
+									"type": "text"
+								}
+							]
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/auth/token",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"auth",
+								"token"
+							]
+						},
+						"description": "Obtain Bearer token for authenticated requests."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "2. Dynamic Logging",
+			"item": [
+				{
+					"name": "Get Log Levels",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/logging/level",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"logging",
+								"level"
+							]
+						},
+						"description": "Retrieve current dynamic log levels for all services."
+					},
+					"response": []
+				},
+				{
+					"name": "Set Log Level (DEBUG)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"service_name\": \"gateway\",\n  \"level\": \"DEBUG\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/logging/level",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"logging",
+								"level"
+							]
+						},
+						"description": "Dynamically change log level to DEBUG at runtime without service restart."
+					},
+					"response": []
+				},
+				{
+					"name": "Set Log Level (INFO)",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"service_name\": \"gateway\",\n  \"level\": \"INFO\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/logging/level",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"logging",
+								"level"
+							]
+						},
+						"description": "Set dynamic log level back to INFO."
+					},
+					"response": []
+				},
+				{
+					"name": "Query Dynamic Logs",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/logging/logs?limit=50",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"logging",
+								"logs"
+							],
+							"query": [
+								{
+									"key": "service_name",
+									"value": "gateway",
+									"disabled": true
+								},
+								{
+									"key": "level",
+									"value": "ERROR",
+									"disabled": true
+								},
+								{
+									"key": "limit",
+									"value": "50"
+								}
+							]
+						},
+						"description": "Fetch captured dynamic request and system logs."
+					},
+					"response": []
+				},
+				{
+					"name": "Post Custom Dynamic Log",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"service_name\": \"postman_client\",\n  \"level\": \"INFO\",\n  \"category\": \"POSTMAN_TEST\",\n  \"message\": \"Triggered dynamic log test from Postman Collection\",\n  \"extra_data\": \"{\\\"test_runner\\\": \\\"postman_v10\\\", \\\"status\\\": \\\"passed\\\"}\"\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/logging/logs",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"logging",
+								"logs"
+							]
+						},
+						"description": "Send a custom log entry into the dynamic log stream."
+					},
+					"response": []
+				},
+				{
+					"name": "Clear Dynamic Logs",
+					"request": {
+						"method": "DELETE",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/logging/logs",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"logging",
+								"logs"
+							]
+						},
+						"description": "Purge in-memory log buffer."
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "3. Dynamic Database",
+			"item": [
+				{
+					"name": "Get DB Schema",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/logging/db/schema",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"logging",
+								"db",
+								"schema"
+							]
+						},
+						"description": "Retrieve all database tables, columns, and data types dynamically."
+					},
+					"response": []
+				},
+				{
+					"name": "Execute Read-Only SQL Query",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"query\": \"SELECT id, timestamp, service_name, level, message FROM dynamic_logs ORDER BY timestamp DESC\",\n  \"limit\": 20\n}"
+						},
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/logging/db/query",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"logging",
+								"db",
+								"query"
+							]
+						},
+						"description": "Execute a dynamic read-only SELECT SQL query for database verification."
+					},
+					"response": []
+				},
+				{
+					"name": "Get DB Performance Stats",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{baseUrl}}/api/v1/logging/db/stats",
+							"host": [
+								"{{baseUrl}}"
+							],
+							"path": [
+								"api",
+								"v1",
+								"logging",
+								"db",
+								"stats"
+							]
+						},
+						"description": "Fetch database connection metrics and total log statistics."
+					},
+					"response": []
+				}
+			]
+		}
+	],
+	"variable": [
+		{
+			"key": "baseUrl",
+			"value": "http://localhost:8000",
+			"type": "string"
+		}
+	]
+}
