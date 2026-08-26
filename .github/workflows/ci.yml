@@ -21,7 +21,7 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        pip install ruff pytest pytest-asyncio
+        pip install ruff pytest pytest-asyncio pytest-cov
         
     - name: Lint and format check with Ruff
       run: |
@@ -30,4 +30,4 @@ jobs:
         
     - name: Run unit tests
       run: |
-        pytest shared/ services/ --ignore=shared/setup.py
+        pytest shared/ services/ --ignore=shared/setup.py --override-ini="addopts=-v"
