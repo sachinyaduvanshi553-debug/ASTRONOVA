@@ -38,6 +38,6 @@ class SpaceWeatherMultiAgentOrchestrator:
                 "earth_impact_agent": earth_impact_agent,
                 "satellite_risk_agent": satellite_risk_agent,
                 "scientific_explanation_agent": scientific_explanation_agent,
-                "historical_retrieval_agent": historical_retrieval_agent
-            }
+                "historical_retrieval_agent": historical_retrieval_agent,
+            },
         }

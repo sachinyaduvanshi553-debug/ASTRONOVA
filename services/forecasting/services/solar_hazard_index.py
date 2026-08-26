@@ -1,4 +1,3 @@
-
 from astronova_core.utils.physics import compute_shi
 
 
@@ -9,7 +8,7 @@ class SolarHazardIndexCalculator:
         gradient: float,
         similarity: float = 0.1,
         sat_risk: float = 0.1,
-        impact_risk: float = 0.1
+        impact_risk: float = 0.1,
     ) -> dict:
         """
         Calculates Solar Hazard Index (SHI) using the standardized, multi-factor physics formula:
@@ -26,7 +25,7 @@ class SolarHazardIndexCalculator:
             growth=gradient,
             similarity=similarity,
             sat_risk=sat_risk,
-            impact_risk=impact_risk
+            impact_risk=impact_risk,
         )
 
         if score < 0.2:
@@ -46,6 +45,6 @@ class SolarHazardIndexCalculator:
                 "flux_gradient": gradient,
                 "historical_similarity": similarity,
                 "satellite_risk_factor": sat_risk,
-                "earth_impact_risk_factor": impact_risk
-            }
+                "earth_impact_risk_factor": impact_risk,
+            },
         }

@@ -1,6 +1,5 @@
-import os
-from datetime import datetime
 from services.ingestion.downloaders.base_downloader import BaseDownloader
+
 
 class NOAADownloader(BaseDownloader):
     def generate_fallback_data(self, dest_path: str):

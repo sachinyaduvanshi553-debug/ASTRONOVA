@@ -8,18 +8,15 @@ Falls back to a pure-PyTorch finite-difference IG implementation if Captum
 is not installed, so the module always runs.
 """
 
-import os
-import sys
 import logging
-import warnings
+import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
 
-import numpy as np
 import matplotlib
+import numpy as np
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import matplotlib.gridspec as gridspec
 import torch
 import torch.nn as nn
 
@@ -31,15 +28,24 @@ if str(PROJECT_ROOT) not in sys.path:
 logger = logging.getLogger("astronova.xai.integrated_gradients")
 
 FEATURE_NAMES = [
-    "log_soft_flux", "log_hard_flux", "xray_ratio",
-    "soft_gradient", "hard_gradient",
-    "soft_rolling_mean_15", "soft_rolling_std_15",
-    "soft_rolling_max_30", "soft_rolling_min_30",
-    "flux_acceleration", "time_since_prev_flare",
-    "hour_sin", "doy_sin", "noaa_ar_count", "magnetic_complexity",
+    "log_soft_flux",
+    "log_hard_flux",
+    "xray_ratio",
+    "soft_gradient",
+    "hard_gradient",
+    "soft_rolling_mean_15",
+    "soft_rolling_std_15",
+    "soft_rolling_max_30",
+    "soft_rolling_min_30",
+    "flux_acceleration",
+    "time_since_prev_flare",
+    "hour_sin",
+    "doy_sin",
+    "noaa_ar_count",
+    "magnetic_complexity",
 ]
 HORIZON_LABELS = ["15m", "30m", "1h", "6h"]
-CLASS_NAMES    = ["A/B", "C", "M", "X"]
+CLASS_NAMES = ["A/B", "C", "M", "X"]
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -48,14 +54,15 @@ class _LSTMWrapper(nn.Module):
     Thin wrapper around BiLSTMForecaster so we can call Captum on
     a specific (horizon, class) scalar output.
     """
+
     def __init__(self, model: nn.Module, horizon_idx: int, class_idx: int):
         super().__init__()
-        self.model       = model
+        self.model = model
         self.horizon_idx = horizon_idx
-        self.class_idx   = class_idx
+        self.class_idx = class_idx
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        probs, _ = self.model(x, return_tuple=True)     # [B, H, C]
+        probs, _ = self.model(x, return_tuple=True)  # [B, H, C]
         return probs[:, self.horizon_idx, self.class_idx]  # [B]
 
 
@@ -82,8 +89,8 @@ class IntegratedGradientsExplainer:
         out_dir: str = "reports/xai",
         n_steps: int = 50,
     ):
-        self.model   = model
-        self.device  = torch.device(device)
+        self.model = model
+        self.device = torch.device(device)
         self.out_dir = Path(out_dir)
         self.out_dir.mkdir(parents=True, exist_ok=True)
         self.n_steps = n_steps
@@ -94,6 +101,7 @@ class IntegratedGradientsExplainer:
         self._has_captum = False
         try:
             from captum.attr import IntegratedGradients
+
             self._ig_cls = IntegratedGradients
             self._has_captum = True
             logger.info("Captum detected — using IntegratedGradients.")
@@ -101,7 +109,7 @@ class IntegratedGradientsExplainer:
             logger.warning("Captum not installed — using pure-PyTorch IG fallback.")
 
         # Cache: {(horizon_idx, class_idx): ndarray [N, seq_len, n_features]}
-        self._attributions: Dict[Tuple[int, int], np.ndarray] = {}
+        self._attributions: dict[tuple[int, int], np.ndarray] = {}
 
     # ─────────────────────────────────────────────────────────── public API ──
     def compute_attributions(
@@ -109,7 +117,7 @@ class IntegratedGradientsExplainer:
         X: torch.Tensor,
         horizon_idx: int = 0,
         class_idx: int = 3,
-        baseline: Optional[torch.Tensor] = None,
+        baseline: torch.Tensor | None = None,
         max_samples: int = 200,
     ) -> np.ndarray:
         """
@@ -122,15 +130,17 @@ class IntegratedGradientsExplainer:
         if isinstance(X, np.ndarray):
             X = torch.tensor(X, dtype=torch.float32)
 
-        X     = X[:max_samples].to(self.device)
-        N, T, F = X.shape
+        X = X[:max_samples].to(self.device)
+        N, _T, _F = X.shape
 
         if baseline is None:
             baseline = torch.zeros_like(X)
 
         logger.info(
             "Computing IG attributions (horizon=%s, class=%s, samples=%d) …",
-            HORIZON_LABELS[horizon_idx], CLASS_NAMES[class_idx], N,
+            HORIZON_LABELS[horizon_idx],
+            CLASS_NAMES[class_idx],
+            N,
         )
 
         if self._has_captum:
@@ -155,13 +165,13 @@ class IntegratedGradientsExplainer:
         attrs = self._attributions.get((horizon_idx, class_idx))
         if attrs is None:
             raise RuntimeError("Call compute_attributions() first.")
-        abs_attrs = np.abs(attrs)           # [N, T, F]
-        time_agg  = abs_attrs.mean(axis=1)  # [N, F]  – average over timesteps
+        abs_attrs = np.abs(attrs)  # [N, T, F]
+        time_agg = abs_attrs.mean(axis=1)  # [N, F]  – average over timesteps
         if aggregate == "sum":
             return time_agg.sum(axis=0)
         elif aggregate == "max":
             return time_agg.max(axis=0)
-        return time_agg.mean(axis=0)        # [F]
+        return time_agg.mean(axis=0)  # [F]
 
     # ──────────────────────────────────────────────────────────────── plots ──
     def plot_temporal_heatmap(
@@ -178,7 +188,7 @@ class IntegratedGradientsExplainer:
         if attrs is None:
             raise RuntimeError("Call compute_attributions() first.")
 
-        sample_attr = attrs[sample_idx]   # [T, F]
+        sample_attr = attrs[sample_idx]  # [T, F]
 
         fig, ax = plt.subplots(figsize=(12, 5), facecolor="#0D1117")
         ax.set_facecolor("#0D1117")
@@ -194,12 +204,13 @@ class IntegratedGradientsExplainer:
         ax.set_yticks(range(len(FEATURE_NAMES)))
         ax.set_yticklabels(FEATURE_NAMES, color="white", fontsize=8)
         ax.set_xticks(range(sample_attr.shape[0]))
-        ax.set_xticklabels([f"t{i}" for i in range(sample_attr.shape[0])],
-                           color="white", fontsize=8)
+        ax.set_xticklabels([f"t{i}" for i in range(sample_attr.shape[0])], color="white", fontsize=8)
         ax.set_title(
             f"BiLSTM Integrated Gradients — Sample {sample_idx}\n"
             f"Horizon: {HORIZON_LABELS[horizon_idx]} | Class: {CLASS_NAMES[class_idx]}",
-            color="white", fontsize=12, pad=10,
+            color="white",
+            fontsize=12,
+            pad=10,
         )
 
         cbar = fig.colorbar(im, ax=ax, fraction=0.02, pad=0.01)
@@ -224,7 +235,7 @@ class IntegratedGradientsExplainer:
         """Horizontal bar chart of IG-based feature importance."""
         imp = self.feature_importance_from_ig(horizon_idx, class_idx)
         order = np.argsort(imp)[::-1][:15]
-        imp_top   = imp[order]
+        imp_top = imp[order]
         names_top = [FEATURE_NAMES[i] for i in order]
 
         fig, ax = plt.subplots(figsize=(10, 7), facecolor="#0D1117")
@@ -236,7 +247,9 @@ class IntegratedGradientsExplainer:
         ax.set_title(
             f"BiLSTM Integrated Gradients — Feature Importance\n"
             f"Horizon: {HORIZON_LABELS[horizon_idx]} | Class: {CLASS_NAMES[class_idx]}",
-            color="white", fontsize=12, pad=10,
+            color="white",
+            fontsize=12,
+            pad=10,
         )
         ax.tick_params(colors="white")
         for spine in ax.spines.values():
@@ -259,12 +272,19 @@ class IntegratedGradientsExplainer:
             key = (hi, class_idx)
             ax.set_facecolor("#0D1117")
             if key not in self._attributions:
-                ax.text(0.5, 0.5, "No data", ha="center", va="center",
-                        color="white", transform=ax.transAxes)
+                ax.text(
+                    0.5,
+                    0.5,
+                    "No data",
+                    ha="center",
+                    va="center",
+                    color="white",
+                    transform=ax.transAxes,
+                )
                 ax.set_title(HORIZON_LABELS[hi], color="white")
                 continue
 
-            imp   = self.feature_importance_from_ig(hi, class_idx)
+            imp = self.feature_importance_from_ig(hi, class_idx)
             order = np.argsort(imp)[::-1][:10]
             ax.barh(
                 [FEATURE_NAMES[i] for i in order][::-1],
@@ -278,7 +298,9 @@ class IntegratedGradientsExplainer:
 
         fig.suptitle(
             f"BiLSTM IG Attributions — Class: {CLASS_NAMES[class_idx]}",
-            color="white", fontsize=14, y=1.01,
+            color="white",
+            fontsize=14,
+            y=1.01,
         )
         plt.tight_layout()
         out = self.out_dir / f"ig_horizons_class{CLASS_NAMES[class_idx]}.png"
@@ -297,8 +319,9 @@ class IntegratedGradientsExplainer:
         class_idx: int,
     ) -> np.ndarray:
         from captum.attr import IntegratedGradients
+
         wrapper = _LSTMWrapper(self.model, horizon_idx, class_idx).to(self.device)
-        ig      = IntegratedGradients(wrapper)
+        ig = IntegratedGradients(wrapper)
         attrs, delta = ig.attribute(
             X,
             baselines=baseline,
@@ -317,19 +340,19 @@ class IntegratedGradientsExplainer:
     ) -> np.ndarray:
         """Pure-PyTorch Riemann sum approximation of Integrated Gradients."""
         alphas = torch.linspace(0, 1, self.n_steps, device=self.device)
-        grads  = []
+        grads = []
 
         for alpha in alphas:
             interp = baseline + alpha * (X - baseline)
             interp = interp.requires_grad_(True)
 
             wrapper = _LSTMWrapper(self.model, horizon_idx, class_idx).to(self.device)
-            out     = wrapper(interp)
-            scalar  = out.sum()
+            out = wrapper(interp)
+            scalar = out.sum()
             scalar.backward()
 
             grads.append(interp.grad.detach().clone())
 
-        integrated = torch.stack(grads, dim=0).mean(dim=0)   # [N, T, F]
+        integrated = torch.stack(grads, dim=0).mean(dim=0)  # [N, T, F]
         attrs = (X - baseline) * integrated
         return attrs.detach().cpu().numpy()

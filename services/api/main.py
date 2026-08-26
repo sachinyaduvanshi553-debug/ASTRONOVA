@@ -1,10 +1,11 @@
+from astronova_core.dynamic_logging import DynamicLoggingMiddleware
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+
+from services.gateway.routers.dynamic_logging import router as dynamic_logging_router
 from services.ml.inference import load_model, predict
 from services.vision.api import router as vision_router
-from services.gateway.routers.dynamic_logging import router as dynamic_logging_router
-from astronova_core.dynamic_logging import DynamicLoggingMiddleware
 
 app = FastAPI(title="Solar Flare AI API")
 
@@ -57,12 +58,8 @@ def home():
 def get_prediction(data: InputData):
     return predict(data.features)
 
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(
-        "services.api.main:app",
-        host="0.0.0.0",
-        port=8013,
-        reload=True
-    )
 
+    uvicorn.run("services.api.main:app", host="0.0.0.0", port=8013, reload=True)

@@ -8,6 +8,7 @@ Usage:
     python -m scripts.build_dataset
     or: from scripts.build_dataset import build_training_dataset
 """
+
 from __future__ import annotations
 
 import logging
@@ -22,18 +23,18 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
+from services.features.engineering.physics_features import PhysicsFeatures
+from services.features.engineering.time_domain import TimeDomainFeatures
 from services.processing.pipelines import (
-    DataCleaningPipeline,
     AlignmentPipeline,
+    DataCleaningPipeline,
     NormalizationPipeline,
     SmoothingPipeline,
     ValidationPipeline,
-    read_goes_nc,
-    parse_noaa_events,
     merge_goes_and_events,
+    parse_noaa_events,
+    read_goes_nc,
 )
-from services.features.engineering.physics_features import PhysicsFeatures
-from services.features.engineering.time_domain import TimeDomainFeatures
 
 logging.basicConfig(
     level=logging.INFO,
@@ -41,9 +42,9 @@ logging.basicConfig(
 )
 logger = logging.getLogger("astronova.build_dataset")
 
-RAW_DIR       = PROJECT_ROOT / "datasets" / "raw"
+RAW_DIR = PROJECT_ROOT / "datasets" / "raw"
 PROCESSED_DIR = PROJECT_ROOT / "datasets" / "processed"
-FEATURES_DIR  = PROJECT_ROOT / "datasets" / "features"
+FEATURES_DIR = PROJECT_ROOT / "datasets" / "features"
 PROCESSED_DIR.mkdir(parents=True, exist_ok=True)
 FEATURES_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -51,6 +52,7 @@ FEATURES_DIR.mkdir(parents=True, exist_ok=True)
 # ---------------------------------------------------------------------------
 # Fallback synthetic dataset (physics-compliant) when real data is absent
 # ---------------------------------------------------------------------------
+
 
 def _generate_synthetic_goes(n_minutes: int = 1440) -> pd.DataFrame:
     """Generate a physics-compliant synthetic GOES XRS 1-day dataset.
@@ -62,23 +64,25 @@ def _generate_synthetic_goes(n_minutes: int = 1440) -> pd.DataFrame:
 
     # Background: log-normal around B2 level
     background = 2e-7 * np.ones(n_minutes)
-    background *= np.exp(rng.normal(0, 0.15, n_minutes))   # ±15% noise
+    background *= np.exp(rng.normal(0, 0.15, n_minutes))  # ±15% noise
 
     # Inject 4 synthetic flares
     for start_min, peak_mult, duration in [
-        (120, 500, 20),   # C5 flare
+        (120, 500, 20),  # C5 flare
         (360, 4000, 35),  # M4 flare
-        (600, 15000, 60), # X1.5 flare
+        (600, 15000, 60),  # X1.5 flare
         (900, 1200, 25),  # M1 flare
     ]:
         if start_min + duration >= n_minutes:
             continue
-        rise  = duration // 3
+        rise = duration // 3
         decay = duration - rise
-        envelope = np.concatenate([
-            np.linspace(1, peak_mult, rise),
-            np.linspace(peak_mult, 1, decay),
-        ])
+        envelope = np.concatenate(
+            [
+                np.linspace(1, peak_mult, rise),
+                np.linspace(peak_mult, 1, decay),
+            ]
+        )
         end_min = start_min + len(envelope)
         background[start_min:end_min] *= envelope
 
@@ -86,11 +90,14 @@ def _generate_synthetic_goes(n_minutes: int = 1440) -> pd.DataFrame:
     # Hard flux ≈ 1/5 of soft (XRSA/XRSB ratio)
     hard_flux = soft_flux * rng.uniform(0.15, 0.25, n_minutes)
 
-    df = pd.DataFrame({
-        "soft_xray_flux": soft_flux,
-        "hard_xray_flux": hard_flux,
-        "quality_flag":   np.zeros(n_minutes, dtype=int),
-    }, index=t)
+    df = pd.DataFrame(
+        {
+            "soft_xray_flux": soft_flux,
+            "hard_xray_flux": hard_flux,
+            "quality_flag": np.zeros(n_minutes, dtype=int),
+        },
+        index=t,
+    )
     logger.info("Generated %d-row synthetic GOES dataset.", n_minutes)
     return df
 
@@ -98,22 +105,42 @@ def _generate_synthetic_goes(n_minutes: int = 1440) -> pd.DataFrame:
 def _generate_synthetic_events() -> pd.DataFrame:
     """Synthetic NOAA event list matching the synthetic GOES data."""
     events = [
-        {"event_id": 1, "start_time": pd.Timestamp("2026-06-21 02:00", tz="UTC"),
-         "peak_time": pd.Timestamp("2026-06-21 02:07", tz="UTC"),
-         "end_time":  pd.Timestamp("2026-06-21 02:20", tz="UTC"),
-         "flare_class": "C5.0", "location": "S15W20", "region": 3420},
-        {"event_id": 2, "start_time": pd.Timestamp("2026-06-21 06:00", tz="UTC"),
-         "peak_time": pd.Timestamp("2026-06-21 06:15", tz="UTC"),
-         "end_time":  pd.Timestamp("2026-06-21 07:00", tz="UTC"),
-         "flare_class": "M4.2", "location": "N10E45", "region": 3421},
-        {"event_id": 3, "start_time": pd.Timestamp("2026-06-21 10:00", tz="UTC"),
-         "peak_time": pd.Timestamp("2026-06-21 10:20", tz="UTC"),
-         "end_time":  pd.Timestamp("2026-06-21 11:00", tz="UTC"),
-         "flare_class": "X1.5", "location": "S20W10", "region": 3422},
-        {"event_id": 4, "start_time": pd.Timestamp("2026-06-21 15:00", tz="UTC"),
-         "peak_time": pd.Timestamp("2026-06-21 15:10", tz="UTC"),
-         "end_time":  pd.Timestamp("2026-06-21 15:30", tz="UTC"),
-         "flare_class": "M1.0", "location": "N10E45", "region": 3421},
+        {
+            "event_id": 1,
+            "start_time": pd.Timestamp("2026-06-21 02:00", tz="UTC"),
+            "peak_time": pd.Timestamp("2026-06-21 02:07", tz="UTC"),
+            "end_time": pd.Timestamp("2026-06-21 02:20", tz="UTC"),
+            "flare_class": "C5.0",
+            "location": "S15W20",
+            "region": 3420,
+        },
+        {
+            "event_id": 2,
+            "start_time": pd.Timestamp("2026-06-21 06:00", tz="UTC"),
+            "peak_time": pd.Timestamp("2026-06-21 06:15", tz="UTC"),
+            "end_time": pd.Timestamp("2026-06-21 07:00", tz="UTC"),
+            "flare_class": "M4.2",
+            "location": "N10E45",
+            "region": 3421,
+        },
+        {
+            "event_id": 3,
+            "start_time": pd.Timestamp("2026-06-21 10:00", tz="UTC"),
+            "peak_time": pd.Timestamp("2026-06-21 10:20", tz="UTC"),
+            "end_time": pd.Timestamp("2026-06-21 11:00", tz="UTC"),
+            "flare_class": "X1.5",
+            "location": "S20W10",
+            "region": 3422,
+        },
+        {
+            "event_id": 4,
+            "start_time": pd.Timestamp("2026-06-21 15:00", tz="UTC"),
+            "peak_time": pd.Timestamp("2026-06-21 15:10", tz="UTC"),
+            "end_time": pd.Timestamp("2026-06-21 15:30", tz="UTC"),
+            "flare_class": "M1.0",
+            "location": "N10E45",
+            "region": 3421,
+        },
     ]
     return pd.DataFrame(events)
 
@@ -121,6 +148,7 @@ def _generate_synthetic_events() -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 # Main pipeline runner
 # ---------------------------------------------------------------------------
+
 
 def build_training_dataset(
     goes_nc_path: Path | None = None,
@@ -136,12 +164,8 @@ def build_training_dataset(
     logger.info("=" * 60)
 
     # ── Step 1: Load raw data ─────────────────────────────────────────
-    goes_nc_path = goes_nc_path or next(
-        (p for p in (RAW_DIR / "goes_xray").glob("*.nc")), None
-    )
-    noaa_path = noaa_events_path or next(
-        (p for p in (RAW_DIR / "noaa_events").glob("*.txt")), None
-    )
+    goes_nc_path = goes_nc_path or next((p for p in (RAW_DIR / "goes_xray").glob("*.nc")), None)
+    noaa_path = noaa_events_path or next((p for p in (RAW_DIR / "noaa_events").glob("*.txt")), None)
 
     if goes_nc_path and goes_nc_path.exists():
         logger.info("Loading GOES NC: %s", goes_nc_path)

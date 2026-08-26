@@ -1,13 +1,13 @@
-
 import numpy as np
 
 GOES_THRESHOLDS: dict[str, tuple[float, float]] = {
-    'A': (1e-8, 1e-7),
-    'B': (1e-7, 1e-6),
-    'C': (1e-6, 1e-5),
-    'M': (1e-5, 1e-4),
-    'X': (1e-4, float('inf')),
+    "A": (1e-8, 1e-7),
+    "B": (1e-7, 1e-6),
+    "C": (1e-6, 1e-5),
+    "M": (1e-5, 1e-4),
+    "X": (1e-4, float("inf")),
 }
+
 
 def classify_flare(flux: float) -> str:
     for classification, (low, high) in GOES_THRESHOLDS.items():
@@ -18,10 +18,12 @@ def classify_flare(flux: float) -> str:
         return "A0.0"
     return "X10.0"
 
+
 def compute_xray_ratio(soft_flux: float, hard_flux: float) -> float:
     if soft_flux <= 0 or hard_flux <= 0:
         return 0.0
     return soft_flux / hard_flux
+
 
 def compute_advanced_features(soft_flux_series: list[float], hard_flux_series: list[float]) -> dict:
     """
@@ -47,7 +49,7 @@ def compute_advanced_features(soft_flux_series: list[float], hard_flux_series: l
     entropy = -np.sum(soft_prob * np.log2(soft_prob + 1e-12))
 
     # Precursor Activity Score (combining gradient factor & ratio)
-    precursor_score = float(max(soft_grad[-1] * 1e5, 0.0) + (soft[-1]/hard[-1] if hard[-1] > 0 else 0.0) * 0.05)
+    precursor_score = float(max(soft_grad[-1] * 1e5, 0.0) + (soft[-1] / hard[-1] if hard[-1] > 0 else 0.0) * 0.05)
 
     return {
         "soft_xray_gradient": float(soft_grad[-1]),
@@ -56,8 +58,9 @@ def compute_advanced_features(soft_flux_series: list[float], hard_flux_series: l
         "xray_ratio": float(soft[-1] / hard[-1]) if hard[-1] > 0 else 0.0,
         "energy_accumulation_rate": float(np.trapz(soft)),
         "rolling_entropy": float(entropy),
-        "precursor_activity_score": precursor_score
+        "precursor_activity_score": precursor_score,
     }
+
 
 def compute_shi(prob: float, growth: float, similarity: float, sat_risk: float, impact_risk: float) -> float:
     """
@@ -67,6 +70,7 @@ def compute_shi(prob: float, growth: float, similarity: float, sat_risk: float, 
     growth_factor = min(max(growth * 1e5, 0.0), 1.0)
     score = (0.35 * prob) + (0.25 * growth_factor) + (0.15 * similarity) + (0.15 * sat_risk) + (0.10 * impact_risk)
     return min(max(score, 0.0), 1.0)
+
 
 def track_lifecycle_phase(soft_flux_series: list[float]) -> str:
     """
@@ -94,9 +98,11 @@ def track_lifecycle_phase(soft_flux_series: list[float]) -> str:
         return "Peak"
     return "Quiescent"
 
+
 # Thermodynamic limits for solar plasma reconnection flux growth rate
 # Standard physical upper limit is 1e-4 to 1e-3 W/m^2 per minute for extreme X-class solar flares
 THERMODYNAMIC_GROWTH_LIMIT = 1e-3  # W/m^2 per minute
+
 
 def apply_physics_constraints(current_flux: float, predicted_flux: float, dt_minutes: float) -> float:
     """

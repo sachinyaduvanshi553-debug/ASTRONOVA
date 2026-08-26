@@ -5,7 +5,7 @@ Re-exports every metric from ``evaluate.py`` and adds flare-classification
 metrics (precision / recall / F1 for binary and multi-class C/M/X).
 """
 
-from typing import Dict, List, Optional, Sequence, Union
+from collections.abc import Sequence
 
 import numpy as np
 import torch
@@ -14,38 +14,39 @@ import torch
 # Re-export all image-quality metrics from evaluate
 # ---------------------------------------------------------------------------
 from .evaluate import (
-    calculate_psnr,
+    Evaluator,
+    calculate_fid,
+    calculate_fid_features,
     calculate_mae,
+    calculate_per_channel_metrics,
+    calculate_psnr,
     calculate_rmse,
     calculate_ssim,
-    calculate_per_channel_metrics,
-    calculate_fid_features,
-    calculate_fid,
-    Evaluator,
 )
 
 __all__ = [
-    # pixel / structural metrics
-    'calculate_psnr',
-    'calculate_mae',
-    'calculate_rmse',
-    'calculate_ssim',
-    'calculate_per_channel_metrics',
-    # distribution metrics
-    'calculate_fid_features',
-    'calculate_fid',
     # evaluator
-    'Evaluator',
+    "Evaluator",
     # flare classification
-    'FlareClassificationMetrics',
+    "FlareClassificationMetrics",
+    "calculate_fid",
+    # distribution metrics
+    "calculate_fid_features",
+    "calculate_mae",
+    "calculate_per_channel_metrics",
+    # pixel / structural metrics
+    "calculate_psnr",
+    "calculate_rmse",
+    "calculate_ssim",
     # convenience
-    'compute_all_metrics',
+    "compute_all_metrics",
 ]
 
 
 # ---------------------------------------------------------------------------
 # Flare classification metrics
 # ---------------------------------------------------------------------------
+
 
 class FlareClassificationMetrics:
     """Precision, Recall, and F1 for solar-flare prediction.
@@ -59,13 +60,13 @@ class FlareClassificationMetrics:
     All inputs are expected as 1-D integer tensors or Python lists.
     """
 
-    CLASS_NAMES: Dict[int, str] = {0: 'C', 1: 'M', 2: 'X'}
+    CLASS_NAMES: dict[int, str] = {0: "C", 1: "M", 2: "X"}
 
-    def __init__(self, mode: str = 'binary', num_classes: Optional[int] = None):
-        if mode not in ('binary', 'multiclass'):
+    def __init__(self, mode: str = "binary", num_classes: int | None = None):
+        if mode not in ("binary", "multiclass"):
             raise ValueError(f"mode must be 'binary' or 'multiclass', got '{mode}'")
         self.mode = mode
-        if mode == 'binary':
+        if mode == "binary":
             self.num_classes = 2
         else:
             self.num_classes = num_classes or 3  # C / M / X
@@ -86,9 +87,9 @@ class FlareClassificationMetrics:
 
     def compute(
         self,
-        predictions: Union[torch.Tensor, Sequence[int]],
-        targets: Union[torch.Tensor, Sequence[int]],
-    ) -> Dict:
+        predictions: torch.Tensor | Sequence[int],
+        targets: torch.Tensor | Sequence[int],
+    ) -> dict:
         """Return a dict of precision, recall, F1 (per-class and macro).
 
         Parameters
@@ -109,13 +110,13 @@ class FlareClassificationMetrics:
         preds = self._to_numpy(predictions)
         tgts = self._to_numpy(targets)
 
-        if self.mode == 'binary':
+        if self.mode == "binary":
             return self._binary_metrics(preds, tgts)
         return self._multiclass_metrics(preds, tgts)
 
     # -- binary ------------------------------------------------------------
 
-    def _binary_metrics(self, preds: np.ndarray, tgts: np.ndarray) -> Dict:
+    def _binary_metrics(self, preds: np.ndarray, tgts: np.ndarray) -> dict:
         tp = int(((preds == 1) & (tgts == 1)).sum())
         fp = int(((preds == 1) & (tgts == 0)).sum())
         fn = int(((preds == 0) & (tgts == 1)).sum())
@@ -127,18 +128,18 @@ class FlareClassificationMetrics:
         accuracy = self._safe_div(tp + tn, tp + fp + fn + tn)
 
         return {
-            'precision': precision,
-            'recall': recall,
-            'f1': f1,
-            'accuracy': accuracy,
-            'support': int(tgts.sum()),
-            'confusion': {'tp': tp, 'fp': fp, 'fn': fn, 'tn': tn},
+            "precision": precision,
+            "recall": recall,
+            "f1": f1,
+            "accuracy": accuracy,
+            "support": int(tgts.sum()),
+            "confusion": {"tp": tp, "fp": fp, "fn": fn, "tn": tn},
         }
 
     # -- multi-class -------------------------------------------------------
 
-    def _multiclass_metrics(self, preds: np.ndarray, tgts: np.ndarray) -> Dict:
-        per_class: Dict[str, Dict[str, float]] = {}
+    def _multiclass_metrics(self, preds: np.ndarray, tgts: np.ndarray) -> dict:
+        per_class: dict[str, dict[str, float]] = {}
         precisions, recalls, f1s = [], [], []
 
         for cls_id in range(self.num_classes):
@@ -152,10 +153,10 @@ class FlareClassificationMetrics:
 
             cls_name = self.CLASS_NAMES.get(cls_id, str(cls_id))
             per_class[cls_name] = {
-                'precision': p,
-                'recall': r,
-                'f1': f,
-                'support': int((tgts == cls_id).sum()),
+                "precision": p,
+                "recall": r,
+                "f1": f,
+                "support": int((tgts == cls_id).sum()),
             }
             precisions.append(p)
             recalls.append(r)
@@ -164,11 +165,11 @@ class FlareClassificationMetrics:
         accuracy = self._safe_div(int((preds == tgts).sum()), len(tgts))
 
         return {
-            'per_class': per_class,
-            'macro_precision': float(np.mean(precisions)),
-            'macro_recall': float(np.mean(recalls)),
-            'macro_f1': float(np.mean(f1s)),
-            'accuracy': accuracy,
+            "per_class": per_class,
+            "macro_precision": float(np.mean(precisions)),
+            "macro_recall": float(np.mean(recalls)),
+            "macro_f1": float(np.mean(f1s)),
+            "accuracy": accuracy,
         }
 
 
@@ -176,14 +177,15 @@ class FlareClassificationMetrics:
 # Convenience: compute every metric in one call
 # ---------------------------------------------------------------------------
 
+
 def compute_all_metrics(
-    pred_images: Optional[torch.Tensor] = None,
-    target_images: Optional[torch.Tensor] = None,
-    pred_labels: Optional[torch.Tensor] = None,
-    target_labels: Optional[torch.Tensor] = None,
+    pred_images: torch.Tensor | None = None,
+    target_images: torch.Tensor | None = None,
+    pred_labels: torch.Tensor | None = None,
+    target_labels: torch.Tensor | None = None,
     data_range: float = 1.0,
-    flare_mode: str = 'binary',
-) -> Dict:
+    flare_mode: str = "binary",
+) -> dict:
     """One-stop shop: compute all available metrics and return a unified dict.
 
     Parameters
@@ -206,7 +208,7 @@ def compute_all_metrics(
         Combined metrics dictionary.  Keys present depend on which inputs
         were supplied.
     """
-    results: Dict = {}
+    results: dict = {}
 
     # --- image-quality metrics ---
     if pred_images is not None and target_images is not None:
@@ -215,7 +217,7 @@ def compute_all_metrics(
             target_images = target_images.unsqueeze(0)
 
         psnr_vals, mae_vals, rmse_vals, ssim_vals = [], [], [], []
-        per_channel_all: List[Dict] = []
+        per_channel_all: list[dict] = []
 
         for i in range(pred_images.shape[0]):
             p = pred_images[i].unsqueeze(0)
@@ -226,17 +228,17 @@ def compute_all_metrics(
             ssim_vals.append(calculate_ssim(p, t, data_range=data_range).item())
             per_channel_all.append(calculate_per_channel_metrics(p, t, data_range))
 
-        results['image_metrics'] = {
-            'psnr': float(np.mean(psnr_vals)),
-            'mae': float(np.mean(mae_vals)),
-            'rmse': float(np.mean(rmse_vals)),
-            'ssim': float(np.mean(ssim_vals)),
-            'per_channel': per_channel_all,
+        results["image_metrics"] = {
+            "psnr": float(np.mean(psnr_vals)),
+            "mae": float(np.mean(mae_vals)),
+            "rmse": float(np.mean(rmse_vals)),
+            "ssim": float(np.mean(ssim_vals)),
+            "per_channel": per_channel_all,
         }
 
     # --- flare classification metrics ---
     if pred_labels is not None and target_labels is not None:
         flare_metrics = FlareClassificationMetrics(mode=flare_mode)
-        results['flare_metrics'] = flare_metrics.compute(pred_labels, target_labels)
+        results["flare_metrics"] = flare_metrics.compute(pred_labels, target_labels)
 
     return results

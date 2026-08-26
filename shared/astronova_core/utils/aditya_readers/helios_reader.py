@@ -7,6 +7,7 @@ import pandas as pd
 
 logger = logging.getLogger("astronova.helios_reader")
 
+
 class HeliosCdfReader:
     """
     Helios Level-1 CDF and general format reader.
@@ -55,14 +56,15 @@ class HeliosCdfReader:
 
         try:
             import cdflib
+
             cdf = cdflib.CDF(filepath)
 
             # Extract variables (standard ISRO HEL1OS names or case-insensitive fallbacks)
             info = cdf.cdf_info()
             var_names = list(info.zVariables) + list(info.rVariables)
 
-            epoch_var = next((v for v in var_names if v.lower() == 'epoch'), None)
-            counts_var = next((v for v in var_names if 'count' in v.lower() or 'flux' in v.lower()), None)
+            epoch_var = next((v for v in var_names if v.lower() == "epoch"), None)
+            counts_var = next((v for v in var_names if "count" in v.lower() or "flux" in v.lower()), None)
 
             if not epoch_var or not counts_var:
                 raise KeyError(f"Required variables ('Epoch' and counts) not found in CDF. Found: {var_names}")
@@ -90,14 +92,16 @@ class HeliosCdfReader:
             # Convert to flux (W/m^2)
             hard_xray_flux = clean_counts * self.calibration_factor
 
-            df = pd.DataFrame({
-                "time": pd.to_datetime(times),
-                "hard_xray_flux": hard_xray_flux,
-                "counts_per_sec": clean_counts,
-                "raw_counts": counts_sec
-            })
+            df = pd.DataFrame(
+                {
+                    "time": pd.to_datetime(times),
+                    "hard_xray_flux": hard_xray_flux,
+                    "counts_per_sec": clean_counts,
+                    "raw_counts": counts_sec,
+                }
+            )
 
-            df['time'] = pd.to_datetime(df['time'])
+            df["time"] = pd.to_datetime(df["time"])
             return df
 
         except ImportError:
@@ -114,21 +118,21 @@ class HeliosCdfReader:
         df.columns = [c.lower() for c in df.columns]
 
         # Rename mappings
-        if 'timestamp' in df.columns:
-            df = df.rename(columns={'timestamp': 'time'})
-        if 'counts' in df.columns:
-            df = df.rename(columns={'counts': 'counts_per_sec'})
+        if "timestamp" in df.columns:
+            df = df.rename(columns={"timestamp": "time"})
+        if "counts" in df.columns:
+            df = df.rename(columns={"counts": "counts_per_sec"})
 
-        df['time'] = pd.to_datetime(df['time'])
+        df["time"] = pd.to_datetime(df["time"])
 
-        if 'counts_per_sec' in df.columns:
-            corrected = self.apply_dead_time_correction(df['counts_per_sec'].values)
+        if "counts_per_sec" in df.columns:
+            corrected = self.apply_dead_time_correction(df["counts_per_sec"].values)
             clean = self.subtract_background(corrected)
-            df['counts_per_sec'] = clean
-            df['hard_xray_flux'] = clean * self.calibration_factor
-        elif 'hard_xray_flux' not in df.columns:
-            df['hard_xray_flux'] = 1e-9
-            df['counts_per_sec'] = 100.0
+            df["counts_per_sec"] = clean
+            df["hard_xray_flux"] = clean * self.calibration_factor
+        elif "hard_xray_flux" not in df.columns:
+            df["hard_xray_flux"] = 1e-9
+            df["counts_per_sec"] = 100.0
 
         return df
 
@@ -141,10 +145,12 @@ class HeliosCdfReader:
         clean = self.subtract_background(corrected)
         hard_xray_flux = clean * self.calibration_factor
 
-        df = pd.DataFrame({
-            "time": pd.date_range(start=datetime.now() - timedelta(hours=2), periods=periods, freq="1Min"),
-            "hard_xray_flux": hard_xray_flux,
-            "counts_per_sec": clean,
-            "raw_counts": raw_counts
-        })
+        df = pd.DataFrame(
+            {
+                "time": pd.date_range(start=datetime.now() - timedelta(hours=2), periods=periods, freq="1Min"),
+                "hard_xray_flux": hard_xray_flux,
+                "counts_per_sec": clean,
+                "raw_counts": raw_counts,
+            }
+        )
         return df

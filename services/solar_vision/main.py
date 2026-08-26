@@ -2,8 +2,9 @@
 Provides FastAPI application that exposes vision prediction endpoints,
 now using the full VisionInferencePipeline from services/vision.
 """
-from fastapi import FastAPI
+
 from astronova_core.logging import setup_logging
+from fastapi import FastAPI
 
 # Use the fully featured vision router from services/vision
 from services.vision.api import router as vision_router
@@ -17,6 +18,7 @@ app = FastAPI(
 )
 
 from fastapi.middleware.cors import CORSMiddleware
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -26,6 +28,7 @@ app.add_middleware(
 )
 
 app.include_router(vision_router)
+
 
 @app.get("/health")
 async def health_check():

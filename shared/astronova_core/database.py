@@ -7,19 +7,12 @@ from astronova_core.config import get_settings
 
 settings = get_settings()
 
-engine = create_async_engine(
-    settings.database.url,
-    pool_pre_ping=True,
-    echo=False
-)
+engine = create_async_engine(settings.database.url, pool_pre_ping=True, echo=False)
 
-AsyncSessionLocal = async_sessionmaker(
-    bind=engine,
-    class_=AsyncSession,
-    expire_on_commit=False
-)
+AsyncSessionLocal = async_sessionmaker(bind=engine, class_=AsyncSession, expire_on_commit=False)
 
 Base = declarative_base()
+
 
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with AsyncSessionLocal() as session:
@@ -31,6 +24,7 @@ async def get_db() -> AsyncGenerator[AsyncSession, None]:
             raise
         finally:
             await session.close()
+
 
 async def init_db() -> None:
     async with engine.begin() as conn:

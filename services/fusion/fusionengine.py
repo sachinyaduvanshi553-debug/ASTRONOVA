@@ -1,6 +1,6 @@
-import pandas as pd
-import numpy as np
 from pathlib import Path
+
+import pandas as pd
 import pyarrow.dataset as ds
 
 # -----------------------------
@@ -26,9 +26,7 @@ def load_data():
 
     # 🔥 MEMORY SAFE HELIOS LOADING
     dataset = ds.dataset(HELIOS_PATH, format="parquet")
-    helios = dataset.to_table(
-        columns=["timestamp", "count_rate", "stat_err", "snr"]
-    ).to_pandas(split_blocks=True)
+    helios = dataset.to_table(columns=["timestamp", "count_rate", "stat_err", "snr"]).to_pandas(split_blocks=True)
 
     # 🔥 reduce memory footprint (important)
     helios = helios.iloc[::10].reset_index(drop=True)
@@ -63,22 +61,22 @@ def preprocess(goes, helios, solexs, noaa):
     print("⚙️ Preprocessing...")
 
     # ---- GOES ----
-    time_col_goes = [c for c in goes.columns if "time" in c.lower()][0]
+    time_col_goes = next(c for c in goes.columns if "time" in c.lower())
     goes = standardize_time(goes, time_col_goes)
     goes = goes.rename(columns={time_col_goes: "timestamp"}).sort_values("timestamp")
 
     # ---- HELIOS ----
-    time_col_hel = [c for c in helios.columns if "time" in c.lower()][0]
+    time_col_hel = next(c for c in helios.columns if "time" in c.lower())
     helios = standardize_time(helios, time_col_hel)
     helios = helios.rename(columns={time_col_hel: "timestamp"}).sort_values("timestamp")
 
     # ---- SOLEXS ----
-    time_col_sol = [c for c in solexs.columns if "time" in c.lower()][0]
+    time_col_sol = next(c for c in solexs.columns if "time" in c.lower())
     solexs = standardize_time(solexs, time_col_sol)
     solexs = solexs.rename(columns={time_col_sol: "timestamp"}).sort_values("timestamp")
 
     # ---- NOAA ----
-    time_col_noaa = [c for c in noaa.columns if "time" in c.lower()][0]
+    time_col_noaa = next(c for c in noaa.columns if "time" in c.lower())
     noaa = standardize_time(noaa, time_col_noaa)
     noaa = noaa.rename(columns={time_col_noaa: "timestamp"}).sort_values("timestamp")
 
@@ -94,7 +92,7 @@ def time_merge(base, other, window="10min"):
         other.sort_values("timestamp"),
         on="timestamp",
         direction="nearest",
-        tolerance=pd.Timedelta(window)
+        tolerance=pd.Timedelta(window),
     )
 
 

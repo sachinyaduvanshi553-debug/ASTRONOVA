@@ -7,12 +7,12 @@ Handles:
 - Quality flag assignment
 - Missing value interpolation with physics-informed backfill
 """
+
 from __future__ import annotations
 
 import logging
 import re
 from pathlib import Path
-from typing import List, Optional
 
 import numpy as np
 import pandas as pd
@@ -22,13 +22,14 @@ from services.processing.pipelines.base import BasePipeline
 logger = logging.getLogger("astronova.processing.cleaning")
 
 # Minimum physical GOES soft X-ray flux (background ~A0 level)
-_FLUX_FLOOR = 1e-9   # W/m²
-_FLUX_CEIL  = 1e-3   # W/m²  (beyond X100 — non-physical in modern era)
+_FLUX_FLOOR = 1e-9  # W/m²
+_FLUX_CEIL = 1e-3  # W/m²  (beyond X100 — non-physical in modern era)
 
 
 # ---------------------------------------------------------------------------
 # NetCDF / GOES reader  (called before the pipeline if needed)
 # ---------------------------------------------------------------------------
+
 
 def _synthetic_goes_fallback(filepath: str) -> pd.DataFrame:
     """Generate a physics-compliant 1-day synthetic GOES dataset as last resort."""
@@ -39,14 +40,18 @@ def _synthetic_goes_fallback(filepath: str) -> pd.DataFrame:
     background = 2e-7 * np.exp(rng.normal(0, 0.1, n))
     for start, mult, dur in [(120, 500, 20), (360, 4000, 35), (600, 15000, 60)]:
         env = np.concatenate([np.linspace(1, mult, dur // 3), np.linspace(mult, 1, dur - dur // 3)])
-        background[start:start + len(env)] *= env
+        background[start : start + len(env)] *= env
     soft = np.clip(background, 1e-9, 1e-3)
     hard = soft * rng.uniform(0.15, 0.25, n)
     return pd.DataFrame(
-        {"soft_xray_flux": soft, "hard_xray_flux": np.clip(hard, 1e-9, 1e-3),
-         "quality_flag": np.zeros(n, dtype=int)},
+        {
+            "soft_xray_flux": soft,
+            "hard_xray_flux": np.clip(hard, 1e-9, 1e-3),
+            "quality_flag": np.zeros(n, dtype=int),
+        },
         index=pd.DatetimeIndex(t, name="time"),
     )
+
 
 def read_goes_nc(filepath: str) -> pd.DataFrame:
     """Read a GOES XRS Level-2 1-minute data file into a standard DataFrame.
@@ -62,7 +67,9 @@ def read_goes_nc(filepath: str) -> pd.DataFrame:
         with open(filepath, "rb") as fh:
             header = fh.read(4)
         is_text = all(b < 128 for b in header) and header[:4] not in (
-            b"\x89HDF", b"CDF\x01", b"CDF\x02"
+            b"\x89HDF",
+            b"CDF\x01",
+            b"CDF\x02",
         )
     except OSError:
         is_text = False
@@ -93,31 +100,33 @@ def read_goes_nc(filepath: str) -> pd.DataFrame:
     # ── NetCDF4 path ──────────────────────────────────────────────────
     try:
         import netCDF4 as nc  # type: ignore
+
         ds = nc.Dataset(filepath, "r")
 
         # GOES XRS L2 variable names
-        time_var  = ds.variables.get("time") or ds.variables.get("TIME")
-        xrsa_var  = ds.variables.get("xrsa_flux") or ds.variables.get("A_FLUX")  # 0.05–0.4 nm
-        xrsb_var  = ds.variables.get("xrsb_flux") or ds.variables.get("B_FLUX")  # 0.1–0.8 nm
-        qual_var  = ds.variables.get("xrsb_flag") or ds.variables.get("QUALITY")
+        time_var = ds.variables.get("time") or ds.variables.get("TIME")
+        xrsa_var = ds.variables.get("xrsa_flux") or ds.variables.get("A_FLUX")  # 0.05–0.4 nm
+        xrsb_var = ds.variables.get("xrsb_flux") or ds.variables.get("B_FLUX")  # 0.1–0.8 nm
+        qual_var = ds.variables.get("xrsb_flag") or ds.variables.get("QUALITY")
 
         # Time: seconds since epoch stored in time_var.units
         units = getattr(time_var, "units", "seconds since 1970-01-01")
         timestamps = pd.to_datetime(
-            nc.num2date(time_var[:], units, only_use_cftime_datetimes=False,
-                        only_use_python_datetimes=True)
+            nc.num2date(time_var[:], units, only_use_cftime_datetimes=False, only_use_python_datetimes=True)
         )
-        soft_flux = np.array(xrsb_var[:], dtype=float)   # XRSB = 0.1–0.8 nm  ("soft")
-        hard_flux = np.array(xrsa_var[:], dtype=float)   # XRSA = 0.05–0.4 nm ("hard")
-        quality   = np.array(qual_var[:], dtype=int) if qual_var is not None else np.zeros(len(timestamps), dtype=int)
+        soft_flux = np.array(xrsb_var[:], dtype=float)  # XRSB = 0.1–0.8 nm  ("soft")
+        hard_flux = np.array(xrsa_var[:], dtype=float)  # XRSA = 0.05–0.4 nm ("hard")
+        quality = np.array(qual_var[:], dtype=int) if qual_var is not None else np.zeros(len(timestamps), dtype=int)
         ds.close()
 
-        df = pd.DataFrame({
-            "time":           timestamps,
-            "soft_xray_flux": soft_flux,
-            "hard_xray_flux": hard_flux,
-            "quality_flag":   quality,
-        })
+        df = pd.DataFrame(
+            {
+                "time": timestamps,
+                "soft_xray_flux": soft_flux,
+                "hard_xray_flux": hard_flux,
+                "quality_flag": quality,
+            }
+        )
         df.set_index("time", inplace=True)
         logger.info("Read GOES NC: %s → %d rows", Path(filepath).name, len(df))
         return df
@@ -127,6 +136,7 @@ def read_goes_nc(filepath: str) -> pd.DataFrame:
         # ── Fallback 2: h5py (handles NetCDF4 / HDF5 format) ──────────
         try:
             import h5py  # type: ignore
+
             with h5py.File(filepath, "r") as f:
                 keys = list(f.keys())
                 # GOES XRS L2 variable layout
@@ -137,9 +147,9 @@ def read_goes_nc(filepath: str) -> pd.DataFrame:
                 if time_key is None:
                     raise KeyError(f"No 'time' key in {keys}")
 
-                t_raw   = f[time_key][:]
-                s_raw   = f[soft_key][:].astype(float) if soft_key else np.full(len(t_raw), 2e-7)
-                h_raw   = f[hard_key][:].astype(float) if hard_key else s_raw * 0.2
+                t_raw = f[time_key][:]
+                s_raw = f[soft_key][:].astype(float) if soft_key else np.full(len(t_raw), 2e-7)
+                h_raw = f[hard_key][:].astype(float) if hard_key else s_raw * 0.2
 
                 # Time units: try attribute, else assume J2000 epoch (GOES convention)
                 try:
@@ -154,11 +164,14 @@ def read_goes_nc(filepath: str) -> pd.DataFrame:
                 except Exception:
                     timestamps = pd.to_datetime(t_raw, unit="s", utc=True)
 
-            df = pd.DataFrame({
-                "soft_xray_flux": np.clip(s_raw, 1e-9, 1e-3),
-                "hard_xray_flux": np.clip(h_raw, 1e-9, 1e-3),
-                "quality_flag":   np.zeros(len(t_raw), dtype=int),
-            }, index=timestamps)
+            df = pd.DataFrame(
+                {
+                    "soft_xray_flux": np.clip(s_raw, 1e-9, 1e-3),
+                    "hard_xray_flux": np.clip(h_raw, 1e-9, 1e-3),
+                    "quality_flag": np.zeros(len(t_raw), dtype=int),
+                },
+                index=timestamps,
+            )
             df.index.name = "time"
             logger.info("Read GOES NC via h5py fallback: %s → %d rows", Path(filepath).name, len(df))
             return df
@@ -185,8 +198,8 @@ def parse_noaa_events(filepath: str) -> pd.DataFrame:
         r"(\d{4})\s+(\d{4})\s+(\d{4})\s+"
         r"(\S+)\s+(\d)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)"
     )
-    date_str: Optional[str] = None
-    with open(filepath, "r", encoding="utf-8", errors="replace") as fh:
+    date_str: str | None = None
+    with open(filepath, encoding="utf-8", errors="replace") as fh:
         for line in fh:
             # Extract date from header
             m_date = re.search(r"(\d{4})\s+(\w{3})\s+(\d{2})", line)
@@ -194,21 +207,29 @@ def parse_noaa_events(filepath: str) -> pd.DataFrame:
                 date_str = m_date.group(0).replace(" ", " ")
             m = flare_pat.match(line.strip())
             if m and m.group(7) == "FLA":  # Only flare events
-                event_id, begin, peak, end, obs, qual, typ, loc, cls, reg = m.groups()
+                event_id, begin, peak, end, _obs, _qual, _typ, loc, cls, reg = m.groups()
                 # Build timestamps — use the date from the file header
-                base_date = pd.Timestamp.now().normalize() if date_str is None else pd.to_datetime(date_str, format="%Y %b %d", errors="coerce")
-                def _t(hhmm: str) -> pd.Timestamp:
+                base_date = (
+                    pd.Timestamp.now().normalize()
+                    if date_str is None
+                    else pd.to_datetime(date_str, format="%Y %b %d", errors="coerce")
+                )
+
+                def _t(hhmm: str, bd=base_date) -> pd.Timestamp:
                     h, mi = int(hhmm[:2]), int(hhmm[2:])
-                    return base_date.replace(hour=h, minute=mi)
-                events.append({
-                    "event_id":   int(event_id),
-                    "start_time": _t(begin),
-                    "peak_time":  _t(peak),
-                    "end_time":   _t(end),
-                    "flare_class": cls,
-                    "location":   loc,
-                    "region":     int(reg),
-                })
+                    return bd.replace(hour=h, minute=mi)
+
+                events.append(
+                    {
+                        "event_id": int(event_id),
+                        "start_time": _t(begin),
+                        "peak_time": _t(peak),
+                        "end_time": _t(end),
+                        "flare_class": cls,
+                        "location": loc,
+                        "region": int(reg),
+                    }
+                )
     df = pd.DataFrame(events)
     logger.info("Parsed NOAA events: %s → %d flare events", Path(filepath).name, len(df))
     return df
@@ -217,6 +238,7 @@ def parse_noaa_events(filepath: str) -> pd.DataFrame:
 # ---------------------------------------------------------------------------
 # DataCleaningPipeline
 # ---------------------------------------------------------------------------
+
 
 class DataCleaningPipeline(BasePipeline):
     """Full cleaning pipeline for GOES XRS tabular flux data.
@@ -230,7 +252,7 @@ class DataCleaningPipeline(BasePipeline):
     6. Quality flag column       (0 = clean, 1 = imputed, 2 = spike-removed)
     """
 
-    FLUX_COLUMNS: List[str] = ["soft_xray_flux", "hard_xray_flux"]
+    FLUX_COLUMNS: list[str] = ["soft_xray_flux", "hard_xray_flux"]
 
     def __init__(
         self,
@@ -244,7 +266,7 @@ class DataCleaningPipeline(BasePipeline):
         self._stats: dict = {}
 
     # ------------------------------------------------------------------
-    def fit(self, df: pd.DataFrame) -> "DataCleaningPipeline":
+    def fit(self, df: pd.DataFrame) -> DataCleaningPipeline:
         """Compute IQR bounds from training data."""
         self._stats = {}
         for col in self.FLUX_COLUMNS:
@@ -253,7 +275,9 @@ class DataCleaningPipeline(BasePipeline):
                 q3 = df[col].quantile(0.75)
                 iqr = q3 - q1
                 self._stats[col] = {
-                    "q1": q1, "q3": q3, "iqr": iqr,
+                    "q1": q1,
+                    "q3": q3,
+                    "iqr": iqr,
                     "lower": q1 - self.iqr_multiplier * iqr,
                     "upper": q3 + self.iqr_multiplier * iqr,
                 }
@@ -303,13 +327,13 @@ class DataCleaningPipeline(BasePipeline):
             df[col] = df[col].clip(lower=_FLUX_FLOOR, upper=_FLUX_CEIL)
 
         # ── 4. Spike detection via rolling Z-score ────────────────────
-        window = max(self.min_rows, 20)   # 20-minute rolling window
+        window = max(self.min_rows, 20)  # 20-minute rolling window
         for col in self.FLUX_COLUMNS:
             if col not in df.columns:
                 continue
             roll_mean = df[col].rolling(window=window, center=True, min_periods=3).mean()
-            roll_std  = df[col].rolling(window=window, center=True, min_periods=3).std()
-            z_score   = (df[col] - roll_mean) / (roll_std + 1e-30)
+            roll_std = df[col].rolling(window=window, center=True, min_periods=3).std()
+            z_score = (df[col] - roll_mean) / (roll_std + 1e-30)
             spike_mask = z_score.abs() > self.spike_zscore_threshold
             n_spikes = int(spike_mask.sum())
             if n_spikes > 0:
@@ -328,8 +352,8 @@ class DataCleaningPipeline(BasePipeline):
                 q1 = df[col].quantile(0.25)
                 q3 = df[col].quantile(0.75)
                 iqr = q3 - q1
-                lb  = max(q1 - self.iqr_multiplier * iqr, _FLUX_FLOOR)
-                ub  = min(q3 + self.iqr_multiplier * iqr, _FLUX_CEIL)
+                lb = max(q1 - self.iqr_multiplier * iqr, _FLUX_FLOOR)
+                ub = min(q3 + self.iqr_multiplier * iqr, _FLUX_CEIL)
             df[col] = df[col].clip(lower=lb, upper=ub)
 
         logger.info("DataCleaningPipeline complete: %d rows, %d cols.", len(df), len(df.columns))

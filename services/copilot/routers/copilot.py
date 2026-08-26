@@ -1,6 +1,8 @@
 import traceback
+
 from fastapi import APIRouter
 from pydantic import BaseModel
+
 from services.copilot.core.rag_chain import SpaceWeatherRAGChain
 
 router = APIRouter(prefix="/api/v1/copilot", tags=["copilot"])
@@ -25,7 +27,7 @@ async def chat_with_copilot(request: ChatRequest):
     except Exception as e:
         traceback.print_exc()
         return {
-            "answer": f"An internal error occurred: {str(e)}. Please try again.",
+            "answer": f"An internal error occurred: {e!s}. Please try again.",
             "sources": [],
         }
 

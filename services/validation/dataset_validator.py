@@ -1,29 +1,16 @@
 from pathlib import Path
+
 import pandas as pd
 import pyarrow.parquet as pq
 
-
 DATASETS = {
-    "SOLEXS":
-        "data/cleaned/solexs/solexs_ml_ready_v1.csv",
-
-    "HEL1OS":
-        "data/cleaned/helios/HEL1OS_FILTERED.parquet",
-
-    "GOES":
-        "data/cleaned/goes/goes_xrs_oct2024_jan2025 (1).csv",
-
-    "NOAA":
-        "data/cleaned/noaa_labels/noaa_flares_clean.csv",
-
-    "CME":
-        "data/cleaned/auxiliary/cme_clean.csv",
-
-    "SEP":
-        "data/cleaned/auxiliary/sep_clean.csv",
-
-    "GST":
-        "data/cleaned/auxiliary/gst_clean.csv"
+    "SOLEXS": "data/cleaned/solexs/solexs_ml_ready_v1.csv",
+    "HEL1OS": "data/cleaned/helios/HEL1OS_FILTERED.parquet",
+    "GOES": "data/cleaned/goes/goes_xrs_oct2024_jan2025 (1).csv",
+    "NOAA": "data/cleaned/noaa_labels/noaa_flares_clean.csv",
+    "CME": "data/cleaned/auxiliary/cme_clean.csv",
+    "SEP": "data/cleaned/auxiliary/sep_clean.csv",
+    "GST": "data/cleaned/auxiliary/gst_clean.csv",
 }
 
 
@@ -59,9 +46,7 @@ def validate_parquet(name, path):
 
 
 if __name__ == "__main__":
-
     for name, path in DATASETS.items():
-
         if not Path(path).exists():
             print(f"{name} missing")
             continue

@@ -1,21 +1,23 @@
-import os
 import hashlib
-import time
-import httpx
-import logging
 import json
-from typing import Dict, Any, List
+import logging
+import os
+import time
+from typing import Any
+
+import httpx
 
 logger = logging.getLogger("astronova.ingestion.downloaders")
 
+
 class BaseDownloader:
-    def __init__(self, dataset_name: str, config: Dict[str, Any], output_dir: str):
+    def __init__(self, dataset_name: str, config: dict[str, Any], output_dir: str):
         self.dataset_name = dataset_name
         self.config = config
         self.output_dir = output_dir
         self.timeout = config.get("timeout", 15.0)
         self.max_retries = config.get("max_retries", 3)
-        
+
         if not os.path.exists(self.output_dir):
             os.makedirs(self.output_dir)
 
@@ -29,19 +31,18 @@ class BaseDownloader:
                 md5.update(chunk)
         return md5.hexdigest() == expected_checksum
 
-    async def download_file(self, url: str, filename: str, expected_checksum: str = None) -> str:
+    async def download_file(self, url: str, filename: str, expected_checksum: str | None = None) -> str:
         """Download file with resume support and retry logic."""
         dest_path = os.path.join(self.output_dir, filename)
-        
+
         # Check if completed file already exists and is valid
-        if os.path.exists(dest_path) and expected_checksum:
-            if self.verify_checksum(dest_path, expected_checksum):
-                logger.info(f"File {filename} exists and is valid. Skipping download.")
-                return dest_path
+        if os.path.exists(dest_path) and expected_checksum and self.verify_checksum(dest_path, expected_checksum):
+            logger.info(f"File {filename} exists and is valid. Skipping download.")
+            return dest_path
 
         headers = {}
         temp_path = dest_path + ".tmp"
-        
+
         # Resume support: check if temporary file exists
         file_mode = "wb"
         downloaded_bytes = 0
@@ -54,33 +55,39 @@ class BaseDownloader:
         retries = 0
         while retries < self.max_retries:
             try:
-                async with httpx.AsyncClient(timeout=self.timeout) as client:
-                    async with client.stream("GET", url, headers=headers) as response:
-                        if response.status_code == 206 or (response.status_code == 200 and file_mode == "wb"):
-                            with open(temp_path, file_mode) as f:
-                                async for chunk in response.iter_bytes():
-                                    f.write(chunk)
-                            break
-                        elif response.status_code == 416:
-                            # Range not satisfiable, file might be complete
-                            logger.warning(f"Range 416: File might already be complete.")
-                            break
-                        else:
-                            raise httpx.HTTPStatusError(f"Unexpected status {response.status_code}", request=response.request, response=response)
+                async with (
+                    httpx.AsyncClient(timeout=self.timeout) as client,
+                    client.stream("GET", url, headers=headers) as response,
+                ):
+                    if response.status_code == 206 or (response.status_code == 200 and file_mode == "wb"):
+                        with open(temp_path, file_mode) as f:
+                            async for chunk in response.iter_bytes():
+                                f.write(chunk)
+                        break
+                    elif response.status_code == 416:
+                        # Range not satisfiable, file might be complete
+                        logger.warning("Range 416: File might already be complete.")
+                        break
+                    else:
+                        raise httpx.HTTPStatusError(
+                            f"Unexpected status {response.status_code}",
+                            request=response.request,
+                            response=response,
+                        )
             except Exception as e:
                 retries += 1
                 logger.error(f"Download attempt {retries} failed for {url}: {e}")
-                time.sleep(2.0 ** retries)
-        
+                time.sleep(2.0**retries)
+
         # Rename temp file to final destination
         if os.path.exists(temp_path):
             os.rename(temp_path, dest_path)
-            
+
         # Verify if final download matches expected checksum
         if expected_checksum and not self.verify_checksum(dest_path, expected_checksum):
             logger.warning(f"Checksum mismatch for {filename}. Generating physics-compliant fallback data.")
             self.generate_fallback_data(dest_path)
-            
+
         # Generate metadata manifest
         self.write_metadata(dest_path, url)
         return dest_path
@@ -92,7 +99,7 @@ class BaseDownloader:
             "url": url,
             "downloaded_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
             "file_size": os.path.getsize(filepath),
-            "schema": self.config.get("expected_schema", {})
+            "schema": self.config.get("expected_schema", {}),
         }
         meta_path = filepath + ".metadata.json"
         with open(meta_path, "w") as f:

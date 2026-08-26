@@ -9,6 +9,7 @@ import pandas as pd
 
 logger = logging.getLogger("astronova.solexs_reader")
 
+
 class SolexsFitsReader:
     """
     Solexs Level-1 FITS and general format reader.
@@ -25,6 +26,7 @@ class SolexsFitsReader:
 
         try:
             from astropy.io import fits
+
             with fits.open(filepath) as hdul:
                 # Extension 1 typically contains the binary table data
                 data_hdu = hdul[1]
@@ -35,10 +37,10 @@ class SolexsFitsReader:
 
                 # Standardize columns to lowercase, map if needed
                 col_mapping = {
-                    'TIME': 'time',
-                    'FLUX_SOFT': 'soft_xray_flux',
-                    'DETECTOR_TEMP': 'detector_temp',
-                    'QUALITY_FLAG': 'quality_flag'
+                    "TIME": "time",
+                    "FLUX_SOFT": "soft_xray_flux",
+                    "DETECTOR_TEMP": "detector_temp",
+                    "QUALITY_FLAG": "quality_flag",
                 }
 
                 # Case insensitive renaming
@@ -51,46 +53,46 @@ class SolexsFitsReader:
                 df = df.rename(columns=rename_dict)
 
                 # If some columns are missing, initialize default values
-                if 'soft_xray_flux' not in df.columns:
-                    if 'FLUX' in df.columns:
-                        df = df.rename(columns={'FLUX': 'soft_xray_flux'})
+                if "soft_xray_flux" not in df.columns:
+                    if "FLUX" in df.columns:
+                        df = df.rename(columns={"FLUX": "soft_xray_flux"})
                     else:
                         # try to find any column containing FLUX
-                        flux_cols = [c for c in df.columns if 'flux' in c.lower()]
+                        flux_cols = [c for c in df.columns if "flux" in c.lower()]
                         if flux_cols:
-                            df = df.rename(columns={flux_cols[0]: 'soft_xray_flux'})
+                            df = df.rename(columns={flux_cols[0]: "soft_xray_flux"})
 
-                if 'detector_temp' not in df.columns:
-                    df['detector_temp'] = 25.0
-                if 'quality_flag' not in df.columns:
-                    df['quality_flag'] = 0
+                if "detector_temp" not in df.columns:
+                    df["detector_temp"] = 25.0
+                if "quality_flag" not in df.columns:
+                    df["quality_flag"] = 0
 
                 # Time conversion
                 # Spacecraft time is usually seconds since a reference epoch (e.g. MJD or mission reference time)
                 # Read epoch from header if available, otherwise default to J2000 or 2026-01-01
-                if 'time' in df.columns:
-                    t_col = df['time']
+                if "time" in df.columns:
+                    t_col = df["time"]
                     if np.issubdtype(t_col.dtype, np.number):
                         # check header for MJDREF or similar
-                        mjdref = header.get('MJDREF', 51544.0) # default J2000
+                        mjdref = header.get("MJDREF", 51544.0)  # default J2000
                         # Convert MJD to datetime
                         epoch = datetime(2000, 1, 1, 12, 0, 0) + timedelta(days=(mjdref - 51544.0))
 
                         # Check if spacecraft seconds (usually from reference epoch)
                         # We'll convert seconds to datetime relative to the epoch
-                        df['time'] = df['time'].apply(lambda s: epoch + timedelta(seconds=float(s)))
+                        df["time"] = df["time"].apply(lambda s: epoch + timedelta(seconds=float(s)))
                     else:
-                        df['time'] = pd.to_datetime(df['time'])
+                        df["time"] = pd.to_datetime(df["time"])
                 else:
                     raise KeyError("FITS table does not contain a recognizable TIME column.")
 
                 # Ensure physical columns exist
-                if 'energy_band_lo' not in df.columns:
-                    df['energy_band_lo'] = 1.0 # 1 keV
-                if 'energy_band_hi' not in df.columns:
-                    df['energy_band_hi'] = 22.0 # 22 keV
+                if "energy_band_lo" not in df.columns:
+                    df["energy_band_lo"] = 1.0  # 1 keV
+                if "energy_band_hi" not in df.columns:
+                    df["energy_band_hi"] = 22.0  # 22 keV
 
-                df['time'] = pd.to_datetime(df['time'])
+                df["time"] = pd.to_datetime(df["time"])
                 return df
 
         except ImportError:
@@ -110,11 +112,12 @@ class SolexsFitsReader:
             "instrument": "SoLEXS",
             "observatory": "Aditya-L1",
             "file_name": os.path.basename(filepath),
-            "file_size_bytes": os.path.getsize(filepath)
+            "file_size_bytes": os.path.getsize(filepath),
         }
 
         try:
             from astropy.io import fits
+
             with fits.open(filepath) as hdul:
                 primary_header = hdul[0].header
                 metadata["date_obs"] = primary_header.get("DATE-OBS", datetime.now().isoformat())
@@ -143,10 +146,10 @@ class SolexsFitsReader:
 
         # Map fields
         mappings = {
-            'soft_xray_flux': ['soft_xray_flux', 'flux', 'soft_flux', 'flux_soft'],
-            'detector_temp': ['detector_temp', 'temp', 'detector_temperature'],
-            'quality_flag': ['quality_flag', 'quality', 'flag'],
-            'time': ['time', 'timestamp', 'epoch']
+            "soft_xray_flux": ["soft_xray_flux", "flux", "soft_flux", "flux_soft"],
+            "detector_temp": ["detector_temp", "temp", "detector_temperature"],
+            "quality_flag": ["quality_flag", "quality", "flag"],
+            "time": ["time", "timestamp", "epoch"],
         }
 
         for std_col, alt_cols in mappings.items():
@@ -156,18 +159,18 @@ class SolexsFitsReader:
                         df = df.rename(columns={alt: std_col})
                         break
 
-        if 'time' in df.columns:
-            df['time'] = pd.to_datetime(df['time'])
+        if "time" in df.columns:
+            df["time"] = pd.to_datetime(df["time"])
         else:
             raise KeyError("CSV file must contain a time column.")
 
-        if 'soft_xray_flux' not in df.columns:
+        if "soft_xray_flux" not in df.columns:
             raise KeyError("CSV file must contain a flux column.")
 
-        if 'detector_temp' not in df.columns:
-            df['detector_temp'] = 25.0
-        if 'quality_flag' not in df.columns:
-            df['quality_flag'] = 0
+        if "detector_temp" not in df.columns:
+            df["detector_temp"] = 25.0
+        if "quality_flag" not in df.columns:
+            df["quality_flag"] = 0
 
         return df
 
@@ -179,24 +182,24 @@ class SolexsFitsReader:
 
         if isinstance(data, list):
             df = pd.DataFrame(data)
-        elif isinstance(data, dict) and 'data' in data:
-            df = pd.DataFrame(data['data'])
+        elif isinstance(data, dict) and "data" in data:
+            df = pd.DataFrame(data["data"])
         else:
             df = pd.DataFrame([data])
 
         # Standardize using same CSV logic
         df.columns = [c.lower() for c in df.columns]
         # Rename time and flux
-        if 'timestamp' in df.columns:
-            df = df.rename(columns={'timestamp': 'time'})
-        if 'flux' in df.columns:
-            df = df.rename(columns={'flux': 'soft_xray_flux'})
+        if "timestamp" in df.columns:
+            df = df.rename(columns={"timestamp": "time"})
+        if "flux" in df.columns:
+            df = df.rename(columns={"flux": "soft_xray_flux"})
 
-        df['time'] = pd.to_datetime(df['time'])
-        if 'detector_temp' not in df.columns:
-            df['detector_temp'] = 25.0
-        if 'quality_flag' not in df.columns:
-            df['quality_flag'] = 0
+        df["time"] = pd.to_datetime(df["time"])
+        if "detector_temp" not in df.columns:
+            df["detector_temp"] = 25.0
+        if "quality_flag" not in df.columns:
+            df["quality_flag"] = 0
 
         return df
 
@@ -206,12 +209,14 @@ class SolexsFitsReader:
         # We generate a dataset based on filename or current date
         np.random.seed(42)
         periods = 120
-        df = pd.DataFrame({
-            "time": pd.date_range(start=datetime.now() - timedelta(hours=2), periods=periods, freq="1Min"),
-            "soft_xray_flux": 1e-8 + np.abs(np.random.normal(0, 1e-9, periods)),
-            "detector_temp": 25.0 + np.random.normal(0, 0.1, periods),
-            "quality_flag": np.zeros(periods, dtype=int),
-            "energy_band_lo": np.ones(periods) * 1.0,
-            "energy_band_hi": np.ones(periods) * 22.0
-        })
+        df = pd.DataFrame(
+            {
+                "time": pd.date_range(start=datetime.now() - timedelta(hours=2), periods=periods, freq="1Min"),
+                "soft_xray_flux": 1e-8 + np.abs(np.random.normal(0, 1e-9, periods)),
+                "detector_temp": 25.0 + np.random.normal(0, 0.1, periods),
+                "quality_flag": np.zeros(periods, dtype=int),
+                "energy_band_lo": np.ones(periods) * 1.0,
+                "energy_band_hi": np.ones(periods) * 22.0,
+            }
+        )
         return df

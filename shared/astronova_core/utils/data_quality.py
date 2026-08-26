@@ -7,6 +7,7 @@ import pandas as pd
 
 logger = logging.getLogger("astronova.data_quality")
 
+
 def compute_quality_score(row: pd.Series | dict[str, Any]) -> float:
     """
     Computes a data quality score between 0.0 and 1.0 for a single observation point.
@@ -48,6 +49,7 @@ def compute_quality_score(row: pd.Series | dict[str, Any]) -> float:
 
     return float(max(0.0, min(1.0, score)))
 
+
 def analyze_gaps(df: pd.DataFrame, time_col: str = "time", expected_cadence_minutes: float = 1.0) -> dict[str, Any]:
     """
     Analyzes gaps in the timeseries data.
@@ -58,7 +60,7 @@ def analyze_gaps(df: pd.DataFrame, time_col: str = "time", expected_cadence_minu
             "total_gaps": 0,
             "max_gap_minutes": 0.0,
             "missing_percentage": 0.0,
-            "gap_intervals": []
+            "gap_intervals": [],
         }
 
     times = pd.to_datetime(df[time_col]).sort_values()
@@ -82,8 +84,9 @@ def analyze_gaps(df: pd.DataFrame, time_col: str = "time", expected_cadence_minu
     return {
         "total_gaps": total_gaps,
         "max_gap_minutes": max_gap,
-        "missing_percentage": float(missing_percentage)
+        "missing_percentage": float(missing_percentage),
     }
+
 
 def detect_sensor_drift(df: pd.DataFrame, column: str, window: int = 120, threshold_std_factor: float = 3.0) -> bool:
     """
@@ -110,10 +113,13 @@ def detect_sensor_drift(df: pd.DataFrame, column: str, window: int = 120, thresh
     deviation = abs(recent_rolling_mean - overall_mean)
 
     if deviation > threshold_std_factor * overall_std:
-        logger.warning(f"Sensor drift detected on column '{column}'. Deviation: {deviation:.2e}, limit: {threshold_std_factor * overall_std:.2e}")
+        logger.warning(
+            f"Sensor drift detected on column '{column}'. Deviation: {deviation:.2e}, limit: {threshold_std_factor * overall_std:.2e}"
+        )
         return True
 
     return False
+
 
 def validate_temporal_consistency(df: pd.DataFrame, time_col: str = "time") -> dict[str, Any]:
     """
@@ -146,8 +152,9 @@ def validate_temporal_consistency(df: pd.DataFrame, time_col: str = "time") -> d
         "is_monotonic": is_monotonic,
         "has_duplicates": has_duplicates,
         "has_future_times": has_future_times,
-        "issues": issues
+        "issues": issues,
     }
+
 
 def detect_outliers_modified_zscore(df: pd.DataFrame, column: str, threshold: float = 3.5) -> pd.Series:
     """

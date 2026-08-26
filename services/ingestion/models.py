@@ -1,10 +1,9 @@
 import uuid
 from datetime import datetime
 
+from astronova_core.database import Base
 from sqlalchemy import JSON, Column, DateTime, Integer, String
 from sqlalchemy.dialects.postgresql import UUID
-
-from astronova_core.database import Base
 
 
 class IngestionJob(Base):

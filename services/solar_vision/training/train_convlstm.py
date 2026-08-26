@@ -19,6 +19,7 @@ def get_dummy_dataset(num_samples: int, seq_len: int, channels: int, height: int
         y = torch.randn(1, seq_len, channels, height, width)
         yield x, y
 
+
 def train(args):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = ConvLSTM(
@@ -48,7 +49,7 @@ def train(args):
             loss.backward()
             optimizer.step()
             epoch_loss += loss.item()
-        print(f"Epoch {epoch}/{args.epochs} - Loss: {epoch_loss/args.samples_per_epoch:.6f}")
+        print(f"Epoch {epoch}/{args.epochs} - Loss: {epoch_loss / args.samples_per_epoch:.6f}")
 
     # Save checkpoint
     checkpoint_dir = Path(args.output_dir)
@@ -57,10 +58,17 @@ def train(args):
     torch.save(model.state_dict(), checkpoint_path)
     print(f"Model checkpoint saved to {checkpoint_path}")
 
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Train ConvLSTM model for Solar Vision Engine")
     parser.add_argument("--input-dim", type=int, default=3, help="Number of input channels (e.g., RGB)")
-    parser.add_argument("--hidden-dim", type=int, nargs="+", default=[64, 64], help="Hidden dimensions per ConvLSTM layer")
+    parser.add_argument(
+        "--hidden-dim",
+        type=int,
+        nargs="+",
+        default=[64, 64],
+        help="Hidden dimensions per ConvLSTM layer",
+    )
     parser.add_argument("--kernel-size", type=int, nargs="+", default=[3, 3], help="Kernel size per ConvLSTM layer")
     parser.add_argument("--num-layers", type=int, default=2, help="Number of ConvLSTM layers")
     parser.add_argument("--seq-len", type=int, default=5, help="Length of input sequence")
@@ -69,8 +77,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--epochs", type=int, default=10, help="Number of training epochs")
     parser.add_argument("--samples-per-epoch", type=int, default=20, help="Number of dummy samples per epoch")
     parser.add_argument("--lr", type=float, default=1e-3, help="Learning rate")
-    parser.add_argument("--output-dir", type=str, default="./models/checkpoints", help="Directory to save model checkpoints")
+    parser.add_argument(
+        "--output-dir",
+        type=str,
+        default="./models/checkpoints",
+        help="Directory to save model checkpoints",
+    )
     return parser.parse_args()
+
 
 if __name__ == "__main__":
     args = parse_args()

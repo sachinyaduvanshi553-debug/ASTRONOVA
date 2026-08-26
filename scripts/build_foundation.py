@@ -3,12 +3,15 @@ import os
 
 def create_file(path, content):
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, 'w', encoding='utf-8') as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write(content)
     print(f"Created: {path}")
 
+
 # --- 1. logging.py ---
-create_file("shared/astronova_core/logging.py", """import logging
+create_file(
+    "shared/astronova_core/logging.py",
+    """import logging
 import sys
 import json
 import time
@@ -47,10 +50,13 @@ def setup_logging(service_name: str, log_level: str = "INFO") -> None:
 
 def get_logger(name: str) -> structlog.stdlib.BoundLogger:
     return structlog.get_logger(name)
-""")
+""",
+)
 
 # --- 2. database.py ---
-create_file("shared/astronova_core/database.py", """import os
+create_file(
+    "shared/astronova_core/database.py",
+    """import os
 from typing import AsyncGenerator
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
@@ -88,10 +94,13 @@ async def init_db() -> None:
         if settings.db.timescale_enabled:
             await conn.execute("CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;")
         # Tables will be managed via Alembic
-""")
+""",
+)
 
 # --- 3. security.py ---
-create_file("shared/astronova_core/security.py", """from datetime import datetime, timedelta
+create_file(
+    "shared/astronova_core/security.py",
+    """from datetime import datetime, timedelta
 from typing import Optional, List, Union
 from enum import Enum
 from jose import jwt, JWTError
@@ -153,10 +162,13 @@ class RoleChecker:
         if current_user.role not in self.allowed_roles:
             raise AuthorizationError("Access forbidden: Insufficient permissions")
         return current_user
-""")
+""",
+)
 
 # --- 4. base.py ---
-create_file("shared/astronova_core/models/base.py", """import uuid
+create_file(
+    "shared/astronova_core/models/base.py",
+    """import uuid
 from datetime import datetime
 from sqlalchemy import Column, DateTime, String
 from sqlalchemy.dialects.postgresql import UUID
@@ -178,10 +190,13 @@ class SoftDeleteMixin:
     @property
     def is_deleted(self) -> bool:
         return self.deleted_at is not None
-""")
+""",
+)
 
 # --- 5. timeseries.py ---
-create_file("shared/astronova_core/models/timeseries.py", """from sqlalchemy import Column, DateTime, Float, String, Integer, Boolean
+create_file(
+    "shared/astronova_core/models/timeseries.py",
+    """from sqlalchemy import Column, DateTime, Float, String, Integer, Boolean
 from astronova_core.database import Base
 
 class SolexsObservation(Base):
@@ -205,10 +220,13 @@ class ProcessedObservation(Base):
     interpolated = Column(Boolean, default=False)
     outlier_removed = Column(Boolean, default=False)
     processing_pipeline_id = Column(String(100), nullable=False)
-""")
+""",
+)
 
 # --- 6. events.py ---
-create_file("shared/astronova_core/models/events.py", """from sqlalchemy import Column, DateTime, Float, String, Integer, Text
+create_file(
+    "shared/astronova_core/models/events.py",
+    """from sqlalchemy import Column, DateTime, Float, String, Integer, Text
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 from datetime import datetime
@@ -246,10 +264,13 @@ class AuditLog(Base):
     details = Column(Text, nullable=True)
     timestamp = Column(DateTime, default=datetime.utcnow)
     ip_address = Column(String(45), nullable=True)
-""")
+""",
+)
 
 # --- 7. ml.py ---
-create_file("shared/astronova_core/models/ml.py", """from sqlalchemy import Column, DateTime, Float, String, Integer, Text, JSON
+create_file(
+    "shared/astronova_core/models/ml.py",
+    """from sqlalchemy import Column, DateTime, Float, String, Integer, Text, JSON
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 from datetime import datetime
@@ -278,6 +299,7 @@ class Prediction(Base):
     predicted_probability = Column(Float, nullable=False)
     predicted_class = Column(String(10), nullable=False)
     confidence = Column(Float, nullable=False)
-""")
+""",
+)
 
 print("FOUNDATION MODULES WRITTEN SUCCESSFULLY")

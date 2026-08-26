@@ -1,17 +1,17 @@
-from fastapi import FastAPI
-from fastapi.middleware.cors import CORSMiddleware
-from services.gateway.routers import auth, proxy, dynamic_logging
-
+from astronova_core.dynamic_logging import DynamicLoggingMiddleware
 from astronova_core.logging import setup_logging
 from astronova_core.metrics import metrics_router
-from astronova_core.dynamic_logging import DynamicLoggingMiddleware
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
+from services.gateway.routers import auth, dynamic_logging, proxy
 
 setup_logging("gateway")
 
 app = FastAPI(
     title="AstroNova API Gateway",
     description="Central secure entrypoint routing API traffic with Dynamic Logging & Dynamic Database capabilities.",
-    version="1.0.0"
+    version="1.0.0",
 )
 
 app.add_middleware(
@@ -28,15 +28,13 @@ app.include_router(proxy.router)
 app.include_router(dynamic_logging.router)
 app.include_router(metrics_router)
 
+
 @app.get("/")
 def read_root():
     return {"message": "AstroNova API Gateway API v1", "dynamic_logging": "enabled"}
 
+
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run(
-        "services.gateway.main:app",
-        host="0.0.0.0",
-        port=8000,
-        reload=True
-    )
+
+    uvicorn.run("services.gateway.main:app", host="0.0.0.0", port=8000, reload=True)

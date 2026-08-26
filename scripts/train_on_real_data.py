@@ -4,8 +4,9 @@ import numpy as np
 import pandas as pd
 import torch
 import torch.nn as nn
-from ml.models.bilstm import BiLSTMForecaster
 from torch.utils.data import DataLoader, Dataset
+
+from ml.models.bilstm import BiLSTMForecaster
 
 
 # Define Dataset class for time-series sequences
@@ -18,7 +19,7 @@ class SolarFluxDataset(Dataset):
     def _prepare_sequences(self, data):
         X, y = [], []
         # Normalizing fluxes for better convergence
-        flux = data['soft_xray_flux'].values
+        flux = data["soft_xray_flux"].values
         # Log scaling: transform W/m^2 to a scaled range
         flux_scaled = np.log10(flux + 1e-9)
 
@@ -45,6 +46,7 @@ class SolarFluxDataset(Dataset):
 
     def __getitem__(self, idx):
         return self.X[idx], self.y[idx]
+
 
 def train_model(data_path: str, epochs: int = 5):
     print(f"Loading real dataset from {data_path}...")
@@ -91,7 +93,9 @@ def train_model(data_path: str, epochs: int = 5):
             correct += (predicted == batch_y).sum().item()
 
         accuracy = 100 * correct / total
-        print(f"Epoch {epoch+1}/{epochs} | Loss: {total_loss/len(train_loader):.4f} | Train Accuracy: {accuracy:.2f}%")
+        print(
+            f"Epoch {epoch + 1}/{epochs} | Loss: {total_loss / len(train_loader):.4f} | Train Accuracy: {accuracy:.2f}%"
+        )
 
     # Evaluate on validation data
     model.eval()
@@ -111,6 +115,7 @@ def train_model(data_path: str, epochs: int = 5):
     os.makedirs("models", exist_ok=True)
     torch.save(model.state_dict(), "models/bilstm_aditya_real.pt")
     print("Model saved to models/bilstm_aditya_real.pt")
+
 
 if __name__ == "__main__":
     # Train using the fetched real-time GOES dataset as a test run

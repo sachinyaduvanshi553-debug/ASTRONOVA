@@ -6,4 +6,5 @@ class IngestionConfig:
         self.settings = get_settings()
         self.upload_dir = "/app/data/uploads"
 
+
 ingestion_config = IngestionConfig()

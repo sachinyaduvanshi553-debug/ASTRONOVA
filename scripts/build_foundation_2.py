@@ -3,12 +3,15 @@ import os
 
 def create_file(path, content):
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, 'w', encoding='utf-8') as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write(content)
     print(f"Created: {path}")
 
+
 # --- 1. schemas/ingestion.py ---
-create_file("shared/astronova_core/schemas/ingestion.py", """from datetime import datetime
+create_file(
+    "shared/astronova_core/schemas/ingestion.py",
+    """from datetime import datetime
 from typing import Optional, List
 from pydantic import BaseModel, Field, field_validator
 
@@ -36,10 +39,13 @@ class IngestionResponse(BaseModel):
     status: str
     rows_ingested: int
     errors: Optional[List[str]] = None
-""")
+""",
+)
 
 # --- 2. schemas/forecasting.py ---
-create_file("shared/astronova_core/schemas/forecasting.py", """from datetime import datetime
+create_file(
+    "shared/astronova_core/schemas/forecasting.py",
+    """from datetime import datetime
 from typing import List, Dict, Optional
 from pydantic import BaseModel, Field
 
@@ -67,10 +73,13 @@ class SolarHazardIndex(BaseModel):
     category: str  # Safe, Moderate, High, Extreme
     components: Dict[str, float]
     timestamp: datetime
-""")
+""",
+)
 
 # --- 3. schemas/impact.py ---
-create_file("shared/astronova_core/schemas/impact.py", """from datetime import datetime
+create_file(
+    "shared/astronova_core/schemas/impact.py",
+    """from datetime import datetime
 from typing import List, Dict, Optional
 from pydantic import BaseModel
 
@@ -98,10 +107,13 @@ class EarthImpactResponse(BaseModel):
     satellites: List[SatelliteRisk]
     comms: List[CommDisruptionRisk]
     timestamp: datetime
-""")
+""",
+)
 
 # --- 4. exceptions.py ---
-create_file("shared/astronova_core/exceptions.py", """from fastapi import status
+create_file(
+    "shared/astronova_core/exceptions.py",
+    """from fastapi import status
 
 class AstroNovaException(Exception):
     def __init__(self, message: str, status_code: int = status.HTTP_500_INTERNAL_SERVER_ERROR):
@@ -144,10 +156,13 @@ class ServiceUnavailableError(AstroNovaException):
 class RateLimitError(AstroNovaException):
     def __init__(self, message: str):
         super().__init__(message, status.HTTP_429_TOO_MANY_REQUESTS)
-""")
+""",
+)
 
 # --- 5. middleware.py ---
-create_file("shared/astronova_core/middleware.py", """import time
+create_file(
+    "shared/astronova_core/middleware.py",
+    """import time
 import uuid
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -176,10 +191,13 @@ class RequestLoggingMiddleware(BaseHTTPMiddleware):
             duration_ms=round(process_time * 1000, 2)
         )
         return response
-""")
+""",
+)
 
 # --- 6. metrics.py ---
-create_file("shared/astronova_core/metrics.py", """from fastapi import APIRouter
+create_file(
+    "shared/astronova_core/metrics.py",
+    """from fastapi import APIRouter
 from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
 from fastapi.responses import Response
 
@@ -206,10 +224,13 @@ PREDICTION_COUNT = Counter(
 @metrics_router.get("/metrics")
 def metrics():
     return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
-""")
+""",
+)
 
 # --- 7. kafka_client.py ---
-create_file("shared/astronova_core/kafka_client.py", """import json
+create_file(
+    "shared/astronova_core/kafka_client.py",
+    """import json
 from typing import Any, Dict
 from confluent_kafka import Producer, Consumer
 from astronova_core.config import get_settings
@@ -246,10 +267,13 @@ class AstroNovaProducer:
 
     def flush(self):
         self.producer.flush()
-""")
+""",
+)
 
 # --- 8. cache.py ---
-create_file("shared/astronova_core/cache.py", """import json
+create_file(
+    "shared/astronova_core/cache.py",
+    """import json
 from typing import Any, Optional
 import redis.asyncio as redis
 from astronova_core.config import get_settings
@@ -274,10 +298,13 @@ class RedisCache:
 
     async def delete(self, key: str) -> None:
         await self.client.delete(key)
-""")
+""",
+)
 
 # --- 9. utils/physics.py ---
-create_file("shared/astronova_core/utils/physics.py", """from typing import Dict, Tuple
+create_file(
+    "shared/astronova_core/utils/physics.py",
+    """from typing import Dict, Tuple
 
 GOES_THRESHOLDS: Dict[str, Tuple[float, float]] = {
     'A': (1e-8, 1e-7),
@@ -301,10 +328,13 @@ def compute_xray_ratio(soft_flux: float, hard_flux: float) -> float:
     if soft_flux <= 0 or hard_flux <= 0:
         return 0.0
     return soft_flux / hard_flux
-""")
+""",
+)
 
 # --- 10. utils/data_io.py ---
-create_file("shared/astronova_core/utils/data_io.py", """import pandas as pd
+create_file(
+    "shared/astronova_core/utils/data_io.py",
+    """import pandas as pd
 import json
 
 def read_csv_solexs(filepath: str) -> pd.DataFrame:
@@ -318,10 +348,13 @@ def read_json_data(filepath: str) -> pd.DataFrame:
     df = pd.DataFrame(data)
     df['time'] = pd.to_datetime(df['time'])
     return df
-""")
+""",
+)
 
 # --- 11. utils/time_utils.py ---
-create_file("shared/astronova_core/utils/time_utils.py", """from datetime import datetime
+create_file(
+    "shared/astronova_core/utils/time_utils.py",
+    """from datetime import datetime
 import pandas as pd
 
 def to_utc(dt: datetime) -> datetime:
@@ -333,10 +366,13 @@ def resample_timeseries(df: pd.DataFrame, freq: str = '1T') -> pd.DataFrame:
     df = df.set_index('time')
     df = df.resample(freq).mean().interpolate(method='linear')
     return df.reset_index()
-""")
+""",
+)
 
 # --- 12. setup.py ---
-create_file("shared/setup.py", """from setuptools import setup, find_packages
+create_file(
+    "shared/setup.py",
+    """from setuptools import setup, find_packages
 setup(
     name='astronova-core',
     version='1.0.0',
@@ -356,6 +392,7 @@ setup(
         'structlog>=24.0.0',
     ]
 )
-""")
+""",
+)
 
 print("FOUNDATION PART 2 COMPLETE")

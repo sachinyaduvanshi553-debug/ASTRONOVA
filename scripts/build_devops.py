@@ -5,12 +5,15 @@ def create_file(path, content):
     dirname = os.path.dirname(path)
     if dirname:
         os.makedirs(dirname, exist_ok=True)
-    with open(path, 'w', encoding='utf-8') as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write(content)
     print(f"Created: {path}")
 
+
 # --- 1. docker-compose.yml ---
-create_file("docker-compose.yml", """version: '3.8'
+create_file(
+    "docker-compose.yml",
+    """version: '3.8'
 
 services:
   postgres:
@@ -94,10 +97,13 @@ volumes:
 networks:
   astronova-net:
     driver: bridge
-""")
+""",
+)
 
 # --- 2. scripts/init_db.sql ---
-create_file("scripts/init_db.sql", """-- Enable TimescaleDB extension
+create_file(
+    "scripts/init_db.sql",
+    """-- Enable TimescaleDB extension
 CREATE EXTENSION IF NOT EXISTS timescaledb CASCADE;
 
 -- Create observations table
@@ -126,10 +132,13 @@ CREATE TABLE IF NOT EXISTS ingestion_jobs (
     started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     completed_at TIMESTAMP
 );
-""")
+""",
+)
 
 # --- 3. monitoring/prometheus.yml ---
-create_file("monitoring/prometheus.yml", """global:
+create_file(
+    "monitoring/prometheus.yml",
+    """global:
   scrape_interval: 15s
 
 scrape_configs:
@@ -142,10 +151,13 @@ scrape_configs:
   - job_name: 'forecasting'
     static_configs:
       - targets: ['forecasting:8004']
-""")
+""",
+)
 
 # --- 4. scripts/generate_synthetic_data.py ---
-create_file("scripts/generate_synthetic_data.py", """import pandas as pd
+create_file(
+    "scripts/generate_synthetic_data.py",
+    """import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
 import os
@@ -187,10 +199,13 @@ def generate_data(num_points: int = 1440):
 
 if __name__ == "__main__":
     generate_data()
-""")
+""",
+)
 
 # --- 5. .github/workflows/ci.yml ---
-create_file(".github/workflows/ci.yml", """name: AstroNova CI
+create_file(
+    ".github/workflows/ci.yml",
+    """name: AstroNova CI
 
 on:
   push:
@@ -222,13 +237,17 @@ jobs:
     - name: Run unit tests
       run: |
         pytest shared/ services/ --ignore=shared/setup.py
-""")
+""",
+)
 
 # --- 6. scripts/setup.sh ---
-create_file("scripts/setup.sh", """#!/bin/bash
+create_file(
+    "scripts/setup.sh",
+    """#!/bin/bash
 echo "Setting up AstroNova Space Weather Platform..."
 python scripts/generate_synthetic_data.py
 echo "Setup complete. Run 'docker-compose up --build' to start."
-""")
+""",
+)
 
 print("DEVOPS AND SCRIPTS GENERATED SUCCESSFULLY")

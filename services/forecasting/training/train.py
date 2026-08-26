@@ -13,6 +13,7 @@ With:
   - Model artifact persistence (.pkl + ONNX)
   - MLflow experiment tracking
 """
+
 from __future__ import annotations
 
 import json
@@ -21,7 +22,7 @@ import pickle
 import sys
 import warnings
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -34,28 +35,28 @@ if str(PROJECT_ROOT) not in sys.path:
 warnings.filterwarnings("ignore", category=UserWarning)
 
 import optuna
+
 optuna.logging.set_verbosity(optuna.logging.WARNING)
 
-from sklearn.ensemble import RandomForestClassifier
-from sklearn.model_selection import StratifiedKFold, cross_val_score
-from sklearn.metrics import roc_auc_score
-from sklearn.preprocessing import label_binarize
-import xgboost as xgb
 import lightgbm as lgb
+import xgboost as xgb
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import roc_auc_score
+from sklearn.model_selection import StratifiedKFold, cross_val_score
 
 try:
     from imblearn.over_sampling import SMOTE
+
     _HAS_SMOTE = True
 except ImportError:
     _HAS_SMOTE = False
     logging.getLogger(__name__).warning("imbalanced-learn not installed; SMOTE disabled.")
 
 from astronova_core.utils.scientific_metrics import (
-    compute_tss,
-    compute_hss,
-    compute_far,
     compute_brier_score,
-    compute_roc_curve,
+    compute_far,
+    compute_hss,
+    compute_tss,
 )
 
 logging.basicConfig(
@@ -65,16 +66,16 @@ logging.basicConfig(
 logger = logging.getLogger("astronova.training.tabular")
 
 # ── Paths ─────────────────────────────────────────────────────────────────────
-PROCESSED_DIR  = PROJECT_ROOT / "datasets" / "processed"
-MODELS_DIR     = PROJECT_ROOT / "models" / "artifacts"
-METRICS_DIR    = PROJECT_ROOT / "models" / "metrics"
+PROCESSED_DIR = PROJECT_ROOT / "datasets" / "processed"
+MODELS_DIR = PROJECT_ROOT / "models" / "artifacts"
+METRICS_DIR = PROJECT_ROOT / "models" / "metrics"
 MODELS_DIR.mkdir(parents=True, exist_ok=True)
 METRICS_DIR.mkdir(parents=True, exist_ok=True)
 
 # ── Training config ───────────────────────────────────────────────────────────
-N_SPLITS        = 5
+N_SPLITS = 5
 N_OPTUNA_TRIALS = 50
-RANDOM_SEED     = 42
+RANDOM_SEED = 42
 
 
 # ---------------------------------------------------------------------------
@@ -82,30 +83,32 @@ RANDOM_SEED     = 42
 # ---------------------------------------------------------------------------
 
 _EXCLUDE_FROM_FEATURES = {
-    "label_binary", "label_class", "quality_flag",
-    "soft_xray_flux_log_scaled", "hard_xray_flux_log_scaled",
+    "label_binary",
+    "label_class",
+    "quality_flag",
+    "soft_xray_flux_log_scaled",
+    "hard_xray_flux_log_scaled",
 }
 
-def get_feature_columns(df: pd.DataFrame) -> List[str]:
+
+def get_feature_columns(df: pd.DataFrame) -> list[str]:
     """Return numeric feature columns, excluding label/flag columns."""
-    return [
-        c for c in df.select_dtypes(include=[np.number]).columns
-        if c not in _EXCLUDE_FROM_FEATURES
-    ]
+    return [c for c in df.select_dtypes(include=[np.number]).columns if c not in _EXCLUDE_FROM_FEATURES]
 
 
 # ---------------------------------------------------------------------------
 # Dataset loader
 # ---------------------------------------------------------------------------
 
-def load_dataset() -> Tuple[np.ndarray, np.ndarray, List[str]]:
+
+def load_dataset() -> tuple[np.ndarray, np.ndarray, list[str]]:
     """Load the processed feature matrix and binary labels.
 
     Returns (X, y, feature_names).
     Falls back to synthetic data if parquet files are missing.
     """
     parquet_path = PROCESSED_DIR / "goes_processed.parquet"
-    feat_path    = PROCESSED_DIR / "feature_matrix.parquet" if not parquet_path.exists() else parquet_path
+    (PROCESSED_DIR / "feature_matrix.parquet" if not parquet_path.exists() else parquet_path)
 
     if parquet_path.exists():
         logger.info("Loading processed dataset from %s.", parquet_path)
@@ -113,6 +116,7 @@ def load_dataset() -> Tuple[np.ndarray, np.ndarray, List[str]]:
     else:
         logger.warning("Processed parquet not found. Running dataset builder first.")
         from scripts.build_dataset import build_training_dataset
+
         df = build_training_dataset(save=True)
 
     if "label_binary" not in df.columns:
@@ -124,7 +128,10 @@ def load_dataset() -> Tuple[np.ndarray, np.ndarray, List[str]]:
 
     logger.info(
         "Dataset loaded: %d samples × %d features | Positives: %d (%.1f%%)",
-        len(X), X.shape[1], y.sum(), 100 * y.mean(),
+        len(X),
+        X.shape[1],
+        y.sum(),
+        100 * y.mean(),
     )
     return X, y, feature_cols
 
@@ -133,36 +140,41 @@ def load_dataset() -> Tuple[np.ndarray, np.ndarray, List[str]]:
 # Metrics evaluation
 # ---------------------------------------------------------------------------
 
+
 def evaluate_model(
     model: Any,
     X_test: np.ndarray,
     y_test: np.ndarray,
     model_name: str,
-) -> Dict[str, float]:
+) -> dict[str, float]:
     """Compute full scientific metrics suite for a fitted model."""
     y_pred = model.predict(X_test)
     y_prob = model.predict_proba(X_test)[:, 1] if hasattr(model, "predict_proba") else y_pred.astype(float)
 
     metrics = {
-        "tss":          compute_tss(y_test, y_pred),
-        "hss":          compute_hss(y_test, y_pred),
-        "far":          compute_far(y_test, y_pred),
-        "brier_score":  compute_brier_score(y_test, y_prob),
-        "auc_roc":      float(roc_auc_score(y_test, y_prob)) if len(np.unique(y_test)) > 1 else 0.0,
-        "accuracy":     float((y_pred == y_test).mean()),
-        "n_test":       int(len(y_test)),
-        "n_positive":   int(y_test.sum()),
-        "model":        model_name,
+        "tss": compute_tss(y_test, y_pred),
+        "hss": compute_hss(y_test, y_pred),
+        "far": compute_far(y_test, y_pred),
+        "brier_score": compute_brier_score(y_test, y_prob),
+        "auc_roc": float(roc_auc_score(y_test, y_prob)) if len(np.unique(y_test)) > 1 else 0.0,
+        "accuracy": float((y_pred == y_test).mean()),
+        "n_test": len(y_test),
+        "n_positive": int(y_test.sum()),
+        "model": model_name,
     }
     logger.info(
         "[%s] TSS=%.3f  HSS=%.3f  FAR=%.3f  AUC=%.3f  Brier=%.4f",
-        model_name, metrics["tss"], metrics["hss"], metrics["far"],
-        metrics["auc_roc"], metrics["brier_score"],
+        model_name,
+        metrics["tss"],
+        metrics["hss"],
+        metrics["far"],
+        metrics["auc_roc"],
+        metrics["brier_score"],
     )
     return metrics
 
 
-def save_metrics(metrics: Dict[str, Any], model_name: str) -> None:
+def save_metrics(metrics: dict[str, Any], model_name: str) -> None:
     """Save metrics dict to JSON."""
     out_path = METRICS_DIR / f"{model_name}_metrics.json"
     with open(out_path, "w") as fh:
@@ -173,6 +185,7 @@ def save_metrics(metrics: Dict[str, Any], model_name: str) -> None:
 # ---------------------------------------------------------------------------
 # Model persistence
 # ---------------------------------------------------------------------------
+
 
 def save_model_pkl(model: Any, name: str) -> Path:
     path = MODELS_DIR / f"{name}.pkl"
@@ -185,8 +198,9 @@ def save_model_pkl(model: Any, name: str) -> Path:
 def export_to_onnx(model: Any, name: str, n_features: int) -> None:
     """Export sklearn/xgb model to ONNX format."""
     try:
-        from skl2onnx import convert_sklearn, to_onnx  # type: ignore
+        from skl2onnx import convert_sklearn  # type: ignore
         from skl2onnx.common.data_types import FloatTensorType  # type: ignore
+
         initial_type = [("float_input", FloatTensorType([None, n_features]))]
         onnx_model = convert_sklearn(model, initial_types=initial_type)
         out_path = MODELS_DIR / f"{name}.onnx"
@@ -203,16 +217,17 @@ def export_to_onnx(model: Any, name: str, n_features: int) -> None:
 # Optuna objective functions
 # ---------------------------------------------------------------------------
 
+
 def _rf_objective(trial: optuna.Trial, X: np.ndarray, y: np.ndarray) -> float:
     params = {
-        "n_estimators":      trial.suggest_int("n_estimators", 100, 500),
-        "max_depth":         trial.suggest_int("max_depth", 4, 20),
+        "n_estimators": trial.suggest_int("n_estimators", 100, 500),
+        "max_depth": trial.suggest_int("max_depth", 4, 20),
         "min_samples_split": trial.suggest_int("min_samples_split", 2, 20),
-        "min_samples_leaf":  trial.suggest_int("min_samples_leaf", 1, 10),
-        "max_features":      trial.suggest_categorical("max_features", ["sqrt", "log2", None]),
-        "class_weight":      "balanced",
-        "random_state":      RANDOM_SEED,
-        "n_jobs":            -1,
+        "min_samples_leaf": trial.suggest_int("min_samples_leaf", 1, 10),
+        "max_features": trial.suggest_categorical("max_features", ["sqrt", "log2", None]),
+        "class_weight": "balanced",
+        "random_state": RANDOM_SEED,
+        "n_jobs": -1,
     }
     model = RandomForestClassifier(**params)
     cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=RANDOM_SEED)
@@ -222,21 +237,21 @@ def _rf_objective(trial: optuna.Trial, X: np.ndarray, y: np.ndarray) -> float:
 
 def _xgb_objective(trial: optuna.Trial, X: np.ndarray, y: np.ndarray) -> float:
     params = {
-        "n_estimators":    trial.suggest_int("n_estimators", 100, 600),
-        "max_depth":       trial.suggest_int("max_depth", 3, 12),
-        "learning_rate":   trial.suggest_float("learning_rate", 0.01, 0.3, log=True),
-        "subsample":       trial.suggest_float("subsample", 0.5, 1.0),
-        "colsample_bytree":trial.suggest_float("colsample_bytree", 0.5, 1.0),
-        "min_child_weight":trial.suggest_int("min_child_weight", 1, 10),
-        "gamma":           trial.suggest_float("gamma", 0.0, 5.0),
-        "reg_alpha":       trial.suggest_float("reg_alpha", 0.0, 1.0),
-        "reg_lambda":      trial.suggest_float("reg_lambda", 0.5, 2.0),
+        "n_estimators": trial.suggest_int("n_estimators", 100, 600),
+        "max_depth": trial.suggest_int("max_depth", 3, 12),
+        "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.3, log=True),
+        "subsample": trial.suggest_float("subsample", 0.5, 1.0),
+        "colsample_bytree": trial.suggest_float("colsample_bytree", 0.5, 1.0),
+        "min_child_weight": trial.suggest_int("min_child_weight", 1, 10),
+        "gamma": trial.suggest_float("gamma", 0.0, 5.0),
+        "reg_alpha": trial.suggest_float("reg_alpha", 0.0, 1.0),
+        "reg_lambda": trial.suggest_float("reg_lambda", 0.5, 2.0),
         "scale_pos_weight": trial.suggest_float("scale_pos_weight", 1.0, 20.0),
         "use_label_encoder": False,
-        "eval_metric":     "auc",
-        "random_state":    RANDOM_SEED,
-        "n_jobs":          -1,
-        "verbosity":       0,
+        "eval_metric": "auc",
+        "random_state": RANDOM_SEED,
+        "n_jobs": -1,
+        "verbosity": 0,
     }
     model = xgb.XGBClassifier(**params)
     cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=RANDOM_SEED)
@@ -246,19 +261,19 @@ def _xgb_objective(trial: optuna.Trial, X: np.ndarray, y: np.ndarray) -> float:
 
 def _lgb_objective(trial: optuna.Trial, X: np.ndarray, y: np.ndarray) -> float:
     params = {
-        "n_estimators":      trial.suggest_int("n_estimators", 100, 600),
-        "max_depth":         trial.suggest_int("max_depth", 3, 12),
-        "learning_rate":     trial.suggest_float("learning_rate", 0.01, 0.3, log=True),
-        "num_leaves":        trial.suggest_int("num_leaves", 20, 150),
-        "subsample":         trial.suggest_float("subsample", 0.5, 1.0),
-        "colsample_bytree":  trial.suggest_float("colsample_bytree", 0.5, 1.0),
+        "n_estimators": trial.suggest_int("n_estimators", 100, 600),
+        "max_depth": trial.suggest_int("max_depth", 3, 12),
+        "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.3, log=True),
+        "num_leaves": trial.suggest_int("num_leaves", 20, 150),
+        "subsample": trial.suggest_float("subsample", 0.5, 1.0),
+        "colsample_bytree": trial.suggest_float("colsample_bytree", 0.5, 1.0),
         "min_child_samples": trial.suggest_int("min_child_samples", 5, 50),
-        "reg_alpha":         trial.suggest_float("reg_alpha", 0.0, 1.0),
-        "reg_lambda":        trial.suggest_float("reg_lambda", 0.0, 1.0),
-        "is_unbalance":      True,
-        "random_state":      RANDOM_SEED,
-        "n_jobs":            -1,
-        "verbosity":         -1,
+        "reg_alpha": trial.suggest_float("reg_alpha", 0.0, 1.0),
+        "reg_lambda": trial.suggest_float("reg_lambda", 0.0, 1.0),
+        "is_unbalance": True,
+        "random_state": RANDOM_SEED,
+        "n_jobs": -1,
+        "verbosity": -1,
     }
     model = lgb.LGBMClassifier(**params)
     cv = StratifiedKFold(n_splits=3, shuffle=True, random_state=RANDOM_SEED)
@@ -270,13 +285,21 @@ def _lgb_objective(trial: optuna.Trial, X: np.ndarray, y: np.ndarray) -> float:
 # Model trainers
 # ---------------------------------------------------------------------------
 
-def train_random_forest(X_train: np.ndarray, y_train: np.ndarray,
-                         X_test: np.ndarray, y_test: np.ndarray,
-                         n_features: int) -> Dict[str, Any]:
+
+def train_random_forest(
+    X_train: np.ndarray,
+    y_train: np.ndarray,
+    X_test: np.ndarray,
+    y_test: np.ndarray,
+    n_features: int,
+) -> dict[str, Any]:
     logger.info("── Training RandomForest ──────────────────────────────────")
     study = optuna.create_study(direction="maximize", study_name="rf_auc")
-    study.optimize(lambda t: _rf_objective(t, X_train, y_train),
-                   n_trials=N_OPTUNA_TRIALS, show_progress_bar=False)
+    study.optimize(
+        lambda t: _rf_objective(t, X_train, y_train),
+        n_trials=N_OPTUNA_TRIALS,
+        show_progress_bar=False,
+    )
     best_params = study.best_params
     best_params.update({"class_weight": "balanced", "random_state": RANDOM_SEED, "n_jobs": -1})
     logger.info("RF best params: %s | AUC=%.4f", best_params, study.best_value)
@@ -292,18 +315,30 @@ def train_random_forest(X_train: np.ndarray, y_train: np.ndarray,
     return {"model": model, "metrics": metrics}
 
 
-def train_xgboost(X_train: np.ndarray, y_train: np.ndarray,
-                   X_test: np.ndarray, y_test: np.ndarray,
-                   n_features: int) -> Dict[str, Any]:
+def train_xgboost(
+    X_train: np.ndarray,
+    y_train: np.ndarray,
+    X_test: np.ndarray,
+    y_test: np.ndarray,
+    n_features: int,
+) -> dict[str, Any]:
     logger.info("── Training XGBoost ──────────────────────────────────────")
     study = optuna.create_study(direction="maximize", study_name="xgb_auc")
-    study.optimize(lambda t: _xgb_objective(t, X_train, y_train),
-                   n_trials=N_OPTUNA_TRIALS, show_progress_bar=False)
+    study.optimize(
+        lambda t: _xgb_objective(t, X_train, y_train),
+        n_trials=N_OPTUNA_TRIALS,
+        show_progress_bar=False,
+    )
     best_params = study.best_params
-    best_params.update({
-        "use_label_encoder": False, "eval_metric": "auc",
-        "random_state": RANDOM_SEED, "n_jobs": -1, "verbosity": 0,
-    })
+    best_params.update(
+        {
+            "use_label_encoder": False,
+            "eval_metric": "auc",
+            "random_state": RANDOM_SEED,
+            "n_jobs": -1,
+            "verbosity": 0,
+        }
+    )
     logger.info("XGB best params: %s | AUC=%.4f", best_params, study.best_value)
 
     model = xgb.XGBClassifier(**best_params)
@@ -324,22 +359,31 @@ def train_xgboost(X_train: np.ndarray, y_train: np.ndarray,
     return {"model": model, "metrics": metrics}
 
 
-def train_lightgbm(X_train: np.ndarray, y_train: np.ndarray,
-                    X_test: np.ndarray, y_test: np.ndarray,
-                    n_features: int) -> Dict[str, Any]:
+def train_lightgbm(
+    X_train: np.ndarray,
+    y_train: np.ndarray,
+    X_test: np.ndarray,
+    y_test: np.ndarray,
+    n_features: int,
+) -> dict[str, Any]:
     logger.info("── Training LightGBM ─────────────────────────────────────")
     study = optuna.create_study(direction="maximize", study_name="lgb_auc")
-    study.optimize(lambda t: _lgb_objective(t, X_train, y_train),
-                   n_trials=N_OPTUNA_TRIALS, show_progress_bar=False)
+    study.optimize(
+        lambda t: _lgb_objective(t, X_train, y_train),
+        n_trials=N_OPTUNA_TRIALS,
+        show_progress_bar=False,
+    )
     best_params = study.best_params
-    best_params.update({"is_unbalance": True, "random_state": RANDOM_SEED,
-                         "n_jobs": -1, "verbosity": -1})
+    best_params.update({"is_unbalance": True, "random_state": RANDOM_SEED, "n_jobs": -1, "verbosity": -1})
     logger.info("LGB best params: %s | AUC=%.4f", best_params, study.best_value)
 
     model = lgb.LGBMClassifier(**best_params)
-    model.fit(X_train, y_train,
-              eval_set=[(X_test, y_test)],
-              callbacks=[lgb.early_stopping(50, verbose=False), lgb.log_evaluation(-1)])
+    model.fit(
+        X_train,
+        y_train,
+        eval_set=[(X_test, y_test)],
+        callbacks=[lgb.early_stopping(50, verbose=False), lgb.log_evaluation(-1)],
+    )
 
     metrics = evaluate_model(model, X_test, y_test, "lightgbm")
     metrics["best_params"] = best_params
@@ -355,7 +399,8 @@ def train_lightgbm(X_train: np.ndarray, y_train: np.ndarray,
 # Main entrypoint
 # ---------------------------------------------------------------------------
 
-def run_training() -> Dict[str, Any]:
+
+def run_training() -> dict[str, Any]:
     """Train all three baseline models and return results dict."""
     X, y, feature_cols = load_dataset()
 
@@ -367,7 +412,10 @@ def run_training() -> Dict[str, Any]:
         X, y = smote.fit_resample(X, y)
         logger.info("After SMOTE: %d samples, %.1f%% positive.", len(X), 100 * y.mean())
     else:
-        logger.info("SMOTE skipped (positive rate=%.2f%% or imbalanced-learn not available).", 100 * pos_rate)
+        logger.info(
+            "SMOTE skipped (positive rate=%.2f%% or imbalanced-learn not available).",
+            100 * pos_rate,
+        )
 
     # ── Train/test split (temporal: last 20% as test) ─────────────────
     split_idx = int(len(X) * 0.80)
@@ -379,8 +427,8 @@ def run_training() -> Dict[str, Any]:
 
     results = {}
     results["random_forest"] = train_random_forest(X_train, y_train, X_test, y_test, n_features)
-    results["xgboost"]       = train_xgboost(X_train, y_train, X_test, y_test, n_features)
-    results["lightgbm"]      = train_lightgbm(X_train, y_train, X_test, y_test, n_features)
+    results["xgboost"] = train_xgboost(X_train, y_train, X_test, y_test, n_features)
+    results["lightgbm"] = train_lightgbm(X_train, y_train, X_test, y_test, n_features)
 
     # ── Summary report ────────────────────────────────────────────────
     logger.info("\n" + "=" * 60)
@@ -390,7 +438,11 @@ def run_training() -> Dict[str, Any]:
         m = res["metrics"]
         logger.info(
             "%-14s  TSS=%+.3f  HSS=%+.3f  AUC=%.3f  FAR=%.3f",
-            name, m["tss"], m["hss"], m["auc_roc"], m["far"],
+            name,
+            m["tss"],
+            m["hss"],
+            m["auc_roc"],
+            m["far"],
         )
 
     # Save feature names for inference

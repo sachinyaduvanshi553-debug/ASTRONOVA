@@ -1,12 +1,11 @@
+from astronova_core.utils.physics import classify_flare, track_lifecycle_phase
 
 from ml.models.nowcasting import ThresholdDetector
-
-from astronova_core.utils.physics import classify_flare, track_lifecycle_phase
 
 
 class NowcastingService:
     def __init__(self):
-        self.detector = ThresholdDetector(threshold=1e-5) # M-class threshold
+        self.detector = ThresholdDetector(threshold=1e-5)  # M-class threshold
 
     def analyze_nowcast(self, current_flux: float, flux_history: list[float] | None = None) -> dict:
         """
@@ -56,6 +55,6 @@ class NowcastingService:
                 "dynamic_lead_time_minutes": optimal_lead_time_minutes,
                 "recommended_cadence_seconds": recommended_polling_interval_seconds,
                 "cadence_urgency_level": cadence_urgency,
-                "operational_directive": action_required
-            }
+                "operational_directive": action_required,
+            },
         }

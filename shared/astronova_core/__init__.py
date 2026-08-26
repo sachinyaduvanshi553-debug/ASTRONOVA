@@ -15,10 +15,10 @@ __author__ = "AstroNova Team, ISRO"
 __license__ = "MIT"
 
 __all__ = [
+    "DynamicLoggingManager",
+    "DynamicLoggingMiddleware",
     "__author__",
     "__license__",
     "__version__",
-    "DynamicLoggingManager",
-    "DynamicLoggingMiddleware",
     "dynamic_logger_manager",
 ]

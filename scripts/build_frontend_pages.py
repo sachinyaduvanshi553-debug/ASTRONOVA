@@ -5,12 +5,15 @@ def create_file(path, content):
     dirname = os.path.dirname(path)
     if dirname:
         os.makedirs(dirname, exist_ok=True)
-    with open(path, 'w', encoding='utf-8') as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write(content)
     print(f"Created: {path}")
 
+
 # --- 1. globals.css ---
-create_file("frontend/src/app/globals.css", """@import "tailwindcss";
+create_file(
+    "frontend/src/app/globals.css",
+    """@import "tailwindcss";
 
 @layer base {
   body {
@@ -44,10 +47,13 @@ create_file("frontend/src/app/globals.css", """@import "tailwindcss";
 .glow-red {
   box-shadow: 0 0 15px rgba(239, 68, 68, 0.4);
 }
-""")
+""",
+)
 
 # --- 2. layout.tsx ---
-create_file("frontend/src/app/layout.tsx", """import type { Metadata } from 'next';
+create_file(
+    "frontend/src/app/layout.tsx",
+    """import type { Metadata } from 'next';
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -68,10 +74,13 @@ export default function RootLayout({
     </html>
   );
 }
-""")
+""",
+)
 
 # --- 3. page.tsx ---
-create_file("frontend/src/app/page.tsx", """'use client';
+create_file(
+    "frontend/src/app/page.tsx",
+    """'use client';
 
 import React, { useState, useEffect } from 'react';
 import {
@@ -744,6 +753,7 @@ export default function Dashboard() {
     </div>
   );
 }
-""")
+""",
+)
 
 print("FRONTEND CODE FILES CREATED SUCCESSFULLY")

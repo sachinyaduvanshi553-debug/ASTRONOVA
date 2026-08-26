@@ -8,14 +8,14 @@ Implements:
 - Lag features for sequence modelling
 - Shannon entropy of local flux windows
 """
+
 from __future__ import annotations
 
 import logging
-from typing import List
 
 import numpy as np
 import pandas as pd
-from scipy.stats import skew, kurtosis
+from scipy.stats import kurtosis, skew
 
 logger = logging.getLogger("astronova.features.time_domain")
 
@@ -48,8 +48,8 @@ class TimeDomainFeatures:
         lag_1, lag_5, lag_15    (lag features for soft_xray_flux)
     """
 
-    def __init__(self, windows: List[int] = None, lag_steps: List[int] = None) -> None:
-        self.windows   = windows or _WINDOWS
+    def __init__(self, windows: list[int] | None = None, lag_steps: list[int] | None = None) -> None:
+        self.windows = windows or _WINDOWS
         self.lag_steps = lag_steps or [1, 5, 15, 30]
 
     # ------------------------------------------------------------------
@@ -66,9 +66,9 @@ class TimeDomainFeatures:
             roll_hard = hard.rolling(window=w, min_periods=1)
 
             df[f"soft_flux_roll_mean_{w}"] = roll_soft.mean()
-            df[f"soft_flux_roll_std_{w}"]  = roll_soft.std().fillna(0.0)
-            df[f"soft_flux_roll_min_{w}"]  = roll_soft.min()
-            df[f"soft_flux_roll_max_{w}"]  = roll_soft.max()
+            df[f"soft_flux_roll_std_{w}"] = roll_soft.std().fillna(0.0)
+            df[f"soft_flux_roll_min_{w}"] = roll_soft.min()
+            df[f"soft_flux_roll_max_{w}"] = roll_soft.max()
 
             # Skew and kurtosis (need at least 3 points)
             df[f"soft_flux_roll_skew_{w}"] = roll_soft.apply(
@@ -79,30 +79,30 @@ class TimeDomainFeatures:
             ).fillna(0.0)
 
             df[f"hard_flux_roll_mean_{w}"] = roll_hard.mean()
-            df[f"hard_flux_roll_std_{w}"]  = roll_hard.std().fillna(0.0)
+            df[f"hard_flux_roll_std_{w}"] = roll_hard.std().fillna(0.0)
 
         # ── Gradient and acceleration ─────────────────────────────────
         df["soft_flux_gradient"] = soft.diff().fillna(0.0)
         df["hard_flux_gradient"] = hard.diff().fillna(0.0)
-        df["soft_flux_accel"]    = df["soft_flux_gradient"].diff().fillna(0.0)
+        df["soft_flux_accel"] = df["soft_flux_gradient"].diff().fillna(0.0)
 
         # ── EWMA trend features ───────────────────────────────────────
-        df["ewma_soft_5"]  = soft.ewm(span=5,  adjust=False).mean()
+        df["ewma_soft_5"] = soft.ewm(span=5, adjust=False).mean()
         df["ewma_soft_15"] = soft.ewm(span=15, adjust=False).mean()
 
         # ── Shannon entropy over 30-min rolling window ────────────────
-        df["soft_rolling_entropy_30"] = soft.rolling(window=30, min_periods=5).apply(
-            self._shannon_entropy, raw=True
-        ).fillna(0.0)
+        df["soft_rolling_entropy_30"] = (
+            soft.rolling(window=30, min_periods=5).apply(self._shannon_entropy, raw=True).fillna(0.0)
+        )
 
         # ── Temporal context features (cyclical encoding) ─────────────
         if isinstance(df.index, pd.DatetimeIndex):
-            hour    = df.index.hour
-            doy     = df.index.dayofyear
-            df["hour_sin"]    = np.sin(2 * np.pi * hour / 24.0)
-            df["hour_cos"]    = np.cos(2 * np.pi * hour / 24.0)
-            df["doy_sin"]     = np.sin(2 * np.pi * doy / 365.0)
-            df["doy_cos"]     = np.cos(2 * np.pi * doy / 365.0)
+            hour = df.index.hour
+            doy = df.index.dayofyear
+            df["hour_sin"] = np.sin(2 * np.pi * hour / 24.0)
+            df["hour_cos"] = np.cos(2 * np.pi * hour / 24.0)
+            df["doy_sin"] = np.sin(2 * np.pi * doy / 365.0)
+            df["doy_cos"] = np.cos(2 * np.pi * doy / 365.0)
 
         # ── Lag features ──────────────────────────────────────────────
         for lag in self.lag_steps:
