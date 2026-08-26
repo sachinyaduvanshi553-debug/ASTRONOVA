@@ -10,13 +10,14 @@ from astropy.io import fits
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("astronova.generate_realistic_data")
 
+
 def generate_flare_profile(
     times: pd.DatetimeIndex,
     start_time: datetime,
     peak_time: datetime,
     decay_tau_minutes: float,
     peak_flux: float,
-    bg_flux: float
+    bg_flux: float,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     Generates a physically realistic soft X-ray flux profile and corresponding hard X-ray count rate
@@ -50,9 +51,10 @@ def generate_flare_profile(
             t_decay = (t - t_peak).total_seconds() / 60.0
             soft_flux[i] = bg_flux + amplitude * np.exp(-t_decay / decay_tau_minutes)
             # Hard X-ray counts decay very rapidly after peak
-            hard_counts[i] = max(0.0, hard_counts[i-1] * np.exp(-t_decay / 2.0) if i > 0 else 0.0)
+            hard_counts[i] = max(0.0, hard_counts[i - 1] * np.exp(-t_decay / 2.0) if i > 0 else 0.0)
 
     return soft_flux, hard_counts
+
 
 def main():
     logger.info("Generating physically realistic Aditya-L1 datasets...")
@@ -61,11 +63,11 @@ def main():
     start_epoch = datetime(2026, 6, 20, 0, 0, 0)
     times = pd.date_range(start=start_epoch, periods=1440, freq="1Min")
 
-    bg_flux = 1.5e-8 # B-class quiescent background
+    bg_flux = 1.5e-8  # B-class quiescent background
 
     # Initialize flux arrays
     soft_flux = np.full(1440, bg_flux)
-    hard_counts = np.full(1440, 10.0) # Quiescent background count rate
+    hard_counts = np.full(1440, 10.0)  # Quiescent background count rate
 
     # Inject multiple flares (Cycle 25 statistics)
     # Flare 1: C-class flare around 04:00 (duration ~40 min)
@@ -74,8 +76,8 @@ def main():
         datetime(2026, 6, 20, 3, 50),
         datetime(2026, 6, 20, 4, 10),
         15.0,
-        4.5e-6, # C4.5
-        bg_flux
+        4.5e-6,  # C4.5
+        bg_flux,
     )
 
     # Flare 2: M-class flare around 10:00 (duration ~60 min)
@@ -84,8 +86,8 @@ def main():
         datetime(2026, 6, 20, 9, 30),
         datetime(2026, 6, 20, 10, 0),
         20.0,
-        2.5e-5, # M2.5
-        bg_flux
+        2.5e-5,  # M2.5
+        bg_flux,
     )
 
     # Flare 3: Extreme X-class flare around 18:00 (duration ~100 min)
@@ -94,8 +96,8 @@ def main():
         datetime(2026, 6, 20, 17, 40),
         datetime(2026, 6, 20, 18, 00),
         30.0,
-        1.2e-4, # X1.2
-        bg_flux
+        1.2e-4,  # X1.2
+        bg_flux,
     )
 
     # Combine signals
@@ -121,21 +123,21 @@ def main():
 
     # Create Primary HDU
     primary_hdu = fits.PrimaryHDU()
-    primary_hdu.header['DATE-OBS'] = start_epoch.isoformat()
-    primary_hdu.header['EXPTIME'] = 60.0
-    primary_hdu.header['VERSION'] = '1.0.0'
-    primary_hdu.header['SC_POS_X'] = 1498000.0 # L1 coordinates approx
-    primary_hdu.header['SC_POS_Y'] = 12000.0
-    primary_hdu.header['SC_POS_Z'] = -34000.0
+    primary_hdu.header["DATE-OBS"] = start_epoch.isoformat()
+    primary_hdu.header["EXPTIME"] = 60.0
+    primary_hdu.header["VERSION"] = "1.0.0"
+    primary_hdu.header["SC_POS_X"] = 1498000.0  # L1 coordinates approx
+    primary_hdu.header["SC_POS_Y"] = 12000.0
+    primary_hdu.header["SC_POS_Z"] = -34000.0
 
     # Times relative to start epoch in seconds
     times_sec = (times - times[0]).total_seconds().values
 
     # Create Binary Table HDU
-    col1 = fits.Column(name='TIME', format='D', array=times_sec)
-    col2 = fits.Column(name='FLUX_SOFT', format='E', array=soft_flux)
-    col3 = fits.Column(name='DETECTOR_TEMP', format='E', array=detector_temp)
-    col4 = fits.Column(name='QUALITY_FLAG', format='I', array=np.zeros(1440, dtype=int))
+    col1 = fits.Column(name="TIME", format="D", array=times_sec)
+    col2 = fits.Column(name="FLUX_SOFT", format="E", array=soft_flux)
+    col3 = fits.Column(name="DETECTOR_TEMP", format="E", array=detector_temp)
+    col4 = fits.Column(name="QUALITY_FLAG", format="I", array=np.zeros(1440, dtype=int))
 
     tb_hdu = fits.BinTableHDU.from_columns(fits.ColDefs([col1, col2, col3, col4]))
 
@@ -157,18 +159,18 @@ def main():
     epochs = cdflib.cdfepoch.compute_epoch(cdf_times)
 
     spec_epoch = {
-        'Variable': 'Epoch',
-        'Data_Type': 31, # CDF_EPOCH
-        'Num_Elements': 1,
-        'Rec_Vary': True,
-        'Dim_Sizes': []
+        "Variable": "Epoch",
+        "Data_Type": 31,  # CDF_EPOCH
+        "Num_Elements": 1,
+        "Rec_Vary": True,
+        "Dim_Sizes": [],
     }
     spec_counts = {
-        'Variable': 'HARD_XRAY_COUNTS',
-        'Data_Type': 45, # CDF_DOUBLE
-        'Num_Elements': 1,
-        'Rec_Vary': True,
-        'Dim_Sizes': []
+        "Variable": "HARD_XRAY_COUNTS",
+        "Data_Type": 45,  # CDF_DOUBLE
+        "Num_Elements": 1,
+        "Rec_Vary": True,
+        "Dim_Sizes": [],
     }
 
     cdf.write_var(spec_epoch, var_data=epochs)
@@ -177,22 +179,21 @@ def main():
     logger.info(f"Wrote HEL1OS CDF data to {helios_cdf_path}")
 
     # Also write CSV copies for easy preview and verification
-    solexs_df = pd.DataFrame({
-        "time": times,
-        "soft_xray_flux": soft_flux,
-        "detector_temp": detector_temp,
-        "quality_flag": 0
-    })
+    solexs_df = pd.DataFrame(
+        {
+            "time": times,
+            "soft_xray_flux": soft_flux,
+            "detector_temp": detector_temp,
+            "quality_flag": 0,
+        }
+    )
     solexs_df.to_csv(os.path.join(out_dir, "solexs_raw_sample.csv"), index=False)
 
-    helios_df = pd.DataFrame({
-        "time": times,
-        "hard_xray_flux": hard_counts * 1e-11,
-        "counts_per_sec": hard_counts
-    })
+    helios_df = pd.DataFrame({"time": times, "hard_xray_flux": hard_counts * 1e-11, "counts_per_sec": hard_counts})
     helios_df.to_csv(os.path.join(out_dir, "helios_raw_sample.csv"), index=False)
 
     logger.info("Generation complete! All synthetic products saved.")
+
 
 if __name__ == "__main__":
     main()

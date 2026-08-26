@@ -1,12 +1,13 @@
 import os
 import sys
-import pytest
+
 from fastapi.testclient import TestClient
 
 sys.path.append(os.path.abspath("."))
 
-from services.gateway.main import app
 from astronova_core.dynamic_logging import dynamic_logger_manager
+
+from services.gateway.main import app
 
 client = TestClient(app)
 
@@ -29,7 +30,7 @@ def test_dynamic_logging_manager_levels():
 def test_dynamic_logging_buffer_and_push():
     """Test pushing dynamic logs and querying recent logs."""
     dynamic_logger_manager.clear_logs()
-    
+
     entry = dynamic_logger_manager.push_log(
         service_name="test_service",
         level="WARNING",
@@ -75,7 +76,7 @@ def test_api_post_custom_log_and_query():
         "message": "Postman simulated log",
         "method": "POST",
         "path": "/api/v1/test",
-        "status_code": 201
+        "status_code": 201,
     }
     post_res = client.post("/api/v1/logging/logs", json=payload)
     assert post_res.status_code == 200
@@ -100,10 +101,7 @@ def test_api_get_db_schema():
 
 def test_api_execute_dynamic_query():
     """Test POST /api/v1/logging/db/query endpoint for read-only SELECT execution."""
-    payload = {
-        "query": "SELECT id, service_name, level, message FROM dynamic_logs",
-        "limit": 10
-    }
+    payload = {"query": "SELECT id, service_name, level, message FROM dynamic_logs", "limit": 10}
     response = client.post("/api/v1/logging/db/query", json=payload)
     assert response.status_code == 200
     data = response.json()
@@ -114,10 +112,7 @@ def test_api_execute_dynamic_query():
 
 def test_api_db_query_reject_non_select():
     """Ensure non-SELECT statements (e.g. DROP, DELETE, INSERT) are rejected for security."""
-    payload = {
-        "query": "DELETE FROM dynamic_logs",
-        "limit": 10
-    }
+    payload = {"query": "DELETE FROM dynamic_logs", "limit": 10}
     response = client.post("/api/v1/logging/db/query", json=payload)
     assert response.status_code == 400
     assert "Only read-only queries" in response.json()["detail"]

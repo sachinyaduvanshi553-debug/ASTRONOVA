@@ -98,9 +98,7 @@ class PipelineConfigUpdate(BaseModel):
 
     pipeline_id: str = Field(..., description="Pipeline to update")
     parameters: dict[str, Any] = Field(..., description="New parameter overrides")
-    enabled: bool | None = Field(
-        default=None, description="Enable or disable the pipeline"
-    )
+    enabled: bool | None = Field(default=None, description="Enable or disable the pipeline")
 
 
 # ---------------------------------------------------------------------------
@@ -204,9 +202,7 @@ async def _run_processing_job(
     try:
         # Determine which pipelines to run
         pipeline_ids = time_range.pipeline_ids or list(_PIPELINES.keys())
-        enabled_ids = [
-            pid for pid in pipeline_ids if _PIPELINES.get(pid, {}).get("enabled", False)
-        ]
+        enabled_ids = [pid for pid in pipeline_ids if _PIPELINES.get(pid, {}).get("enabled", False)]
 
         total = len(enabled_ids)
         stats: dict[str, Any] = {"pipelines_run": [], "rows_processed": 0}
@@ -266,9 +262,7 @@ async def run_processing(
     submitted_at = datetime.now(UTC)
 
     # Rough estimation: 1 second per day of data, minimum 1 s
-    delta_days = max(
-        (body.end - body.start).total_seconds() / 86400, 1 / 1440
-    )
+    delta_days = max((body.end - body.start).total_seconds() / 86400, 1 / 1440)
     estimated = max(round(delta_days * 1.0, 2), 0.1)
 
     _job_registry[job_id] = {
@@ -296,10 +290,7 @@ async def run_processing(
     return ProcessingJobResponse(
         job_id=job_id,
         status="queued",
-        message=(
-            f"Processing job accepted. Instrument: {body.instrument}. "
-            f"Pipelines: {body.pipeline_ids or 'all'}."
-        ),
+        message=(f"Processing job accepted. Instrument: {body.instrument}. Pipelines: {body.pipeline_ids or 'all'}."),
         submitted_at=submitted_at,
         estimated_duration_seconds=estimated,
     )

@@ -1,6 +1,7 @@
-import pandas as pd
-import joblib
 from pathlib import Path
+
+import joblib
+import pandas as pd
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 
@@ -49,11 +50,7 @@ def train_model(X_train, X_test, y_train, y_test):
 
     print("🤖 Training model...")
 
-    model = RandomForestClassifier(
-        n_estimators=100,
-        random_state=42,
-        n_jobs=-1
-    )
+    model = RandomForestClassifier(n_estimators=100, random_state=42, n_jobs=-1)
 
     model.fit(X_train, y_train)
 

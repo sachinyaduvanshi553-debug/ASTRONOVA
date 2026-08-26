@@ -5,16 +5,19 @@ def create_file(path, content):
     dirname = os.path.dirname(path)
     if dirname:
         os.makedirs(dirname, exist_ok=True)
-    with open(path, 'w', encoding='utf-8') as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write(content)
     print(f"Created: {path}")
+
 
 # =====================================================================
 # PART 1: ADITYA-L1 DATA READERS
 # =====================================================================
 
 # --- 1. solexs_reader.py ---
-create_file("shared/astronova_core/utils/aditya_readers/solexs_reader.py", """import pandas as pd
+create_file(
+    "shared/astronova_core/utils/aditya_readers/solexs_reader.py",
+    """import pandas as pd
 import numpy as np
 from datetime import datetime
 
@@ -39,10 +42,13 @@ class SolexsFitsReader:
 
         df['time'] = pd.to_datetime(df['time'])
         return df
-""")
+""",
+)
 
 # --- 2. helios_reader.py ---
-create_file("shared/astronova_core/utils/aditya_readers/helios_reader.py", """import pandas as pd
+create_file(
+    "shared/astronova_core/utils/aditya_readers/helios_reader.py",
+    """import pandas as pd
 import numpy as np
 
 class HeliosCdfReader:
@@ -56,10 +62,13 @@ class HeliosCdfReader:
         })
         df['time'] = pd.to_datetime(df['time'])
         return df
-""")
+""",
+)
 
 # --- 3. calibration.py ---
-create_file("shared/astronova_core/utils/aditya_readers/calibration.py", """import pandas as pd
+create_file(
+    "shared/astronova_core/utils/aditya_readers/calibration.py",
+    """import pandas as pd
 
 class AdityaCalibrator:
     def calibrate_solexs(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -72,10 +81,13 @@ class AdityaCalibrator:
                 axis=1
             )
         return df
-""")
+""",
+)
 
 # --- 4. synchronization.py ---
-create_file("shared/astronova_core/utils/aditya_readers/synchronization.py", """import pandas as pd
+create_file(
+    "shared/astronova_core/utils/aditya_readers/synchronization.py",
+    """import pandas as pd
 
 class AdityaSensorSynchronizer:
     def synchronize_sensors(self, solexs_df: pd.DataFrame, helios_df: pd.DataFrame) -> pd.DataFrame:
@@ -88,7 +100,8 @@ class AdityaSensorSynchronizer:
         merged = merged.interpolate(method='linear').ffill().bfill()
 
         return merged.reset_index()
-""")
+""",
+)
 
 
 # =====================================================================
@@ -96,7 +109,9 @@ class AdityaSensorSynchronizer:
 # =====================================================================
 
 # --- 5. requirements.txt ---
-create_file("services/flare_catalog/requirements.txt", """fastapi>=0.115.0
+create_file(
+    "services/flare_catalog/requirements.txt",
+    """fastapi>=0.115.0
 uvicorn>=0.30.0
 pydantic>=2.9.0
 sqlalchemy>=2.0.0
@@ -106,10 +121,13 @@ numpy>=2.0.0
 prometheus-client>=0.21.0
 structlog>=24.0.0
 astronova-core
-""")
+""",
+)
 
 # --- 6. main.py ---
-create_file("services/flare_catalog/main.py", """from fastapi import FastAPI
+create_file(
+    "services/flare_catalog/main.py",
+    """from fastapi import FastAPI
 from services.flare_catalog.routers import catalog
 from astronova_core.logging import setup_logging
 from astronova_core.metrics import metrics_router
@@ -128,10 +146,13 @@ app.include_router(metrics_router)
 @app.get("/")
 def read_root():
     return {"message": "AstroNova Flare Catalog Service API v1"}
-""")
+""",
+)
 
 # --- 7. Dockerfile ---
-create_file("services/flare_catalog/Dockerfile", """FROM python:3.12-slim as builder
+create_file(
+    "services/flare_catalog/Dockerfile",
+    """FROM python:3.12-slim as builder
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
@@ -144,10 +165,13 @@ ENV PATH=/root/.local/bin:$PATH
 ENV PYTHONUNBUFFERED=1
 EXPOSE 8012
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8012"]
-""")
+""",
+)
 
 # --- 8. routers/catalog.py ---
-create_file("services/flare_catalog/routers/catalog.py", """from fastapi import APIRouter, Depends
+create_file(
+    "services/flare_catalog/routers/catalog.py",
+    """from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from astronova_core.database import get_db
 from astronova_core.models.timeseries import SolexsObservation
@@ -212,7 +236,8 @@ async def list_catalog(db: AsyncSession = Depends(get_db)):
 @router.get("/health")
 def health():
     return {"status": "healthy"}
-""")
+""",
+)
 
 
 # =====================================================================
@@ -220,7 +245,9 @@ def health():
 # =====================================================================
 
 # --- 9. models/benchmarks/harness.py ---
-create_file("models/benchmarks/harness.py", """import numpy as np
+create_file(
+    "models/benchmarks/harness.py",
+    """import numpy as np
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
 
 class ModelBenchmarkHarness:
@@ -272,7 +299,8 @@ class ModelBenchmarkHarness:
                 "lead_time_minutes": 26.0
             }
         }
-""")
+""",
+)
 
 
 # =====================================================================
@@ -280,16 +308,21 @@ class ModelBenchmarkHarness:
 # =====================================================================
 
 # --- 10. requirements.txt ---
-create_file("services/comms_impact/requirements.txt", """fastapi>=0.115.0
+create_file(
+    "services/comms_impact/requirements.txt",
+    """fastapi>=0.115.0
 uvicorn>=0.30.0
 pydantic>=2.9.0
 prometheus-client>=0.21.0
 structlog>=24.0.0
 astronova-core
-""")
+""",
+)
 
 # --- 11. main.py ---
-create_file("services/comms_impact/main.py", """from fastapi import FastAPI
+create_file(
+    "services/comms_impact/main.py",
+    """from fastapi import FastAPI
 from services.comms_impact.routers import comms
 from astronova_core.logging import setup_logging
 from astronova_core.metrics import metrics_router
@@ -308,10 +341,13 @@ app.include_router(metrics_router)
 @app.get("/")
 def read_root():
     return {"message": "AstroNova Comms Impact Service API v1"}
-""")
+""",
+)
 
 # --- 12. Dockerfile ---
-create_file("services/comms_impact/Dockerfile", """FROM python:3.12-slim as builder
+create_file(
+    "services/comms_impact/Dockerfile",
+    """FROM python:3.12-slim as builder
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
@@ -324,10 +360,13 @@ ENV PATH=/root/.local/bin:$PATH
 ENV PYTHONUNBUFFERED=1
 EXPOSE 8013
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8013"]
-""")
+""",
+)
 
 # --- 13. routers/comms.py ---
-create_file("services/comms_impact/routers/comms.py", """from fastapi import APIRouter, Query
+create_file(
+    "services/comms_impact/routers/comms.py",
+    """from fastapi import APIRouter, Query
 
 router = APIRouter(prefix="/api/v1/comms", tags=["comms-impact"])
 
@@ -368,7 +407,8 @@ async def assess_comms_impact(goes_class: str = Query(..., description="GOES Cla
 @router.get("/health")
 def health():
     return {"status": "healthy"}
-""")
+""",
+)
 
 
 # =====================================================================
@@ -376,7 +416,9 @@ def health():
 # =====================================================================
 
 # --- 14. services/copilot/services/agents_orch.py ---
-create_file("services/copilot/services/agents_orch.py", """from typing import Dict, Any
+create_file(
+    "services/copilot/services/agents_orch.py",
+    """from typing import Dict, Any
 
 class SpaceWeatherMultiAgentOrchestrator:
     async def run_orchestration(self, goes_class: str, current_flux: float) -> Dict[str, Any]:
@@ -418,6 +460,7 @@ class SpaceWeatherMultiAgentOrchestrator:
                 "historical_retrieval_agent": historical_retrieval_agent
             }
         }
-""")
+""",
+)
 
 print("ALL PHASE-2 MODULES GENERATED")

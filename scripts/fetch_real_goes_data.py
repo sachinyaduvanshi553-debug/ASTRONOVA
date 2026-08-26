@@ -10,25 +10,27 @@ def fetch_noaa_live_data():
     print("Fetching real-time solar flux from NOAA SWPC API...")
 
     try:
-        req = urllib.request.Request(url, headers={'User-Agent': 'Mozilla/5.0'})
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
         with urllib.request.urlopen(req) as response:
-            data = json.loads(response.read().decode('utf-8'))
+            data = json.loads(response.read().decode("utf-8"))
 
         # Parse data into lists
         records = []
         for item in data:
             # We want the 0.1-0.8nm band (Soft X-ray)
             if item.get("energy") == "0.1-0.8nm":
-                records.append({
-                    "time": item.get("time_tag"),
-                    "soft_xray_flux": item.get("flux"),
-                    "hard_xray_flux": item.get("flux") * 0.1,  # Proxy hard flux if not separated
-                    "quality_flag": 0
-                })
+                records.append(
+                    {
+                        "time": item.get("time_tag"),
+                        "soft_xray_flux": item.get("flux"),
+                        "hard_xray_flux": item.get("flux") * 0.1,  # Proxy hard flux if not separated
+                        "quality_flag": 0,
+                    }
+                )
 
         df = pd.DataFrame(records)
-        df['time'] = pd.to_datetime(df['time'])
-        df = df.sort_values('time')
+        df["time"] = pd.to_datetime(df["time"])
+        df = df.sort_values("time")
 
         # Save real data
         os.makedirs("data/sample", exist_ok=True)
@@ -42,6 +44,7 @@ def fetch_noaa_live_data():
     except Exception as e:
         print(f"Error fetching NOAA API: {e!s}")
         return None
+
 
 if __name__ == "__main__":
     fetch_noaa_live_data()

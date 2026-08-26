@@ -1,9 +1,8 @@
 import os
-import json
-import httpx
 import traceback
-from typing import Any, Dict, List
+from typing import Any
 
+import httpx
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -39,6 +38,7 @@ class SpaceWeatherRAGChain:
         if self.api_key:
             try:
                 from google import genai
+
                 self.genai_client = genai.Client(api_key=self.api_key)
                 print(f"[Copilot] Gemini client initialized with model: {self.model_name}")
             except ImportError:
@@ -48,7 +48,7 @@ class SpaceWeatherRAGChain:
         else:
             print("[Copilot] No GEMINI_API_KEY found. Using Ollama fallback.")
 
-    def chat(self, query: str) -> Dict[str, Any]:
+    def chat(self, query: str) -> dict[str, Any]:
         """Send the user query to Gemini (if configured) or Ollama (fallback) and return a structured response."""
 
         # ─── Try Gemini first ──────────────────────────────────────────
@@ -69,9 +69,8 @@ class SpaceWeatherRAGChain:
             # ─── Final hardcoded fallback ──────────────────────────────
             return self._chat_fallback(query)
 
-    def _chat_gemini(self, query: str) -> Dict[str, Any]:
+    def _chat_gemini(self, query: str) -> dict[str, Any]:
         """Call Google Gemini using the new google-genai SDK."""
-        from google import genai
         from google.genai import types
 
         response = self.genai_client.models.generate_content(
@@ -86,7 +85,7 @@ class SpaceWeatherRAGChain:
         answer = response.text.strip() if response.text else "No response generated."
         return {"answer": answer, "sources": []}
 
-    def _chat_ollama(self, query: str) -> Dict[str, Any]:
+    def _chat_ollama(self, query: str) -> dict[str, Any]:
         """Call local Ollama LLM as fallback."""
         payload = {
             "model": self.ollama_model,
@@ -104,7 +103,7 @@ class SpaceWeatherRAGChain:
             answer = data.get("response", "").strip()
             return {"answer": answer, "sources": []}
 
-    def _chat_fallback(self, query: str) -> Dict[str, Any]:
+    def _chat_fallback(self, query: str) -> dict[str, Any]:
         """Hardcoded intelligent fallback when both Gemini and Ollama are unavailable."""
         q = query.lower()
 
@@ -156,10 +155,13 @@ class SpaceWeatherRAGChain:
             )
         else:
             answer = (
-                f"I received your query: \"{query}\"\n\n"
+                f'I received your query: "{query}"\n\n'
                 "I'm the AstroNova Space Weather Copilot. I can provide expert analysis on "
                 "solar flares, CMEs, geomagnetic storms, ISRO missions (Aditya-L1, SOLEXS), "
                 "satellite risk, and ionospheric effects. Please ask me a specific space weather question!"
             )
 
-        return {"answer": answer, "sources": [{"title": "AstroNova Knowledge Base", "chunk": "Built-in domain knowledge"}]}
+        return {
+            "answer": answer,
+            "sources": [{"title": "AstroNova Knowledge Base", "chunk": "Built-in domain knowledge"}],
+        }

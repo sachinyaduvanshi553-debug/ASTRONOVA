@@ -7,38 +7,38 @@ Checks:
 - Class balance report
 - Data quality summary report
 """
+
 from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional
 
-import numpy as np
 import pandas as pd
 
 logger = logging.getLogger("astronova.processing.validation")
 
 _REQUIRED_COLS = ["soft_xray_flux", "hard_xray_flux"]
-_FLUX_FLOOR    = 1e-9   # W/m²
-_FLUX_CEIL     = 1e-3   # W/m²
-_MAX_GAP_MIN   = 5      # Alert if gap > 5 minutes in 1-min cadence data
+_FLUX_FLOOR = 1e-9  # W/m²
+_FLUX_CEIL = 1e-3  # W/m²
+_MAX_GAP_MIN = 5  # Alert if gap > 5 minutes in 1-min cadence data
 
 
 @dataclass
 class ValidationReport:
     """Container for dataset validation results."""
-    n_rows:            int = 0
-    n_cols:            int = 0
-    missing_columns:   List[str] = field(default_factory=list)
-    nan_counts:        Dict[str, int] = field(default_factory=dict)
-    out_of_range:      Dict[str, int] = field(default_factory=dict)
-    time_gaps:         List[str] = field(default_factory=list)
-    n_time_gaps:       int = 0
-    class_balance:     Dict[str, int] = field(default_factory=dict)
-    quality_flag_dist: Dict[str, int] = field(default_factory=dict)
-    passed:            bool = True
-    warnings:          List[str] = field(default_factory=list)
-    errors:            List[str] = field(default_factory=list)
+
+    n_rows: int = 0
+    n_cols: int = 0
+    missing_columns: list[str] = field(default_factory=list)
+    nan_counts: dict[str, int] = field(default_factory=dict)
+    out_of_range: dict[str, int] = field(default_factory=dict)
+    time_gaps: list[str] = field(default_factory=list)
+    n_time_gaps: int = 0
+    class_balance: dict[str, int] = field(default_factory=dict)
+    quality_flag_dist: dict[str, int] = field(default_factory=dict)
+    passed: bool = True
+    warnings: list[str] = field(default_factory=list)
+    errors: list[str] = field(default_factory=list)
 
     def summary(self) -> str:
         lines = [
@@ -70,13 +70,13 @@ class ValidationPipeline:
 
     def __init__(
         self,
-        required_columns: Optional[List[str]] = None,
-        flux_columns: Optional[List[str]] = None,
+        required_columns: list[str] | None = None,
+        flux_columns: list[str] | None = None,
         max_gap_minutes: int = _MAX_GAP_MIN,
     ) -> None:
         self.required_columns = required_columns or _REQUIRED_COLS
-        self.flux_columns     = flux_columns or ["soft_xray_flux", "hard_xray_flux"]
-        self.max_gap_minutes  = max_gap_minutes
+        self.flux_columns = flux_columns or ["soft_xray_flux", "hard_xray_flux"]
+        self.max_gap_minutes = max_gap_minutes
 
     # ------------------------------------------------------------------
     def validate(self, df: pd.DataFrame) -> ValidationReport:
@@ -117,9 +117,7 @@ class ValidationPipeline:
             n_above = int((df[col] > _FLUX_CEIL).sum())
             if n_below + n_above > 0:
                 report.out_of_range[col] = n_below + n_above
-                report.warnings.append(
-                    f"Column '{col}': {n_below} below floor, {n_above} above ceiling."
-                )
+                report.warnings.append(f"Column '{col}': {n_below} below floor, {n_above} above ceiling.")
 
         # ── 4. Temporal continuity ────────────────────────────────────
         if isinstance(df.index, pd.DatetimeIndex) and len(df) > 1:
@@ -130,9 +128,7 @@ class ValidationPipeline:
             for ts, gap in large_gaps.items():
                 report.time_gaps.append(f"{ts}: gap = {gap}")
             if report.n_time_gaps > 0:
-                report.warnings.append(
-                    f"{report.n_time_gaps} temporal gaps > {self.max_gap_minutes}min detected."
-                )
+                report.warnings.append(f"{report.n_time_gaps} temporal gaps > {self.max_gap_minutes}min detected.")
 
         # ── 5. Class balance ──────────────────────────────────────────
         if "label_binary" in df.columns:
@@ -142,7 +138,7 @@ class ValidationPipeline:
             total = sum(report.class_balance.values())
             if total > 0 and pos / total < 0.01:
                 report.warnings.append(
-                    f"Severe class imbalance: only {pos}/{total} positive M/X labels ({100*pos/total:.2f}%)."
+                    f"Severe class imbalance: only {pos}/{total} positive M/X labels ({100 * pos / total:.2f}%)."
                 )
 
         if "flare_class" in df.columns:
@@ -153,9 +149,7 @@ class ValidationPipeline:
         if "quality_flag" in df.columns:
             vc = df["quality_flag"].value_counts().to_dict()
             flag_labels = {0: "clean", 1: "imputed", 2: "spike_removed"}
-            report.quality_flag_dist = {
-                flag_labels.get(int(k), str(k)): int(v) for k, v in vc.items()
-            }
+            report.quality_flag_dist = {flag_labels.get(int(k), str(k)): int(v) for k, v in vc.items()}
 
         logger.info("ValidationPipeline:\n%s", report.summary())
         return report

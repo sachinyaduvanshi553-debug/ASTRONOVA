@@ -7,6 +7,7 @@ from scipy.signal import find_peaks
 
 logger = logging.getLogger("astronova.ground_truth")
 
+
 class FlareGroundTruthBuilder:
     """
     Builds a ground truth solar flare catalog from continuous flux telemetry.
@@ -53,7 +54,7 @@ class FlareGroundTruthBuilder:
         df: pd.DataFrame,
         peak_idx: int,
         flux_col: str = "soft_xray_flux",
-        time_col: str = "time"
+        time_col: str = "time",
     ) -> dict[str, Any] | None:
         """
         Segments a single flare given its peak index.
@@ -127,36 +128,35 @@ class FlareGroundTruthBuilder:
             "goes_class": self.classify_flux_goes(peak_flux),
             "duration_minutes": float(duration_minutes),
             "rise_time_minutes": float(rise_time_minutes),
-            "decay_time_minutes": float(decay_time_minutes)
+            "decay_time_minutes": float(decay_time_minutes),
         }
 
-    def build_catalog(
-        self,
-        df: pd.DataFrame,
-        flux_col: str = "soft_xray_flux",
-        time_col: str = "time"
-    ) -> pd.DataFrame:
+    def build_catalog(self, df: pd.DataFrame, flux_col: str = "soft_xray_flux", time_col: str = "time") -> pd.DataFrame:
         """
         Scans a continuous flux DataFrame and detects all flare events.
         Returns a DataFrame representing the ground truth flare catalog.
         """
         if df.empty or len(df) < 5:
-            return pd.DataFrame(columns=[
-                "start_time", "peak_time", "end_time", "peak_flux",
-                "background_flux", "goes_class", "duration_minutes",
-                "rise_time_minutes", "decay_time_minutes"
-            ])
+            return pd.DataFrame(
+                columns=[
+                    "start_time",
+                    "peak_time",
+                    "end_time",
+                    "peak_flux",
+                    "background_flux",
+                    "goes_class",
+                    "duration_minutes",
+                    "rise_time_minutes",
+                    "decay_time_minutes",
+                ]
+            )
 
         df_sorted = df.sort_values(by=time_col).reset_index(drop=True)
         fluxes = df_sorted[flux_col].fillna(1e-9).values
 
         # Detect peaks using scipy.signal.find_peaks
         # Distance constraint translates time distance to number of samples (assuming 1-minute cadence)
-        peaks_indices, _ = find_peaks(
-            fluxes,
-            prominence=self.prom_threshold,
-            distance=self.min_distance_minutes
-        )
+        peaks_indices, _ = find_peaks(fluxes, prominence=self.prom_threshold, distance=self.min_distance_minutes)
 
         flares = []
         for idx in peaks_indices:

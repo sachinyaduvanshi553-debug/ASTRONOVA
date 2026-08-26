@@ -6,16 +6,16 @@ Implements:
 - MinMax scaling (optional, for neural network inputs)
 - Inverse transform utilities
 """
+
 from __future__ import annotations
 
 import logging
 import pickle
 from pathlib import Path
-from typing import Dict, List, Optional
 
 import numpy as np
 import pandas as pd
-from sklearn.preprocessing import RobustScaler, MinMaxScaler
+from sklearn.preprocessing import MinMaxScaler, RobustScaler
 
 from services.processing.pipelines.base import BasePipeline
 
@@ -23,7 +23,7 @@ logger = logging.getLogger("astronova.processing.normalization")
 
 # Columns to normalize (exclude flags and labels)
 _FLUX_COLS = ["soft_xray_flux", "hard_xray_flux"]
-_LOG_TRANSFORM_FLOOR = 1e-9   # W/m² – same as cleaning floor
+_LOG_TRANSFORM_FLOOR = 1e-9  # W/m² – same as cleaning floor
 
 
 class NormalizationPipeline(BasePipeline):
@@ -38,18 +38,18 @@ class NormalizationPipeline(BasePipeline):
 
     def __init__(
         self,
-        flux_columns: List[str] = None,
+        flux_columns: list[str] | None = None,
         use_log: bool = True,
         use_minmax: bool = False,
     ) -> None:
         self.flux_columns = flux_columns or _FLUX_COLS
         self.use_log = use_log
         self.use_minmax = use_minmax
-        self._scaler: Optional[RobustScaler | MinMaxScaler] = None
+        self._scaler: RobustScaler | MinMaxScaler | None = None
         self._fitted = False
 
     # ------------------------------------------------------------------
-    def fit(self, df: pd.DataFrame) -> "NormalizationPipeline":
+    def fit(self, df: pd.DataFrame) -> NormalizationPipeline:
         """Fit scaler on ``df`` flux columns (after log transform if enabled)."""
         X = self._extract_and_log(df)
         if self.use_minmax:
@@ -102,7 +102,7 @@ class NormalizationPipeline(BasePipeline):
             if scaled_col in df.columns:
                 raw = X_unscaled[:, i]
                 if self.use_log:
-                    raw = np.power(10.0, raw)   # undo log10
+                    raw = np.power(10.0, raw)  # undo log10
                 df[f"{col}_physical"] = np.clip(raw, _LOG_TRANSFORM_FLOOR, 1e-3)
 
         return df
@@ -113,15 +113,21 @@ class NormalizationPipeline(BasePipeline):
         path = Path(path)
         path.parent.mkdir(parents=True, exist_ok=True)
         with open(path, "wb") as fh:
-            pickle.dump({"scaler": self._scaler, "config": {
-                "flux_columns": self.flux_columns,
-                "use_log": self.use_log,
-                "use_minmax": self.use_minmax,
-            }}, fh)
+            pickle.dump(
+                {
+                    "scaler": self._scaler,
+                    "config": {
+                        "flux_columns": self.flux_columns,
+                        "use_log": self.use_log,
+                        "use_minmax": self.use_minmax,
+                    },
+                },
+                fh,
+            )
         logger.info("NormalizationPipeline saved to %s.", path)
 
     @classmethod
-    def load(cls, path: str | Path) -> "NormalizationPipeline":
+    def load(cls, path: str | Path) -> NormalizationPipeline:
         """Load a persisted NormalizationPipeline from disk."""
         with open(path, "rb") as fh:
             data = pickle.load(fh)
@@ -140,7 +146,7 @@ class NormalizationPipeline(BasePipeline):
             raise ValueError(f"None of the expected flux columns found: {self.flux_columns}")
 
         X = df[cols_present].values.astype(float)
-        X = np.clip(X, _LOG_TRANSFORM_FLOOR, None)   # avoid log(0)
+        X = np.clip(X, _LOG_TRANSFORM_FLOOR, None)  # avoid log(0)
         if self.use_log:
             X = np.log10(X)
         return X

@@ -6,20 +6,17 @@ Supports per-horizon explanations, global feature importance aggregation,
 and waterfall / beeswarm plot generation.
 """
 
-import os
-import sys
 import logging
-import pickle
-import warnings
+import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any
 
+import matplotlib
 import numpy as np
 import pandas as pd
-import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import matplotlib.patches as mpatches
 
 # ── Project root guard ────────────────────────────────────────────────────────
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
@@ -29,16 +26,25 @@ if str(PROJECT_ROOT) not in sys.path:
 logger = logging.getLogger("astronova.xai.shap_explainer")
 
 FEATURE_NAMES = [
-    "log_soft_flux", "log_hard_flux", "xray_ratio",
-    "soft_gradient", "hard_gradient",
-    "soft_rolling_mean_15", "soft_rolling_std_15",
-    "soft_rolling_max_30", "soft_rolling_min_30",
-    "flux_acceleration", "time_since_prev_flare",
-    "hour_sin", "doy_sin", "noaa_ar_count", "magnetic_complexity",
+    "log_soft_flux",
+    "log_hard_flux",
+    "xray_ratio",
+    "soft_gradient",
+    "hard_gradient",
+    "soft_rolling_mean_15",
+    "soft_rolling_std_15",
+    "soft_rolling_max_30",
+    "soft_rolling_min_30",
+    "flux_acceleration",
+    "time_since_prev_flare",
+    "hour_sin",
+    "doy_sin",
+    "noaa_ar_count",
+    "magnetic_complexity",
 ]
 
 HORIZON_LABELS = ["15m", "30m", "1h", "6h"]
-CLASS_NAMES    = ["A/B", "C", "M", "X"]
+CLASS_NAMES = ["A/B", "C", "M", "X"]
 
 # Colour palette for horizon bars
 PALETTE = ["#4FC3F7", "#29B6F6", "#0288D1", "#01579B"]
@@ -66,27 +72,26 @@ class SHAPExplainer:
     ):
         try:
             import shap
+
             self._shap = shap
         except ImportError:
-            raise ImportError(
-                "shap is required: pip install shap"
-            )
+            raise ImportError("shap is required: pip install shap")
 
-        self.model      = model
+        self.model = model
         self.model_name = model_name
-        self.seq_len    = seq_len
-        self.out_dir    = Path(out_dir)
+        self.seq_len = seq_len
+        self.out_dir = Path(out_dir)
         self.out_dir.mkdir(parents=True, exist_ok=True)
 
         # Build flat feature names: timestep_t0_feat … timestep_t9_feat
-        self.flat_feature_names: List[str] = []
+        self.flat_feature_names: list[str] = []
         for t in range(seq_len):
             for f in FEATURE_NAMES:
                 self.flat_feature_names.append(f"t{t}_{f}")
 
         # Cache of computed shap values keyed by horizon index
-        self._shap_values: Dict[int, Any] = {}
-        self._explainers:  Dict[int, Any] = {}
+        self._shap_values: dict[int, Any] = {}
+        self._explainers: dict[int, Any] = {}
 
     # ─────────────────────────────────────────────────────────── public API ──
     def compute_shap_values(
@@ -109,30 +114,32 @@ class SHAPExplainer:
         shap_values : ndarray [N, flat_features, num_classes]
         """
         X_flat = self._flatten(X)[:max_samples]
-        clf    = self.model.classifiers[horizon_idx]
+        clf = self.model.classifiers[horizon_idx]
 
         logger.info(
             "[%s] Computing SHAP (horizon=%s, samples=%d) …",
-            self.model_name, HORIZON_LABELS[horizon_idx], len(X_flat),
+            self.model_name,
+            HORIZON_LABELS[horizon_idx],
+            len(X_flat),
         )
 
-        explainer  = self._shap.TreeExplainer(clf)
-        shap_vals  = explainer.shap_values(X_flat)   # list[num_classes] or ndarray
+        explainer = self._shap.TreeExplainer(clf)
+        shap_vals = explainer.shap_values(X_flat)  # list[num_classes] or ndarray
 
         # Normalise to [N, features, classes]
         if isinstance(shap_vals, list):
             # Legacy SHAP: list of [N, F] arrays, one per class
-            shap_arr = np.stack(shap_vals, axis=-1)   # [N, F, C]
+            shap_arr = np.stack(shap_vals, axis=-1)  # [N, F, C]
         else:
             shap_arr = np.asarray(shap_vals)
             # Newer SHAP may return (N, F, C, 1) – squeeze trailing 1-dims
             while shap_arr.ndim > 3 and shap_arr.shape[-1] == 1:
                 shap_arr = shap_arr.squeeze(-1)
-            if shap_arr.ndim == 2:                     # [N, F] binary case
-                shap_arr = shap_arr[..., np.newaxis]   # → [N, F, 1]
+            if shap_arr.ndim == 2:  # [N, F] binary case
+                shap_arr = shap_arr[..., np.newaxis]  # → [N, F, 1]
 
         self._shap_values[horizon_idx] = shap_arr
-        self._explainers[horizon_idx]  = explainer
+        self._explainers[horizon_idx] = explainer
 
         logger.info("[%s] SHAP values computed. shape=%s", self.model_name, shap_arr.shape)
         return shap_arr
@@ -148,18 +155,18 @@ class SHAPExplainer:
         Returns a DataFrame with columns: feature, importance, std.
         """
         if horizon_idx not in self._shap_values:
-            raise RuntimeError(
-                f"Run compute_shap_values(horizon_idx={horizon_idx}) first."
-            )
-        shap_arr = self._shap_values[horizon_idx]   # [N, F, C]
+            raise RuntimeError(f"Run compute_shap_values(horizon_idx={horizon_idx}) first.")
+        shap_arr = self._shap_values[horizon_idx]  # [N, F, C]
         mean_abs = np.abs(shap_arr).mean(axis=(0, 2))  # [F]
-        std_abs  = np.abs(shap_arr).std(axis=(0, 2))
+        std_abs = np.abs(shap_arr).std(axis=(0, 2))
 
-        df = pd.DataFrame({
-            "feature":    self.flat_feature_names,
-            "importance": mean_abs,
-            "std":        std_abs,
-        })
+        df = pd.DataFrame(
+            {
+                "feature": self.flat_feature_names,
+                "importance": mean_abs,
+                "std": std_abs,
+            }
+        )
         df = df.sort_values("importance", ascending=False).head(top_n).reset_index(drop=True)
         return df
 
@@ -170,25 +177,26 @@ class SHAPExplainer:
         horizon_idx: int = 0,
         target_class: int = 3,
         top_n: int = 10,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Per-sample waterfall-style explanation for the target flare class.
         """
         if horizon_idx not in self._shap_values:
             self.compute_shap_values(X, horizon_idx)
 
-        shap_arr   = self._shap_values[horizon_idx]       # [N, F, C]
-        sv_sample  = shap_arr[sample_idx, :, target_class]  # [F]
-        feat_vals  = self._flatten(X)[sample_idx]
+        shap_arr = self._shap_values[horizon_idx]  # [N, F, C]
+        sv_sample = shap_arr[sample_idx, :, target_class]  # [F]
+        feat_vals = self._flatten(X)[sample_idx]
 
-        order   = np.argsort(np.abs(sv_sample))[::-1][:top_n]
+        order = np.argsort(np.abs(sv_sample))[::-1][:top_n]
         pos_feats = [
             {
                 "feature": self.flat_feature_names[i],
                 "shap_value": float(sv_sample[i]),
                 "feature_value": float(feat_vals[i]),
             }
-            for i in order if sv_sample[i] > 0
+            for i in order
+            if sv_sample[i] > 0
         ]
         neg_feats = [
             {
@@ -196,12 +204,13 @@ class SHAPExplainer:
                 "shap_value": float(sv_sample[i]),
                 "feature_value": float(feat_vals[i]),
             }
-            for i in order if sv_sample[i] <= 0
+            for i in order
+            if sv_sample[i] <= 0
         ]
 
         return {
-            "model_name":   self.model_name,
-            "horizon":      HORIZON_LABELS[horizon_idx],
+            "model_name": self.model_name,
+            "horizon": HORIZON_LABELS[horizon_idx],
             "target_class": CLASS_NAMES[target_class],
             "positive_factors": pos_feats,
             "negative_factors": neg_feats,
@@ -218,24 +227,24 @@ class SHAPExplainer:
         """
         Beeswarm-style summary plot for the given horizon and target class.
         """
-        shap_arr  = self._shap_values.get(horizon_idx)
+        shap_arr = self._shap_values.get(horizon_idx)
         if shap_arr is None:
             raise RuntimeError("Call compute_shap_values() first.")
 
-        sv = shap_arr[:, :, target_class]              # [N, F]
+        sv = shap_arr[:, :, target_class]  # [N, F]
         order = np.argsort(np.abs(sv).mean(axis=0))[::-1][:top_n]
-        sv_top    = sv[:, order]
-        fnames    = [self.flat_feature_names[i] for i in order]
+        sv_top = sv[:, order]
+        fnames = [self.flat_feature_names[i] for i in order]
 
         fig, ax = plt.subplots(figsize=(10, 8), facecolor="#0D1117")
         ax.set_facecolor("#0D1117")
 
         # Scatter with colour = feature magnitude
         feat_vals = np.zeros_like(sv_top)
-        for fi, orig_i in enumerate(order):
-            feat_vals[:, fi] = self._flatten(np.zeros((1, 1)))[0][0]   # placeholder
+        for fi, _orig_i in enumerate(order):
+            feat_vals[:, fi] = self._flatten(np.zeros((1, 1)))[0][0]  # placeholder
 
-        colours = plt.cm.RdBu_r(np.linspace(0, 1, sv_top.shape[0]))
+        plt.cm.RdBu_r(np.linspace(0, 1, sv_top.shape[0]))
         for fi in range(sv_top.shape[1] - 1, -1, -1):
             jitter = np.random.normal(0, 0.08, sv_top.shape[0])
             ax.scatter(
@@ -255,7 +264,9 @@ class SHAPExplainer:
         ax.set_title(
             f"{self.model_name} — SHAP Beeswarm\n"
             f"Horizon: {HORIZON_LABELS[horizon_idx]} | Class: {CLASS_NAMES[target_class]}",
-            color="white", fontsize=12, pad=10,
+            color="white",
+            fontsize=12,
+            pad=10,
         )
         ax.tick_params(colors="white")
         for spine in ax.spines.values():
@@ -292,12 +303,19 @@ class SHAPExplainer:
         display_names = [n.split("_", 1)[1] if "_" in n else n for n in df["feature"]]
         colours = plt.cm.plasma(np.linspace(0.2, 0.9, len(df)))[::-1]
 
-        bars = ax.barh(display_names[::-1], df["importance"][::-1], xerr=df["std"][::-1],
-                       color=colours, error_kw={"ecolor": "#888", "capsize": 3})
+        ax.barh(
+            display_names[::-1],
+            df["importance"][::-1],
+            xerr=df["std"][::-1],
+            color=colours,
+            error_kw={"ecolor": "#888", "capsize": 3},
+        )
         ax.set_xlabel("Mean |SHAP value|", color="white", fontsize=10)
         ax.set_title(
             f"{self.model_name} — Global SHAP Importance\nHorizon: {HORIZON_LABELS[horizon_idx]}",
-            color="white", fontsize=12, pad=10,
+            color="white",
+            fontsize=12,
+            pad=10,
         )
         ax.tick_params(colors="white")
         for spine in ax.spines.values():
@@ -332,8 +350,12 @@ class SHAPExplainer:
             for spine in ax.spines.values():
                 spine.set_edgecolor("#333")
 
-        fig.suptitle(f"{self.model_name} — SHAP Importance Across Horizons",
-                     color="white", fontsize=14, y=1.01)
+        fig.suptitle(
+            f"{self.model_name} — SHAP Importance Across Horizons",
+            color="white",
+            fontsize=14,
+            y=1.01,
+        )
         plt.tight_layout()
         out = self.out_dir / f"shap_horizons_{self.model_name.lower()}.png"
         if save:
@@ -343,11 +365,11 @@ class SHAPExplainer:
         return out
 
     # ───────────────────────────────────────────────────────── class-level ──
-    def explain_prediction(self, X: np.ndarray = None) -> Dict[str, Any]:
+    def explain_prediction(self, X: np.ndarray = None) -> dict[str, Any]:
         """
         Backward-compatible API: returns a combined local+global explanation dict.
         """
-        if X is None or (horizon_idx := 0) not in self._shap_values:
+        if X is None or 0 not in self._shap_values:
             return {
                 "global_feature_importance": {},
                 "local_explanation": {
@@ -358,7 +380,7 @@ class SHAPExplainer:
             }
         df = self.global_feature_importance(0)
         return {
-            "global_feature_importance": dict(zip(df["feature"], df["importance"].round(4))),
+            "global_feature_importance": dict(zip(df["feature"], df["importance"].round(4), strict=False)),
             "local_explanation": self.local_explanation(X, 0, 0, 3),
         }
 

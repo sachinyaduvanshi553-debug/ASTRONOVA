@@ -3,16 +3,19 @@ import os
 
 def create_file(path, content):
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, 'w', encoding='utf-8') as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write(content)
     print(f"Created: {path}")
+
 
 # =====================================================================
 # PART 1: XAI SERVICE
 # =====================================================================
 
 # --- 1. requirements.txt ---
-create_file("services/xai/requirements.txt", """fastapi>=0.115.0
+create_file(
+    "services/xai/requirements.txt",
+    """fastapi>=0.115.0
 uvicorn>=0.30.0
 pydantic>=2.9.0
 sqlalchemy>=2.0.0
@@ -24,10 +27,13 @@ shap>=0.45.0
 prometheus-client>=0.21.0
 structlog>=24.0.0
 astronova-core
-""")
+""",
+)
 
 # --- 2. main.py ---
-create_file("services/xai/main.py", """from fastapi import FastAPI
+create_file(
+    "services/xai/main.py",
+    """from fastapi import FastAPI
 from services.xai.routers import explainability
 from astronova_core.logging import setup_logging
 from astronova_core.metrics import metrics_router
@@ -46,10 +52,13 @@ app.include_router(metrics_router)
 @app.get("/")
 def read_root():
     return {"message": "AstroNova XAI Service API v1"}
-""")
+""",
+)
 
 # --- 3. Dockerfile ---
-create_file("services/xai/Dockerfile", """FROM python:3.12-slim as builder
+create_file(
+    "services/xai/Dockerfile",
+    """FROM python:3.12-slim as builder
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
@@ -62,10 +71,13 @@ ENV PATH=/root/.local/bin:$PATH
 ENV PYTHONUNBUFFERED=1
 EXPOSE 8005
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8005"]
-""")
+""",
+)
 
 # --- 4. services/shap_explainer.py ---
-create_file("services/xai/services/shap_explainer.py", """from typing import Dict, Any
+create_file(
+    "services/xai/services/shap_explainer.py",
+    """from typing import Dict, Any
 
 class SHAPExplainer:
     def explain_prediction(self) -> Dict[str, Any]:
@@ -87,10 +99,13 @@ class SHAPExplainer:
                 ]
             }
         }
-""")
+""",
+)
 
 # --- 5. routers/explainability.py ---
-create_file("services/xai/routers/explainability.py", """from fastapi import APIRouter
+create_file(
+    "services/xai/routers/explainability.py",
+    """from fastapi import APIRouter
 from services.xai.services.shap_explainer import SHAPExplainer
 
 router = APIRouter(prefix="/api/v1/xai", tags=["xai"])
@@ -103,7 +118,8 @@ async def get_explanation():
 @router.get("/health")
 def health():
     return {"status": "healthy"}
-""")
+""",
+)
 
 
 # =====================================================================
@@ -111,7 +127,9 @@ def health():
 # =====================================================================
 
 # --- 6. requirements.txt ---
-create_file("services/earth_impact/requirements.txt", """fastapi>=0.115.0
+create_file(
+    "services/earth_impact/requirements.txt",
+    """fastapi>=0.115.0
 uvicorn>=0.30.0
 pydantic>=2.9.0
 pandas>=2.2.0
@@ -119,10 +137,13 @@ numpy>=2.0.0
 prometheus-client>=0.21.0
 structlog>=24.0.0
 astronova-core
-""")
+""",
+)
 
 # --- 7. main.py ---
-create_file("services/earth_impact/main.py", """from fastapi import FastAPI
+create_file(
+    "services/earth_impact/main.py",
+    """from fastapi import FastAPI
 from services.earth_impact.routers import impact
 from astronova_core.logging import setup_logging
 from astronova_core.metrics import metrics_router
@@ -141,10 +162,13 @@ app.include_router(metrics_router)
 @app.get("/")
 def read_root():
     return {"message": "AstroNova Earth Impact Service API v1"}
-""")
+""",
+)
 
 # --- 8. Dockerfile ---
-create_file("services/earth_impact/Dockerfile", """FROM python:3.12-slim as builder
+create_file(
+    "services/earth_impact/Dockerfile",
+    """FROM python:3.12-slim as builder
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
@@ -157,10 +181,13 @@ ENV PATH=/root/.local/bin:$PATH
 ENV PYTHONUNBUFFERED=1
 EXPOSE 8006
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8006"]
-""")
+""",
+)
 
 # --- 9. services/impact_calculator.py ---
-create_file("services/earth_impact/services/impact_calculator.py", """from typing import Dict, Any, List
+create_file(
+    "services/earth_impact/services/impact_calculator.py",
+    """from typing import Dict, Any, List
 
 class EarthImpactCalculator:
     REGIONS = ["South-Asia", "Asia-Pacific", "Europe", "North-America", "South-America", "Africa"]
@@ -194,10 +221,13 @@ class EarthImpactCalculator:
             "geomagnetic_storm_probability": 0.85 if goes_class.startswith("X") else 0.3,
             "regional_risks": regional_risks
         }
-""")
+""",
+)
 
 # --- 10. routers/impact.py ---
-create_file("services/earth_impact/routers/impact.py", """from fastapi import APIRouter, Query
+create_file(
+    "services/earth_impact/routers/impact.py",
+    """from fastapi import APIRouter, Query
 from services.earth_impact.services.impact_calculator import EarthImpactCalculator
 
 router = APIRouter(prefix="/api/v1/impact", tags=["earth-impact"])
@@ -210,7 +240,8 @@ async def assess_impact(goes_class: str = Query(..., description="Predicted/Curr
 @router.get("/health")
 def health():
     return {"status": "healthy"}
-""")
+""",
+)
 
 
 # =====================================================================
@@ -218,7 +249,9 @@ def health():
 # =====================================================================
 
 # --- 11. requirements.txt ---
-create_file("services/satellite_risk/requirements.txt", """fastapi>=0.115.0
+create_file(
+    "services/satellite_risk/requirements.txt",
+    """fastapi>=0.115.0
 uvicorn>=0.30.0
 pydantic>=2.9.0
 pandas>=2.2.0
@@ -226,10 +259,13 @@ numpy>=2.0.0
 prometheus-client>=0.21.0
 structlog>=24.0.0
 astronova-core
-""")
+""",
+)
 
 # --- 12. main.py ---
-create_file("services/satellite_risk/main.py", """from fastapi import FastAPI
+create_file(
+    "services/satellite_risk/main.py",
+    """from fastapi import FastAPI
 from services.satellite_risk.routers import satellite
 from astronova_core.logging import setup_logging
 from astronova_core.metrics import metrics_router
@@ -248,10 +284,13 @@ app.include_router(metrics_router)
 @app.get("/")
 def read_root():
     return {"message": "AstroNova Satellite Risk Service API v1"}
-""")
+""",
+)
 
 # --- 13. Dockerfile ---
-create_file("services/satellite_risk/Dockerfile", """FROM python:3.12-slim as builder
+create_file(
+    "services/satellite_risk/Dockerfile",
+    """FROM python:3.12-slim as builder
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
@@ -264,10 +303,13 @@ ENV PATH=/root/.local/bin:$PATH
 ENV PYTHONUNBUFFERED=1
 EXPOSE 8007
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8007"]
-""")
+""",
+)
 
 # --- 14. services/risk_calculator.py ---
-create_file("services/satellite_risk/services/risk_calculator.py", """from typing import Dict, Any, List
+create_file(
+    "services/satellite_risk/services/risk_calculator.py",
+    """from typing import Dict, Any, List
 
 class SatelliteRiskCalculator:
     ORBITS = ["LEO", "MEO", "GEO", "HEO"]
@@ -319,10 +361,13 @@ class SatelliteRiskCalculator:
             "satellite_risks": satellite_risks,
             "communication_disruption": comms_disruption
         }
-""")
+""",
+)
 
 # --- 15. routers/satellite.py ---
-create_file("services/satellite_risk/routers/satellite.py", """from fastapi import APIRouter, Query
+create_file(
+    "services/satellite_risk/routers/satellite.py",
+    """from fastapi import APIRouter, Query
 from services.satellite_risk.services.risk_calculator import SatelliteRiskCalculator
 
 router = APIRouter(prefix="/api/v1/satellite", tags=["satellite-risk"])
@@ -335,6 +380,7 @@ async def assess_satellite_risk(goes_class: str = Query(..., description="Predic
 @router.get("/health")
 def health():
     return {"status": "healthy"}
-""")
+""",
+)
 
 print("INTELLIGENCE SERVICES WRITTEN")

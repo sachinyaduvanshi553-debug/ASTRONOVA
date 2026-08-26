@@ -5,12 +5,15 @@ def create_file(path, content):
     dirname = os.path.dirname(path)
     if dirname:
         os.makedirs(dirname, exist_ok=True)
-    with open(path, 'w', encoding='utf-8') as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write(content)
     print(f"Created: {path}")
 
+
 # --- 1. services/ingestion/tests/test_ingestion_service.py ---
-create_file("services/ingestion/tests/test_ingestion_service.py", """import pytest
+create_file(
+    "services/ingestion/tests/test_ingestion_service.py",
+    """import pytest
 import os
 import pandas as pd
 from unittest.mock import MagicMock
@@ -69,10 +72,13 @@ async def test_ingest_file_missing_columns():
     finally:
         if os.path.exists(csv_path):
             os.remove(csv_path)
-""")
+""",
+)
 
 # --- 2. services/forecasting/tests/test_forecasting.py ---
-create_file("services/forecasting/tests/test_forecasting.py", """import pytest
+create_file(
+    "services/forecasting/tests/test_forecasting.py",
+    """import pytest
 from services.forecasting.services.nowcasting import NowcastingService
 from services.forecasting.services.solar_hazard_index import SolarHazardIndexCalculator
 from services.forecasting.services.inference_engine import InferenceEngine
@@ -106,6 +112,7 @@ def test_inference_engine_prediction():
     assert "horizon_minutes" in res["prediction"]
     assert "probabilities" in res["prediction"]
     assert "predicted_class" in res["prediction"]
-""")
+""",
+)
 
 print("TESTS GENERATED SUCCESSFULLY")

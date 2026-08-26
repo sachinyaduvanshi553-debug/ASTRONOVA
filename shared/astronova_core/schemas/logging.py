@@ -1,7 +1,7 @@
 from datetime import datetime
-from typing import Any, Literal, Optional
-from pydantic import BaseModel, Field
+from typing import Any, Literal
 
+from pydantic import BaseModel, Field
 
 LogLevel = Literal["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
 
@@ -11,13 +11,13 @@ class LogEntryCreate(BaseModel):
     level: LogLevel = Field("INFO", description="Log severity level")
     category: str = Field("SYSTEM", description="Category e.g. HTTP_REQUEST, DB_QUERY, SYSTEM")
     message: str = Field(..., description="Log message text")
-    method: Optional[str] = None
-    path: Optional[str] = None
-    status_code: Optional[int] = None
-    duration_ms: Optional[float] = None
-    sql_query: Optional[str] = None
-    correlation_id: Optional[str] = None
-    extra_data: Optional[str] = None
+    method: str | None = None
+    path: str | None = None
+    status_code: int | None = None
+    duration_ms: float | None = None
+    sql_query: str | None = None
+    correlation_id: str | None = None
+    extra_data: str | None = None
 
 
 class LogEntryResponse(BaseModel):
@@ -27,13 +27,13 @@ class LogEntryResponse(BaseModel):
     level: str
     category: str
     message: str
-    method: Optional[str] = None
-    path: Optional[str] = None
-    status_code: Optional[int] = None
-    duration_ms: Optional[float] = None
-    sql_query: Optional[str] = None
-    correlation_id: Optional[str] = None
-    extra_data: Optional[str] = None
+    method: str | None = None
+    path: str | None = None
+    status_code: int | None = None
+    duration_ms: float | None = None
+    sql_query: str | None = None
+    correlation_id: str | None = None
+    extra_data: str | None = None
 
 
 class LogLevelUpdate(BaseModel):

@@ -11,8 +11,10 @@ class IngestionJobResponse(BaseModel):
     started_at: datetime
     completed_at: datetime | None = None
 
+
 class BulkIngestionRequest(BaseModel):
     directory_path: str
+
 
 class ScheduleRequest(BaseModel):
     cron_expression: str

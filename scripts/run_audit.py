@@ -11,6 +11,7 @@ sys.path.append(os.path.abspath("."))
 sys.path.append(os.path.abspath("shared"))
 
 import torch
+
 from ml.models.bilstm import BiLSTMForecaster
 from ml.models.gru_model import GRUForecaster
 from ml.models.transformer import SolarTransformer
@@ -44,7 +45,9 @@ def run_model_validation():
     transformer = SolarTransformer(input_size=input_size, d_model=32, nhead=2, num_layers=1, num_classes=num_classes)
 
     # GBDT Model
-    xgb_model = XGBoostForecaster(input_size=input_size, seq_len=seq_len, num_classes=num_classes, num_horizons=num_horizons)
+    xgb_model = XGBoostForecaster(
+        input_size=input_size, seq_len=seq_len, num_classes=num_classes, num_horizons=num_horizons
+    )
     # Fit GBDT with dummy data so it can predict
     xgb_model.fit(X_val.numpy(), y_class_val, y_reg_val)
 
@@ -52,7 +55,7 @@ def run_model_validation():
         "BiLSTM": bilstm,
         "GRU": gru,
         "Transformer": transformer,
-        "XGBoost Baseline": xgb_model
+        "XGBoost Baseline": xgb_model,
     }
 
     results = []
@@ -119,34 +122,53 @@ def run_model_validation():
             mape = 22.1
             lead_time = 12.0  # minutes
 
-        results.append({
-            "Model": name,
-            "Accuracy": acc,
-            "Precision": prec,
-            "Recall": rec,
-            "F1 Score": f1,
-            "ROC AUC": roc_auc,
-            "TSS": tss,
-            "MAE": mae,
-            "RMSE": rmse,
-            "MAPE": mape,
-            "Lead Time (m)": lead_time,
-            "Inference Time (ms)": eval_time
-        })
+        results.append(
+            {
+                "Model": name,
+                "Accuracy": acc,
+                "Precision": prec,
+                "Recall": rec,
+                "F1 Score": f1,
+                "ROC AUC": roc_auc,
+                "TSS": tss,
+                "MAE": mae,
+                "RMSE": rmse,
+                "MAPE": mape,
+                "Lead Time (m)": lead_time,
+                "Inference Time (ms)": eval_time,
+            }
+        )
 
     df = pd.DataFrame(results)
     print(df.to_string(index=False))
     return df
+
 
 def run_scientific_shi_validation():
     print("\n--- 2. SOLAR HAZARD INDEX VALIDATION ---")
 
     # Test cases representing low, moderate, high, extreme solar activity
     test_cases = [
-        {"name": "Low Activity", "probs": {"A": 0.8, "B": 0.15, "C": 0.05, "M": 0.0, "X": 0.0}, "gradient": 1e-9},
-        {"name": "Moderate Activity", "probs": {"A": 0.1, "B": 0.5, "C": 0.3, "M": 0.1, "X": 0.0}, "gradient": 5e-7},
-        {"name": "High Activity", "probs": {"A": 0.0, "B": 0.1, "C": 0.2, "M": 0.5, "X": 0.2}, "gradient": 2e-5},
-        {"name": "Extreme Activity", "probs": {"A": 0.0, "B": 0.0, "C": 0.05, "M": 0.2, "X": 0.75}, "gradient": 1.2e-4}
+        {
+            "name": "Low Activity",
+            "probs": {"A": 0.8, "B": 0.15, "C": 0.05, "M": 0.0, "X": 0.0},
+            "gradient": 1e-9,
+        },
+        {
+            "name": "Moderate Activity",
+            "probs": {"A": 0.1, "B": 0.5, "C": 0.3, "M": 0.1, "X": 0.0},
+            "gradient": 5e-7,
+        },
+        {
+            "name": "High Activity",
+            "probs": {"A": 0.0, "B": 0.1, "C": 0.2, "M": 0.5, "X": 0.2},
+            "gradient": 2e-5,
+        },
+        {
+            "name": "Extreme Activity",
+            "probs": {"A": 0.0, "B": 0.0, "C": 0.05, "M": 0.2, "X": 0.75},
+            "gradient": 1.2e-4,
+        },
     ]
 
     for case in test_cases:
@@ -154,6 +176,7 @@ def run_scientific_shi_validation():
         print(f"[{case['name']}] Probs: {case['probs']} | Gradient: {case['gradient']:.2e}")
         print(f"  -> SHI Score: {res['score']:.4f} | Category: {res['category']}")
         print(f"  -> Components: {res['components']}")
+
 
 def run_earth_satellite_validation():
     print("\n--- 3. EARTH & SATELLITE RISK VALIDATION ---")
@@ -167,10 +190,13 @@ def run_earth_satellite_validation():
         earth_res = earth_calc.calculate_impact(c)
         sat_res = sat_calc.calculate_satellite_risk(c)
 
-        print(f"  Earth Impact Severity: {earth_res['overall_severity']} | Storm Prob: {earth_res['geomagnetic_storm_probability']}")
+        print(
+            f"  Earth Impact Severity: {earth_res['overall_severity']} | Storm Prob: {earth_res['geomagnetic_storm_probability']}"
+        )
         print(f"  Regional risks (first 2): {earth_res['regional_risks'][:2]}")
         print(f"  Satellite risks (first 2): {sat_res['satellite_risks'][:2]}")
         print(f"  Comms Disruption: {sat_res['communication_disruption']}")
+
 
 def run_load_testing():
     print("\n--- 4. LOAD TESTING SIMULATION (10,000+ Requests) ---")
@@ -211,11 +237,8 @@ def run_load_testing():
     print(f"  Average Latency: {latency_ms:.4f} ms")
     print(f"  Error Rate: {errors / num_requests * 100:.2f}%")
 
-    return {
-        "throughput": throughput,
-        "latency_ms": latency_ms,
-        "error_rate": errors / num_requests
-    }
+    return {"throughput": throughput, "latency_ms": latency_ms, "error_rate": errors / num_requests}
+
 
 if __name__ == "__main__":
     print("=========================================")

@@ -6,8 +6,8 @@ import sys
 import pandas as pd
 
 # Ensure shared directory is on the path so we can import astronova_core
-sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'shared'))
-sys.path.append(os.path.join(os.path.dirname(__file__), '..'))
+sys.path.append(os.path.join(os.path.dirname(__file__), "..", "shared"))
+sys.path.append(os.path.join(os.path.dirname(__file__), ".."))
 
 import logging
 
@@ -17,6 +17,7 @@ from astronova_core.utils.data_quality import compute_quality_score, validate_te
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("solexs_dataset_builder")
+
 
 def build_solexs_dataset(input_dir: str, output_file: str):
     logger.info(f"Building clean SoLEXS dataset from {input_dir}...")
@@ -64,7 +65,7 @@ def build_solexs_dataset(input_dir: str, output_file: str):
 
     # Concat and sort by time
     combined_df = pd.concat(all_dfs, ignore_index=True)
-    combined_df = combined_df.drop_duplicates(subset=['time']).sort_values(by='time').reset_index(drop=True)
+    combined_df = combined_df.drop_duplicates(subset=["time"]).sort_values(by="time").reset_index(drop=True)
 
     # Validate temporal consistency
     temp_validity = validate_temporal_consistency(combined_df)
@@ -76,17 +77,28 @@ def build_solexs_dataset(input_dir: str, output_file: str):
 
     # Compute data quality scores
     logger.info("Computing observation quality scores...")
-    calibrated_df['quality_score'] = calibrated_df.apply(compute_quality_score, axis=1)
+    calibrated_df["quality_score"] = calibrated_df.apply(compute_quality_score, axis=1)
 
     # Save clean dataset
     os.makedirs(os.path.dirname(output_file), exist_ok=True)
     calibrated_df.to_parquet(output_file, index=False)
     logger.info(f"Saved clean SoLEXS dataset to {output_file} ({len(calibrated_df)} records)")
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Process raw SoLEXS telemetry into clean Parquet dataset.")
-    parser.add_argument("--input-dir", type=str, default="data/sample", help="Directory containing raw SoLEXS files.")
-    parser.add_argument("--output-file", type=str, default="data/sample/clean_solexs.parquet", help="Path to save clean Parquet file.")
+    parser.add_argument(
+        "--input-dir",
+        type=str,
+        default="data/sample",
+        help="Directory containing raw SoLEXS files.",
+    )
+    parser.add_argument(
+        "--output-file",
+        type=str,
+        default="data/sample/clean_solexs.parquet",
+        help="Path to save clean Parquet file.",
+    )
     args = parser.parse_args()
 
     build_solexs_dataset(args.input_dir, args.output_file)

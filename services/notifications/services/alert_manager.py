@@ -8,5 +8,5 @@ class AlertManager:
             "severity": severity,
             "title": title,
             "message": message,
-            "status": "sent"
+            "status": "sent",
         }

@@ -3,12 +3,15 @@ import os
 
 def create_file(path, content):
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, 'w', encoding='utf-8') as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write(content)
     print(f"Created: {path}")
 
+
 # --- 1. config.py ---
-create_file("services/ingestion/config.py", """from astronova_core.config import get_settings
+create_file(
+    "services/ingestion/config.py",
+    """from astronova_core.config import get_settings
 
 class IngestionConfig:
     def __init__(self):
@@ -16,10 +19,13 @@ class IngestionConfig:
         self.upload_dir = "/app/data/uploads"
 
 ingestion_config = IngestionConfig()
-""")
+""",
+)
 
 # --- 2. requirements.txt ---
-create_file("services/ingestion/requirements.txt", """fastapi>=0.115.0
+create_file(
+    "services/ingestion/requirements.txt",
+    """fastapi>=0.115.0
 uvicorn>=0.30.0
 pydantic>=2.9.0
 sqlalchemy>=2.0.0
@@ -35,10 +41,13 @@ passlib[bcrypt]>=1.7.4
 structlog>=24.0.0
 python-multipart>=0.0.9
 astronova-core
-""")
+""",
+)
 
 # --- 3. Dockerfile ---
-create_file("services/ingestion/Dockerfile", """FROM python:3.12-slim as builder
+create_file(
+    "services/ingestion/Dockerfile",
+    """FROM python:3.12-slim as builder
 
 WORKDIR /app
 
@@ -65,10 +74,13 @@ HEALTHCHECK --interval=30s --timeout=5s --start-period=5s --retries=3 \
   CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8001/api/v1/ingest/health')" || exit 1
 
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8001"]
-""")
+""",
+)
 
 # --- 4. models.py ---
-create_file("services/ingestion/models.py", """from sqlalchemy import Column, String, Integer, DateTime, Text, JSON
+create_file(
+    "services/ingestion/models.py",
+    """from sqlalchemy import Column, String, Integer, DateTime, Text, JSON
 from sqlalchemy.dialects.postgresql import UUID
 import uuid
 from datetime import datetime
@@ -85,10 +97,13 @@ class IngestionJob(Base):
     errors = Column(JSON, nullable=True)
     started_at = Column(DateTime, default=datetime.utcnow)
     completed_at = Column(DateTime, nullable=True)
-""")
+""",
+)
 
 # --- 5. schemas.py ---
-create_file("services/ingestion/schemas.py", """from pydantic import BaseModel, Field
+create_file(
+    "services/ingestion/schemas.py",
+    """from pydantic import BaseModel, Field
 from datetime import datetime
 from typing import Optional, List
 
@@ -105,10 +120,13 @@ class BulkIngestionRequest(BaseModel):
 
 class ScheduleRequest(BaseModel):
     cron_expression: str
-""")
+""",
+)
 
 # --- 6. services/kafka_producer.py ---
-create_file("services/ingestion/services/kafka_producer.py", """from astronova_core.kafka_client import AstroNovaProducer
+create_file(
+    "services/ingestion/services/kafka_producer.py",
+    """from astronova_core.kafka_client import AstroNovaProducer
 import json
 from typing import Dict, Any
 
@@ -125,10 +143,13 @@ class DataProducer:
             "job_id": job_id,
             "stats": stats
         })
-""")
+""",
+)
 
 # --- 7. services/ingestion_service.py ---
-create_file("services/ingestion/services/ingestion_service.py", """import os
+create_file(
+    "services/ingestion/services/ingestion_service.py",
+    """import os
 import pandas as pd
 import uuid
 from datetime import datetime
@@ -220,10 +241,13 @@ class IngestionService:
             await db.commit()
 
         return job
-""")
+""",
+)
 
 # --- 8. services/scheduler.py ---
-create_file("services/ingestion/services/scheduler.py", """from apscheduler.schedulers.asyncio import AsyncScheduler
+create_file(
+    "services/ingestion/services/scheduler.py",
+    """from apscheduler.schedulers.asyncio import AsyncScheduler
 from apscheduler.schedulers.background import BackgroundScheduler
 from astronova_core.logging import get_logger
 
@@ -242,10 +266,13 @@ class IngestionScheduler:
         if self.scheduler.running:
             self.scheduler.shutdown()
             logger.info("scheduler_stopped")
-""")
+""",
+)
 
 # --- 9. routers/ingest.py ---
-create_file("services/ingestion/routers/ingest.py", """import os
+create_file(
+    "services/ingestion/routers/ingest.py",
+    """import os
 import uuid
 from fastapi import APIRouter, UploadFile, File, Depends, HTTPException, status, BackgroundTasks
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -302,10 +329,13 @@ async def get_job_status(job_id: str, db: AsyncSession = Depends(get_db)):
 @router.get("/health")
 async def health_check():
     return {"status": "healthy", "service": "ingestion"}
-""")
+""",
+)
 
 # --- 10. routers/data.py ---
-create_file("services/ingestion/routers/data.py", """from fastapi import APIRouter, Depends, Query
+create_file(
+    "services/ingestion/routers/data.py",
+    """from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, desc
 from astronova_core.database import get_db
@@ -361,10 +391,13 @@ async def get_latest_observations(
             "quality_flag": obs.quality_flag
         } for obs in observations
     ]
-""")
+""",
+)
 
 # --- 11. main.py ---
-create_file("services/ingestion/main.py", """import os
+create_file(
+    "services/ingestion/main.py",
+    """import os
 from fastapi import FastAPI, Depends
 from services.ingestion.routers import ingest, data
 from astronova_core.logging import setup_logging
@@ -394,6 +427,7 @@ app.include_router(metrics_router)
 @app.get("/")
 def read_root():
     return {"message": "AstroNova Ingestion Service API v1"}
-""")
+""",
+)
 
 print("INGESTION SERVICE WRITTEN SUCCESSFULLY")

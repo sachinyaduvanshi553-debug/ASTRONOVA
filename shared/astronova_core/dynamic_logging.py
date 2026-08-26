@@ -1,11 +1,10 @@
-import asyncio
 import json
 import logging
 import time
 import uuid
 from collections import deque
 from datetime import datetime
-from typing import Any, Optional
+from typing import Any
 
 from fastapi import Request, Response
 from starlette.middleware.base import BaseHTTPMiddleware
@@ -42,9 +41,9 @@ class DynamicLoggingManager:
         level_upper = level.upper()
         if level_upper not in LOG_LEVEL_MAP:
             raise ValueError(f"Invalid log level: {level}. Allowed: {list(LOG_LEVEL_MAP.keys())}")
-        
+
         self._log_levels[service_name] = level_upper
-        
+
         # Update python root logger level if global or matching
         py_level = LOG_LEVEL_MAP[level_upper]
         logging.getLogger().setLevel(py_level)
@@ -63,13 +62,13 @@ class DynamicLoggingManager:
         level: str,
         category: str,
         message: str,
-        method: Optional[str] = None,
-        path: Optional[str] = None,
-        status_code: Optional[int] = None,
-        duration_ms: Optional[float] = None,
-        sql_query: Optional[str] = None,
-        correlation_id: Optional[str] = None,
-        extra_data: Optional[Any] = None,
+        method: str | None = None,
+        path: str | None = None,
+        status_code: int | None = None,
+        duration_ms: float | None = None,
+        sql_query: str | None = None,
+        correlation_id: str | None = None,
+        extra_data: Any | None = None,
     ) -> dict[str, Any]:
         log_entry = {
             "id": str(uuid.uuid4()),
@@ -84,17 +83,19 @@ class DynamicLoggingManager:
             "duration_ms": duration_ms,
             "sql_query": sql_query,
             "correlation_id": correlation_id,
-            "extra_data": json.dumps(extra_data) if isinstance(extra_data, (dict, list)) else (str(extra_data) if extra_data else None),
+            "extra_data": json.dumps(extra_data)
+            if isinstance(extra_data, (dict, list))
+            else (str(extra_data) if extra_data else None),
         }
         self._buffer.appendleft(log_entry)
         return log_entry
 
     def get_recent_logs(
         self,
-        service_name: Optional[str] = None,
-        level: Optional[str] = None,
-        category: Optional[str] = None,
-        search: Optional[str] = None,
+        service_name: str | None = None,
+        level: str | None = None,
+        category: str | None = None,
+        search: str | None = None,
         limit: int = 100,
     ) -> list[dict[str, Any]]:
         results = []
@@ -105,7 +106,11 @@ class DynamicLoggingManager:
                 continue
             if category and entry["category"].lower() != category.lower():
                 continue
-            if search and search.lower() not in entry["message"].lower() and search.lower() not in (entry.get("path") or "").lower():
+            if (
+                search
+                and search.lower() not in entry["message"].lower()
+                and search.lower() not in (entry.get("path") or "").lower()
+            ):
                 continue
             results.append(entry)
             if len(results) >= limit:
@@ -139,7 +144,7 @@ class DynamicLoggingMiddleware(BaseHTTPMiddleware):
 
         # Log request dynamically
         level = "ERROR" if response.status_code >= 500 else ("WARNING" if response.status_code >= 400 else "INFO")
-        
+
         dynamic_logger_manager.push_log(
             service_name=self.service_name,
             level=level,

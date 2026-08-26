@@ -3,16 +3,19 @@ import os
 
 def create_file(path, content):
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, 'w', encoding='utf-8') as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write(content)
     print(f"Created: {path}")
+
 
 # =====================================================================
 # PART 1: RAG KNOWLEDGE SERVICE
 # =====================================================================
 
 # --- 1. requirements.txt ---
-create_file("services/rag/requirements.txt", """fastapi>=0.115.0
+create_file(
+    "services/rag/requirements.txt",
+    """fastapi>=0.115.0
 uvicorn>=0.30.0
 pydantic>=2.9.0
 chromadb>=0.5.0
@@ -21,10 +24,13 @@ numpy>=2.0.0
 prometheus-client>=0.21.0
 structlog>=24.0.0
 astronova-core
-""")
+""",
+)
 
 # --- 2. main.py ---
-create_file("services/rag/main.py", """from fastapi import FastAPI
+create_file(
+    "services/rag/main.py",
+    """from fastapi import FastAPI
 from services.rag.routers import knowledge
 from astronova_core.logging import setup_logging
 from astronova_core.metrics import metrics_router
@@ -43,10 +49,13 @@ app.include_router(metrics_router)
 @app.get("/")
 def read_root():
     return {"message": "AstroNova RAG Knowledge Service API v1"}
-""")
+""",
+)
 
 # --- 3. Dockerfile ---
-create_file("services/rag/Dockerfile", """FROM python:3.12-slim as builder
+create_file(
+    "services/rag/Dockerfile",
+    """FROM python:3.12-slim as builder
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
@@ -59,10 +68,13 @@ ENV PATH=/root/.local/bin:$PATH
 ENV PYTHONUNBUFFERED=1
 EXPOSE 8008
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8008"]
-""")
+""",
+)
 
 # --- 4. services/vector_store.py ---
-create_file("services/rag/services/vector_store.py", """from typing import List, Dict, Any
+create_file(
+    "services/rag/services/vector_store.py",
+    """from typing import List, Dict, Any
 
 class SpaceWeatherVectorStore:
     def search(self, query: str) -> List[Dict[str, Any]]:
@@ -81,10 +93,13 @@ class SpaceWeatherVectorStore:
                 "score": 0.76
             }
         ]
-""")
+""",
+)
 
 # --- 5. routers/knowledge.py ---
-create_file("services/rag/routers/knowledge.py", """from fastapi import APIRouter, Query
+create_file(
+    "services/rag/routers/knowledge.py",
+    """from fastapi import APIRouter, Query
 from services.rag.services.vector_store import SpaceWeatherVectorStore
 
 router = APIRouter(prefix="/api/v1/rag", tags=["knowledge"])
@@ -97,7 +112,8 @@ async def search_knowledge(query: str = Query(..., description="Query string")):
 @router.get("/health")
 def health():
     return {"status": "healthy"}
-""")
+""",
+)
 
 
 # =====================================================================
@@ -105,16 +121,21 @@ def health():
 # =====================================================================
 
 # --- 6. requirements.txt ---
-create_file("services/copilot/requirements.txt", """fastapi>=0.115.0
+create_file(
+    "services/copilot/requirements.txt",
+    """fastapi>=0.115.0
 uvicorn>=0.30.0
 pydantic>=2.9.0
 prometheus-client>=0.21.0
 structlog>=24.0.0
 astronova-core
-""")
+""",
+)
 
 # --- 7. main.py ---
-create_file("services/copilot/main.py", """from fastapi import FastAPI
+create_file(
+    "services/copilot/main.py",
+    """from fastapi import FastAPI
 from services.copilot.routers import copilot
 from astronova_core.logging import setup_logging
 from astronova_core.metrics import metrics_router
@@ -133,10 +154,13 @@ app.include_router(metrics_router)
 @app.get("/")
 def read_root():
     return {"message": "AstroNova LLM Copilot Service API v1"}
-""")
+""",
+)
 
 # --- 8. Dockerfile ---
-create_file("services/copilot/Dockerfile", """FROM python:3.12-slim as builder
+create_file(
+    "services/copilot/Dockerfile",
+    """FROM python:3.12-slim as builder
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
@@ -149,10 +173,13 @@ ENV PATH=/root/.local/bin:$PATH
 ENV PYTHONUNBUFFERED=1
 EXPOSE 8009
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8009"]
-""")
+""",
+)
 
 # --- 9. services/rag_chain.py ---
-create_file("services/copilot/services/rag_chain.py", """from typing import Dict, Any
+create_file(
+    "services/copilot/services/rag_chain.py",
+    """from typing import Dict, Any
 
 class SpaceWeatherRAGChain:
     def chat(self, query: str) -> Dict[str, Any]:
@@ -164,10 +191,13 @@ class SpaceWeatherRAGChain:
                 {"title": "Space Weather Hazard Guidelines", "chunk": "pose extreme ionospheric disruption risk for GNSS/NavIC"}
             ]
         }
-""")
+""",
+)
 
 # --- 10. routers/copilot.py ---
-create_file("services/copilot/routers/copilot.py", """from fastapi import APIRouter, Query
+create_file(
+    "services/copilot/routers/copilot.py",
+    """from fastapi import APIRouter, Query
 from services.copilot.services.rag_chain import SpaceWeatherRAGChain
 
 router = APIRouter(prefix="/api/v1/copilot", tags=["copilot"])
@@ -180,7 +210,8 @@ async def chat_with_copilot(query: str = Query(..., description="User query")):
 @router.get("/health")
 def health():
     return {"status": "healthy"}
-""")
+""",
+)
 
 
 # =====================================================================
@@ -188,7 +219,9 @@ def health():
 # =====================================================================
 
 # --- 11. requirements.txt ---
-create_file("services/gateway/requirements.txt", """fastapi>=0.115.0
+create_file(
+    "services/gateway/requirements.txt",
+    """fastapi>=0.115.0
 uvicorn>=0.30.0
 pydantic>=2.9.0
 httpx>=0.27.0
@@ -198,10 +231,13 @@ passlib[bcrypt]>=1.7.4
 prometheus-client>=0.21.0
 structlog>=24.0.0
 astronova-core
-""")
+""",
+)
 
 # --- 12. main.py ---
-create_file("services/gateway/main.py", """from fastapi import FastAPI, Depends
+create_file(
+    "services/gateway/main.py",
+    """from fastapi import FastAPI, Depends
 from services.gateway.routers import auth, proxy
 from astronova_core.logging import setup_logging
 from astronova_core.metrics import metrics_router
@@ -230,10 +266,13 @@ app.include_router(metrics_router)
 @app.get("/")
 def read_root():
     return {"message": "AstroNova API Gateway API v1"}
-""")
+""",
+)
 
 # --- 13. Dockerfile ---
-create_file("services/gateway/Dockerfile", """FROM python:3.12-slim as builder
+create_file(
+    "services/gateway/Dockerfile",
+    """FROM python:3.12-slim as builder
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
@@ -246,10 +285,13 @@ ENV PATH=/root/.local/bin:$PATH
 ENV PYTHONUNBUFFERED=1
 EXPOSE 8000
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000"]
-""")
+""",
+)
 
 # --- 14. routers/auth.py ---
-create_file("services/gateway/routers/auth.py", """from fastapi import APIRouter, Depends, HTTPException, status
+create_file(
+    "services/gateway/routers/auth.py",
+    """from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordRequestForm
 from astronova_core.security import create_access_token, get_password_hash, verify_password, UserRole
 from pydantic import BaseModel
@@ -273,10 +315,13 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         detail="Incorrect username or password",
         headers={"WWW-Authenticate": "Bearer"},
     )
-""")
+""",
+)
 
 # --- 15. routers/proxy.py ---
-create_file("services/gateway/routers/proxy.py", """from fastapi import APIRouter, Depends, HTTPException
+create_file(
+    "services/gateway/routers/proxy.py",
+    """from fastapi import APIRouter, Depends, HTTPException
 import httpx
 from astronova_core.security import get_current_user, TokenData
 
@@ -305,7 +350,8 @@ async def proxy_request(service_name: str, endpoint: str, current_user: TokenDat
             return r.json()
         except Exception as e:
             raise HTTPException(status_code=502, detail=f"Bad Gateway: {str(e)}")
-""")
+""",
+)
 
 
 # =====================================================================
@@ -313,16 +359,21 @@ async def proxy_request(service_name: str, endpoint: str, current_user: TokenDat
 # =====================================================================
 
 # --- 16. requirements.txt ---
-create_file("services/notifications/requirements.txt", """fastapi>=0.115.0
+create_file(
+    "services/notifications/requirements.txt",
+    """fastapi>=0.115.0
 uvicorn>=0.30.0
 pydantic>=2.9.0
 prometheus-client>=0.21.0
 structlog>=24.0.0
 astronova-core
-""")
+""",
+)
 
 # --- 17. main.py ---
-create_file("services/notifications/main.py", """from fastapi import FastAPI
+create_file(
+    "services/notifications/main.py",
+    """from fastapi import FastAPI
 from services.notifications.routers import alerts
 from astronova_core.logging import setup_logging
 from astronova_core.metrics import metrics_router
@@ -341,10 +392,13 @@ app.include_router(metrics_router)
 @app.get("/")
 def read_root():
     return {"message": "AstroNova Notification Service API v1"}
-""")
+""",
+)
 
 # --- 18. Dockerfile ---
-create_file("services/notifications/Dockerfile", """FROM python:3.12-slim as builder
+create_file(
+    "services/notifications/Dockerfile",
+    """FROM python:3.12-slim as builder
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
@@ -357,10 +411,13 @@ ENV PATH=/root/.local/bin:$PATH
 ENV PYTHONUNBUFFERED=1
 EXPOSE 8010
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8010"]
-""")
+""",
+)
 
 # --- 19. services/alert_manager.py ---
-create_file("services/notifications/services/alert_manager.py", """from typing import Dict, Any, List
+create_file(
+    "services/notifications/services/alert_manager.py",
+    """from typing import Dict, Any, List
 
 class AlertManager:
     def create_alert(self, severity: str, title: str, message: str) -> Dict[str, Any]:
@@ -371,10 +428,13 @@ class AlertManager:
             "message": message,
             "status": "sent"
         }
-""")
+""",
+)
 
 # --- 20. routers/alerts.py ---
-create_file("services/notifications/routers/alerts.py", """from fastapi import APIRouter
+create_file(
+    "services/notifications/routers/alerts.py",
+    """from fastapi import APIRouter
 from services.notifications.services.alert_manager import AlertManager
 from pydantic import BaseModel
 
@@ -393,6 +453,7 @@ async def trigger_alert(req: AlertRequest):
 @router.get("/health")
 def health():
     return {"status": "healthy"}
-""")
+""",
+)
 
 print("ALL OTHER SERVICES GENERATED SUCCESSFULLY")

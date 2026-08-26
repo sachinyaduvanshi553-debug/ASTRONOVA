@@ -18,9 +18,11 @@ class SolexsDataPoint(BaseModel):
             raise ValueError("Observation time cannot be in the future")
         return v
 
+
 class IngestionRequest(BaseModel):
     filepath: str
     format: str = Field(..., pattern="^(fits|cdf|csv|json)$")
+
 
 class IngestionResponse(BaseModel):
     job_id: str

@@ -7,6 +7,7 @@ from sklearn.metrics import auc, brier_score_loss, precision_recall_curve, roc_c
 
 logger = logging.getLogger("astronova.scientific_metrics")
 
+
 def _get_confusion_matrix_elements(y_true: np.ndarray, y_pred: np.ndarray) -> tuple[int, int, int, int]:
     """Helper to compute TP, FP, FN, TN for binary classification."""
     y_true_bool = np.array(y_true, dtype=bool)
@@ -18,6 +19,7 @@ def _get_confusion_matrix_elements(y_true: np.ndarray, y_pred: np.ndarray) -> tu
     tn = int(np.sum(~y_true_bool & ~y_pred_bool))
 
     return tp, fp, fn, tn
+
 
 def compute_tss(y_true: list[int] | np.ndarray, y_pred: list[int] | np.ndarray) -> float:
     """
@@ -38,6 +40,7 @@ def compute_tss(y_true: list[int] | np.ndarray, y_pred: list[int] | np.ndarray) 
 
     tss = tpr - fpr
     return float(tss)
+
 
 def compute_hss(y_true: list[int] | np.ndarray, y_pred: list[int] | np.ndarray) -> float:
     """
@@ -64,6 +67,7 @@ def compute_hss(y_true: list[int] | np.ndarray, y_pred: list[int] | np.ndarray) 
     hss = (observed_correct - expected_correct) / denom
     return float(hss)
 
+
 def compute_far(y_true: list[int] | np.ndarray, y_pred: list[int] | np.ndarray, return_ratio: bool = True) -> float:
     """
     False Alarm Ratio (FAR) or False Alarm Rate (FPR).
@@ -82,6 +86,7 @@ def compute_far(y_true: list[int] | np.ndarray, y_pred: list[int] | np.ndarray, 
         denom = fp + tn
         return float(fp / denom) if denom > 0 else 0.0
 
+
 def compute_brier_score(y_true: list[int] | np.ndarray, y_prob: list[float] | np.ndarray) -> float:
     """
     Brier Score (BS). Mean squared error of probability forecasts.
@@ -93,7 +98,10 @@ def compute_brier_score(y_true: list[int] | np.ndarray, y_prob: list[float] | np
         return 0.0
     return float(brier_score_loss(y_true, y_prob))
 
-def compute_calibration_error(y_true: list[int] | np.ndarray, y_prob: list[float] | np.ndarray, n_bins: int = 10) -> float:
+
+def compute_calibration_error(
+    y_true: list[int] | np.ndarray, y_prob: list[float] | np.ndarray, n_bins: int = 10
+) -> float:
     """
     Expected Calibration Error (ECE).
     Weighted average of difference between confidence and accuracy in each bin.
@@ -113,7 +121,11 @@ def compute_calibration_error(y_true: list[int] | np.ndarray, y_prob: list[float
         bin_upper = bin_edges[i + 1]
 
         # Find indices of samples falling into current bin
-        in_bin = (y_prob >= bin_lower) & (y_prob < bin_upper) if i < n_bins - 1 else (y_prob >= bin_lower) & (y_prob <= bin_upper)
+        in_bin = (
+            (y_prob >= bin_lower) & (y_prob < bin_upper)
+            if i < n_bins - 1
+            else (y_prob >= bin_lower) & (y_prob <= bin_upper)
+        )
         bin_count = np.sum(in_bin)
 
         if bin_count > 0:
@@ -123,7 +135,10 @@ def compute_calibration_error(y_true: list[int] | np.ndarray, y_prob: list[float
 
     return float(ece)
 
-def compute_reliability_curve(y_true: list[int] | np.ndarray, y_prob: list[float] | np.ndarray, n_bins: int = 10) -> dict[str, list[float]]:
+
+def compute_reliability_curve(
+    y_true: list[int] | np.ndarray, y_prob: list[float] | np.ndarray, n_bins: int = 10
+) -> dict[str, list[float]]:
     """
     Computes points for a reliability diagram (calibration curve).
     """
@@ -139,7 +154,11 @@ def compute_reliability_curve(y_true: list[int] | np.ndarray, y_prob: list[float
         bin_lower = bin_edges[i]
         bin_upper = bin_edges[i + 1]
 
-        in_bin = (y_prob >= bin_lower) & (y_prob < bin_upper) if i < n_bins - 1 else (y_prob >= bin_lower) & (y_prob <= bin_upper)
+        in_bin = (
+            (y_prob >= bin_lower) & (y_prob < bin_upper)
+            if i < n_bins - 1
+            else (y_prob >= bin_lower) & (y_prob <= bin_upper)
+        )
         bin_count = np.sum(in_bin)
 
         if bin_count > 0:
@@ -150,8 +169,9 @@ def compute_reliability_curve(y_true: list[int] | np.ndarray, y_prob: list[float
     return {
         "true_probabilities": true_probabilities,
         "pred_probabilities": pred_probabilities,
-        "bin_counts": bin_counts
+        "bin_counts": bin_counts,
     }
+
 
 def compute_roc_curve(y_true: list[int] | np.ndarray, y_prob: list[float] | np.ndarray) -> dict[str, Any]:
     """
@@ -170,8 +190,9 @@ def compute_roc_curve(y_true: list[int] | np.ndarray, y_prob: list[float] | np.n
         "fpr": fpr.tolist(),
         "tpr": tpr.tolist(),
         "thresholds": thresholds.tolist(),
-        "auc": float(roc_auc)
+        "auc": float(roc_auc),
     }
+
 
 def compute_pr_curve(y_true: list[int] | np.ndarray, y_prob: list[float] | np.ndarray) -> dict[str, Any]:
     """
@@ -187,20 +208,17 @@ def compute_pr_curve(y_true: list[int] | np.ndarray, y_prob: list[float] | np.nd
         "precision": precision.tolist(),
         "recall": recall.tolist(),
         "thresholds": thresholds.tolist(),
-        "auc": float(pr_auc)
+        "auc": float(pr_auc),
     }
+
 
 def generate_confusion_matrix(y_true: list[int] | np.ndarray, y_pred: list[int] | np.ndarray) -> dict[str, int]:
     """
     Generates standard binary confusion matrix counts.
     """
     tp, fp, fn, tn = _get_confusion_matrix_elements(np.array(y_true), np.array(y_pred))
-    return {
-        "tp": tp,
-        "fp": fp,
-        "fn": fn,
-        "tn": tn
-    }
+    return {"tp": tp, "fp": fp, "fn": fn, "tn": tn}
+
 
 def compute_lead_time_stats(event_catalog: pd.DataFrame, predictions: list[dict[str, Any]]) -> dict[str, float]:
     """
@@ -212,19 +230,20 @@ def compute_lead_time_stats(event_catalog: pd.DataFrame, predictions: list[dict[
     # Simple matching logic: find events and see when the forecast first crossed 50% probability
     # within a 1-hour window prior to the event.
     for _, event in event_catalog.iterrows():
-        event_start = pd.to_datetime(event['start_time'])
+        event_start = pd.to_datetime(event["start_time"])
         # Look for predictions prior to event_start (up to 2 hours before)
         event_preds = [
-            p for p in predictions
-            if pd.to_datetime(p['timestamp']) < event_start
-            and pd.to_datetime(p['timestamp']) >= event_start - pd.Timedelta(hours=2)
-            and p.get('probability', 0.0) >= 0.5
+            p
+            for p in predictions
+            if pd.to_datetime(p["timestamp"]) < event_start
+            and pd.to_datetime(p["timestamp"]) >= event_start - pd.Timedelta(hours=2)
+            and p.get("probability", 0.0) >= 0.5
         ]
 
         if event_preds:
             # Sort by timestamp ascending to find the earliest detection
-            event_preds.sort(key=lambda x: pd.to_datetime(x['timestamp']))
-            earliest_detection = pd.to_datetime(event_preds[0]['timestamp'])
+            event_preds.sort(key=lambda x: pd.to_datetime(x["timestamp"]))
+            earliest_detection = pd.to_datetime(event_preds[0]["timestamp"])
             lead_time_min = (event_start - earliest_detection).total_seconds() / 60.0
             lead_times.append(lead_time_min)
 
@@ -234,5 +253,5 @@ def compute_lead_time_stats(event_catalog: pd.DataFrame, predictions: list[dict[
     return {
         "mean_lead_time": float(np.mean(lead_times)),
         "median_lead_time": float(np.median(lead_times)),
-        "max_lead_time": float(np.max(lead_times))
+        "max_lead_time": float(np.max(lead_times)),
     }

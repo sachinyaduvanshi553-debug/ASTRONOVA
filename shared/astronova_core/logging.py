@@ -32,5 +32,6 @@ def setup_logging(service_name: str, log_level: str = "INFO") -> None:
     root_logger.addHandler(handler)
     root_logger.setLevel(log_level)
 
+
 def get_logger(name: str) -> structlog.stdlib.BoundLogger:
     return structlog.get_logger(name)

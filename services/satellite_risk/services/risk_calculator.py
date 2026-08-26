@@ -24,12 +24,14 @@ class SatelliteRiskCalculator:
                 mitigations.append("Enter safe-hold mode")
                 mitigations.append("Disable non-essential instruments")
 
-            satellite_risks.append({
-                "satellite_id": sat,
-                "orbit_type": orbit,
-                "risk_score": min(risk, 1.0),
-                "mitigation_actions": mitigations if mitigations else ["Nominal Operations"]
-            })
+            satellite_risks.append(
+                {
+                    "satellite_id": sat,
+                    "orbit_type": orbit,
+                    "risk_score": min(risk, 1.0),
+                    "mitigation_actions": mitigations if mitigations else ["Nominal Operations"],
+                }
+            )
 
         # Comms disruption predictions
         comms_disruption = [
@@ -37,17 +39,14 @@ class SatelliteRiskCalculator:
                 "system_type": "GPS/NavIC",
                 "severity": "High" if severity > 0.7 else ("Medium" if severity > 0.4 else "Low"),
                 "confidence": 0.85,
-                "affected_regions": ["South-Asia", "Asia-Pacific"]
+                "affected_regions": ["South-Asia", "Asia-Pacific"],
             },
             {
                 "system_type": "HF Radio",
                 "severity": "Critical" if severity > 0.7 else ("High" if severity > 0.4 else "Low"),
                 "confidence": 0.9,
-                "affected_regions": ["Global Day-side"]
-            }
+                "affected_regions": ["Global Day-side"],
+            },
         ]
 
-        return {
-            "satellite_risks": satellite_risks,
-            "communication_disruption": comms_disruption
-        }
+        return {"satellite_risks": satellite_risks, "communication_disruption": comms_disruption}

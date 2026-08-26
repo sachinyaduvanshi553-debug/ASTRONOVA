@@ -7,10 +7,10 @@ Implements research-grade features following:
 - Thermal/non-thermal radiation proxies
 - Spectral hardness ratio (XRSA/XRSB)
 """
+
 from __future__ import annotations
 
 import logging
-from typing import List, Optional
 
 import numpy as np
 import pandas as pd
@@ -47,12 +47,11 @@ def flux_to_class_numeric(flux: float) -> float:
         if flux >= threshold:
             base = float(i)
     # Sub-class decimal
-    for cls, (low, high) in _CLASS_THRESHOLDS.items():
+    for _cls, (low, high) in _CLASS_THRESHOLDS.items():
         if low <= flux < min(high, 1e-3):
             sub = np.log10(flux / low)
             return base + sub
     return base
-
 
 
 class PhysicsFeatures:
@@ -79,9 +78,9 @@ class PhysicsFeatures:
     PHASE_MAP = {
         "Quiescent": 0,
         "Pre-flare": 1,
-        "Rise":      2,
-        "Peak":      3,
-        "Decay":     4,
+        "Rise": 2,
+        "Peak": 3,
+        "Decay": 4,
     }
 
     def __init__(self, window: int = 10) -> None:
@@ -105,17 +104,17 @@ class PhysicsFeatures:
         hard = np.clip(hard, 1e-9, None)
 
         # ── Basic spectral features ───────────────────────────────────
-        df["xray_ratio"]       = soft / hard
-        df["spectral_hardness"]= np.log10(soft / hard)
-        df["log_soft_flux"]    = np.log10(soft)
-        df["log_hard_flux"]    = np.log10(hard)
-        df["log_flux_diff"]    = df["log_soft_flux"] - df["log_hard_flux"]
-        df["flux_severity"]    = [flux_to_class_numeric(f) for f in soft]
+        df["xray_ratio"] = soft / hard
+        df["spectral_hardness"] = np.log10(soft / hard)
+        df["log_soft_flux"] = np.log10(soft)
+        df["log_hard_flux"] = np.log10(hard)
+        df["log_flux_diff"] = df["log_soft_flux"] - df["log_hard_flux"]
+        df["flux_severity"] = [flux_to_class_numeric(f) for f in soft]
 
         # ── Gradient features ─────────────────────────────────────────
         df["soft_xray_gradient"] = np.gradient(soft)
         df["hard_xray_gradient"] = np.gradient(hard)
-        df["flux_acceleration"]  = np.gradient(np.gradient(soft))
+        df["flux_acceleration"] = np.gradient(np.gradient(soft))
 
         # ── Cumulative energy proxy (trapezoidal running integral) ────
         energy = np.zeros(len(soft))
@@ -131,7 +130,7 @@ class PhysicsFeatures:
         phases = []
         w = self.window
         for i in range(len(soft)):
-            window_slice = soft[max(0, i - w + 1): i + 1]
+            window_slice = soft[max(0, i - w + 1) : i + 1]
             phases.append(self._classify_phase(window_slice))
         df["lifecycle_phase"] = [self.PHASE_MAP[p] for p in phases]
 

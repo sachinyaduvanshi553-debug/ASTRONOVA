@@ -1,16 +1,18 @@
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 import os
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+
 
 def check_dataset(filepath="data/sample/real_time_goes.csv"):
     print(f"Loading dataset: {filepath}")
-    
+
     # Ensure output directories exist
     os.makedirs("reports", exist_ok=True)
     os.makedirs("reports/dataset", exist_ok=True)
-    
+
     try:
         df = pd.read_csv(filepath)
     except Exception as e:
@@ -21,64 +23,72 @@ def check_dataset(filepath="data/sample/real_time_goes.csv"):
     num_rows, num_cols = df.shape
     missing_pct = df.isnull().mean().mean() * 100
     duplicates = df.duplicated().sum()
-    
+
     print(f"Rows: {num_rows}")
     print(f"Columns: {num_cols}")
     print(f"Missing Values: {missing_pct:.2f}%")
     print(f"Duplicates: {duplicates}")
 
     # Temporal Integrity
-    if 'time' in df.columns:
-        df['time'] = pd.to_datetime(df['time'])
-        is_increasing = df['time'].is_monotonic_increasing
+    if "time" in df.columns:
+        df["time"] = pd.to_datetime(df["time"])
+        is_increasing = df["time"].is_monotonic_increasing
     else:
         is_increasing = "No 'time' column"
-        
+
     print(f"Time monotonically increasing: {is_increasing}")
 
     # Plot 1: Flux Distribution
     plt.figure(figsize=(10, 5))
-    if 'soft_xray_flux' in df.columns:
-        sns.histplot(df['soft_xray_flux'], bins=100, log_scale=True, kde=True, label='Soft X-Ray Flux')
-    if 'hard_xray_flux' in df.columns:
-        sns.histplot(df['hard_xray_flux'], bins=100, log_scale=True, kde=True, color='red', alpha=0.5, label='Hard X-Ray Flux')
-    plt.title('Flux Distribution')
+    if "soft_xray_flux" in df.columns:
+        sns.histplot(df["soft_xray_flux"], bins=100, log_scale=True, kde=True, label="Soft X-Ray Flux")
+    if "hard_xray_flux" in df.columns:
+        sns.histplot(
+            df["hard_xray_flux"],
+            bins=100,
+            log_scale=True,
+            kde=True,
+            color="red",
+            alpha=0.5,
+            label="Hard X-Ray Flux",
+        )
+    plt.title("Flux Distribution")
     plt.legend()
-    plt.savefig('reports/dataset/flux_distribution.png')
+    plt.savefig("reports/dataset/flux_distribution.png")
     plt.close()
 
     # Plot 2: Missing Values Heatmap
     plt.figure(figsize=(12, 6))
-    sns.heatmap(df.isnull(), cbar=False, cmap='viridis', yticklabels=False)
-    plt.title('Missing Values Heatmap')
-    plt.savefig('reports/dataset/missing_values_heatmap.png')
+    sns.heatmap(df.isnull(), cbar=False, cmap="viridis", yticklabels=False)
+    plt.title("Missing Values Heatmap")
+    plt.savefig("reports/dataset/missing_values_heatmap.png")
     plt.close()
 
     # Plot 3: Feature Correlations
     numeric_df = df.select_dtypes(include=[np.number])
     plt.figure(figsize=(14, 10))
-    sns.heatmap(numeric_df.corr(), annot=False, cmap='coolwarm', center=0)
-    plt.title('Feature Correlations')
+    sns.heatmap(numeric_df.corr(), annot=False, cmap="coolwarm", center=0)
+    plt.title("Feature Correlations")
     plt.tight_layout()
-    plt.savefig('reports/dataset/feature_correlations.png')
+    plt.savefig("reports/dataset/feature_correlations.png")
     plt.close()
 
     # Plot 4: Time Coverage
     plt.figure(figsize=(12, 4))
-    if 'time' in df.columns:
-        plt.plot(df['time'], np.ones(len(df)), '|', markersize=20)
-        plt.title('Time Coverage')
-        plt.xlabel('Time')
+    if "time" in df.columns:
+        plt.plot(df["time"], np.ones(len(df)), "|", markersize=20)
+        plt.title("Time Coverage")
+        plt.xlabel("Time")
         plt.yticks([])
-        plt.savefig('reports/dataset/time_coverage.png')
+        plt.savefig("reports/dataset/time_coverage.png")
     plt.close()
 
     # Plot 5: Class Distribution
     plt.figure(figsize=(8, 5))
-    if 'flare_class' in df.columns:
-        sns.countplot(data=df, x='flare_class', order=['A', 'B', 'C', 'M', 'X'])
-        plt.title('Flare Class Distribution')
-        plt.savefig('reports/dataset/class_distribution.png')
+    if "flare_class" in df.columns:
+        sns.countplot(data=df, x="flare_class", order=["A", "B", "C", "M", "X"])
+        plt.title("Flare Class Distribution")
+        plt.savefig("reports/dataset/class_distribution.png")
     plt.close()
 
     # Write report
@@ -86,13 +96,13 @@ def check_dataset(filepath="data/sample/real_time_goes.csv"):
 
 ## Basic Information
 - **File**: `{filepath}`
-- **Rows**: {num_rows} (Expected > 10,000: {'✅' if num_rows > 10000 else '❌'})
-- **Columns**: {num_cols} (Expected > 15: {'✅' if num_cols > 15 else '❌'})
-- **Missing Values**: {missing_pct:.2f}% (Expected < 1%: {'✅' if missing_pct < 1 else '❌'})
-- **Duplicates**: {duplicates} (Expected = 0: {'✅' if duplicates == 0 else '❌'})
+- **Rows**: {num_rows} (Expected > 10,000: {"✅" if num_rows > 10000 else "❌"})
+- **Columns**: {num_cols} (Expected > 15: {"✅" if num_cols > 15 else "❌"})
+- **Missing Values**: {missing_pct:.2f}% (Expected < 1%: {"✅" if missing_pct < 1 else "❌"})
+- **Duplicates**: {duplicates} (Expected = 0: {"✅" if duplicates == 0 else "❌"})
 
 ## Temporal Integrity
-- **Timestamps Strictly Increasing**: {'✅' if is_increasing == True else '❌ ' + str(is_increasing)}
+- **Timestamps Strictly Increasing**: {"✅" if is_increasing else "❌ " + str(is_increasing)}
 
 ## Visualizations
 - ![Flux Distribution](dataset/flux_distribution.png)
@@ -106,6 +116,7 @@ def check_dataset(filepath="data/sample/real_time_goes.csv"):
     with open("reports/dataset_audit.md", "w", encoding="utf-8") as f:
         f.write(report)
     print("Report written to reports/dataset_audit.md")
+
 
 if __name__ == "__main__":
     check_dataset()

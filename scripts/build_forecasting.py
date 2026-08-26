@@ -3,16 +3,19 @@ import os
 
 def create_file(path, content):
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, 'w', encoding='utf-8') as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write(content)
     print(f"Created: {path}")
+
 
 # =====================================================================
 # PART 1: ML MODELS
 # =====================================================================
 
 # --- 1. bilstm.py ---
-create_file("ml/models/bilstm.py", """import torch
+create_file(
+    "ml/models/bilstm.py",
+    """import torch
 import torch.nn as nn
 from typing import Dict, Any
 
@@ -36,10 +39,13 @@ class BiLSTMForecaster(nn.Module):
         out = out[:, -1, :]
         out = self.fc(out)
         return self.softmax(out)
-""")
+""",
+)
 
 # --- 2. gru_model.py ---
-create_file("ml/models/gru_model.py", """import torch
+create_file(
+    "ml/models/gru_model.py",
+    """import torch
 import torch.nn as nn
 
 class GRUForecaster(nn.Module):
@@ -59,10 +65,13 @@ class GRUForecaster(nn.Module):
         out = out[:, -1, :]
         out = self.fc(out)
         return self.softmax(out)
-""")
+""",
+)
 
 # --- 3. transformer.py ---
-create_file("ml/models/transformer.py", """import torch
+create_file(
+    "ml/models/transformer.py",
+    """import torch
 import torch.nn as nn
 import math
 
@@ -96,10 +105,13 @@ class SolarTransformer(nn.Module):
         out = out.mean(dim=1)  # Global average pooling
         out = self.fc(out)
         return self.softmax(out)
-""")
+""",
+)
 
 # --- 4. nowcasting.py ---
-create_file("ml/models/nowcasting.py", """import numpy as np
+create_file(
+    "ml/models/nowcasting.py",
+    """import numpy as np
 
 class ThresholdDetector:
     def __init__(self, threshold: float = 1e-5):
@@ -107,7 +119,8 @@ class ThresholdDetector:
 
     def detect(self, current_flux: float) -> bool:
         return current_flux >= self.threshold
-""")
+""",
+)
 
 
 # =====================================================================
@@ -115,7 +128,9 @@ class ThresholdDetector:
 # =====================================================================
 
 # --- 5. requirements.txt ---
-create_file("services/forecasting/requirements.txt", """fastapi>=0.115.0
+create_file(
+    "services/forecasting/requirements.txt",
+    """fastapi>=0.115.0
 uvicorn>=0.30.0
 pydantic>=2.9.0
 sqlalchemy>=2.0.0
@@ -127,10 +142,13 @@ redis>=5.2.0
 prometheus-client>=0.21.0
 structlog>=24.0.0
 astronova-core
-""")
+""",
+)
 
 # --- 6. main.py ---
-create_file("services/forecasting/main.py", """from fastapi import FastAPI
+create_file(
+    "services/forecasting/main.py",
+    """from fastapi import FastAPI
 from services.forecasting.routers import forecast
 from astronova_core.logging import setup_logging
 from astronova_core.metrics import metrics_router
@@ -149,10 +167,13 @@ app.include_router(metrics_router)
 @app.get("/")
 def read_root():
     return {"message": "AstroNova Forecasting Service API v1"}
-""")
+""",
+)
 
 # --- 7. Dockerfile ---
-create_file("services/forecasting/Dockerfile", """FROM python:3.12-slim as builder
+create_file(
+    "services/forecasting/Dockerfile",
+    """FROM python:3.12-slim as builder
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
@@ -165,10 +186,13 @@ ENV PATH=/root/.local/bin:$PATH
 ENV PYTHONUNBUFFERED=1
 EXPOSE 8004
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8004"]
-""")
+""",
+)
 
 # --- 8. services/inference_engine.py ---
-create_file("services/forecasting/services/inference_engine.py", """import torch
+create_file(
+    "services/forecasting/services/inference_engine.py",
+    """import torch
 import numpy as np
 from ml.models.bilstm import BiLSTMForecaster
 from typing import Dict, Any
@@ -198,10 +222,13 @@ class InferenceEngine:
                 "confidence": float(probs[pred_class_idx])
             }
         }
-""")
+""",
+)
 
 # --- 9. services/nowcasting.py ---
-create_file("services/forecasting/services/nowcasting.py", """from ml.models.nowcasting import ThresholdDetector
+create_file(
+    "services/forecasting/services/nowcasting.py",
+    """from ml.models.nowcasting import ThresholdDetector
 from astronova_core.utils.physics import classify_flare
 
 class NowcastingService:
@@ -219,10 +246,13 @@ class NowcastingService:
             "detection_method": "threshold_detector",
             "peak_flux": current_flux
         }
-""")
+""",
+)
 
 # --- 10. services/solar_hazard_index.py ---
-create_file("services/forecasting/services/solar_hazard_index.py", """class SolarHazardIndexCalculator:
+create_file(
+    "services/forecasting/services/solar_hazard_index.py",
+    """class SolarHazardIndexCalculator:
     @staticmethod
     def calculate_shi(probabilities: dict, gradient: float) -> dict:
         # Weighted sum: 60% X-class prob, 30% M-class prob, 10% gradient factor
@@ -250,10 +280,13 @@ create_file("services/forecasting/services/solar_hazard_index.py", """class Sola
                 "flux_gradient_factor": min(abs(gradient) * 1e5, 0.1)
             }
         }
-""")
+""",
+)
 
 # --- 11. routers/forecast.py ---
-create_file("services/forecasting/routers/forecast.py", """from fastapi import APIRouter, HTTPException, Query
+create_file(
+    "services/forecasting/routers/forecast.py",
+    """from fastapi import APIRouter, HTTPException, Query
 from services.forecasting.services.inference_engine import InferenceEngine
 from services.forecasting.services.nowcasting import NowcastingService
 from services.forecasting.services.solar_hazard_index import SolarHazardIndexCalculator
@@ -290,6 +323,7 @@ async def get_shi(current_flux: float = Query(..., description="Current observed
 @router.get("/health")
 def health():
     return {"status": "healthy"}
-""")
+""",
+)
 
 print("FORECASTING MODULES AND SERVICE WRITTEN")

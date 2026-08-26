@@ -1,15 +1,20 @@
+import contextlib
+import os
+import sys
 
+import numpy as np
+from astronova_core.schemas.forecasting import ForecastRequest
 from fastapi import APIRouter, Body, Query
 from pydantic import BaseModel, Field
+
 from services.forecasting.services.inference_engine import InferenceEngine
 from services.forecasting.services.nowcasting import NowcastingService
 from services.forecasting.services.solar_hazard_index import SolarHazardIndexCalculator
 
-from astronova_core.schemas.forecasting import ForecastRequest
-
 router = APIRouter(prefix="/api/v1/forecast", tags=["forecasting"])
 inference_engine = InferenceEngine()
 nowcast_service = NowcastingService()
+
 
 # --- Pydantic Models for Simulation & Evaluation ---
 class SimulationRequest(BaseModel):
@@ -18,6 +23,7 @@ class SimulationRequest(BaseModel):
     duration_minutes: int = Field(30, ge=1, description="Simulated flare lifecycle duration")
     precursor_score: float = Field(0.4, ge=0.0, le=1.0, description="Simulated magnetic reconnection precursor index")
 
+
 class SimulationResponse(BaseModel):
     goes_class: str
     simulated_peak_flux: float
@@ -25,31 +31,33 @@ class SimulationResponse(BaseModel):
     comms_impact_assessment: dict
     satellite_operational_directive: str
 
+
 class EvaluationResponse(BaseModel):
     metrics: dict[str, dict]
     dataset_period: str
     total_events_evaluated: int
 
+
 @router.post("/predict")
 async def get_prediction(
     request: ForecastRequest,
-    current_flux: float = Query(1e-7, description="Current observed flux for constraint check")
+    current_flux: float = Query(1e-7, description="Current observed flux for constraint check"),
 ):
     """
     Generates multi-horizon probabilistic forecasts with physics-informed bounds.
     """
     dummy_features = np.zeros((1, 10, 15), dtype=np.float32)
-    if hasattr(request, 'features') and request.features:
-        try:
+    if hasattr(request, "features") and request.features:
+        with contextlib.suppress(Exception):
             dummy_features = np.array([request.features], dtype=np.float32)
-        except: pass
     res = inference_engine.predict(dummy_features, current_flux=current_flux)
     return res
+
 
 @router.get("/nowcast")
 async def get_nowcast(
     current_flux: float = Query(..., description="Current observed flux (W/m^2)"),
-    flux_history: list[float] | None = Query(None, description="Recent historical flux values for lifecycle tracking")
+    flux_history: list[float] | None = Query(None, description="Recent historical flux values for lifecycle tracking"),
 ):
     """
     Nowcast current flux state, tracking lifecycle phase and recommended cadence.
@@ -57,33 +65,35 @@ async def get_nowcast(
     res = nowcast_service.analyze_nowcast(current_flux, flux_history=flux_history)
     return res
 
+
 @router.get("/shi")
 async def get_shi(
     current_flux: float = Query(..., description="Current observed flux (W/m^2)"),
     similarity: float = Query(0.1, ge=0.0, le=1.0, description="Historical similarity score"),
     sat_risk: float = Query(0.1, ge=0.0, le=1.0, description="Satellite risk factor"),
-    impact_risk: float = Query(0.1, ge=0.0, le=1.0, description="Geospatial earth impact risk")
+    impact_risk: float = Query(0.1, ge=0.0, le=1.0, description="Geospatial earth impact risk"),
 ):
     """
     Computes advanced Solar Hazard Index incorporating multi-factor risks.
     """
     # Generate nowcast and predict states
-    nowcast_res = nowcast_service.analyze_nowcast(current_flux)
+    nowcast_service.analyze_nowcast(current_flux)
     dummy_features = np.zeros((1, 10, 15), dtype=np.float32)
     pred_res = inference_engine.predict(dummy_features, current_flux=current_flux)
-    
+
     # Calculate gradient proxy from nowcast
     gradient = current_flux * 0.05
     probabilities = pred_res["prediction"]["horizons"]["15m"]["probabilities"]
-    
+
     shi = SolarHazardIndexCalculator.calculate_shi(
         probabilities=probabilities,
         gradient=gradient,
         similarity=similarity,
         sat_risk=sat_risk,
-        impact_risk=impact_risk
+        impact_risk=impact_risk,
     )
     return shi
+
 
 @router.post("/simulate", response_model=SimulationResponse)
 async def simulate_scenario(request: SimulationRequest = Body(...)):
@@ -104,7 +114,7 @@ async def simulate_scenario(request: SimulationRequest = Body(...)):
         gradient=sim_gradient,
         similarity=0.88,  # Simulated matches
         sat_risk=0.65 if sim_class in ["M", "X"] else 0.2,
-        impact_risk=0.72 if sim_class in ["M", "X"] else 0.15
+        impact_risk=0.72 if sim_class in ["M", "X"] else 0.15,
     )
 
     # 2. Compute comms impact assessment
@@ -124,26 +134,28 @@ async def simulate_scenario(request: SimulationRequest = Body(...)):
         "gps_degradation": {
             "severity": severity,
             "position_error_increase_meters": 1.5 if severity == "Low" else (5.4 if severity == "Moderate" else 14.8),
-            "confidence": 0.94
+            "confidence": 0.94,
         },
         "navic_degradation": {
             "severity": severity,
             "s4_index": scintillation_s4,
             "scintillation_warning": bool(scintillation_s4 >= 0.4),
-            "confidence": 0.92
+            "confidence": 0.92,
         },
         "hf_radio": {
             "dellinger_absorption_db": absorption_db,
             "blackout_probability": 0.15 if severity == "Low" else (0.65 if severity == "Moderate" else 0.98),
-            "affected_frequency_mhz_ceiling": 15 if severity == "Low" else (25 if severity == "Moderate" else 35)
-        }
+            "affected_frequency_mhz_ceiling": 15 if severity == "Low" else (25 if severity == "Moderate" else 35),
+        },
     }
 
     # 3. Operational directive recommendation
     if sim_class == "X":
         directive = "CRITICAL ACTION: Trigger safing procedures for GEO platforms. Divert polar aviation routes. Initiate NavIC receiver tracking-loop adjustments."
     elif sim_class == "M":
-        directive = "AMBER ACTION: Monitor transponder thermal limits. Prepare GPS/NavIC receivers for scintillation anomalies."
+        directive = (
+            "AMBER ACTION: Monitor transponder thermal limits. Prepare GPS/NavIC receivers for scintillation anomalies."
+        )
     else:
         directive = "GREEN ACTION: Routine operations. Continue monitoring standard cadence."
 
@@ -152,8 +164,9 @@ async def simulate_scenario(request: SimulationRequest = Body(...)):
         "simulated_peak_flux": request.peak_flux,
         "solar_hazard_index": sim_shi,
         "comms_impact_assessment": comms_assessment,
-        "satellite_operational_directive": directive
+        "satellite_operational_directive": directive,
     }
+
 
 @router.get("/evaluate", response_model=EvaluationResponse)
 async def evaluate_models():
@@ -169,7 +182,7 @@ async def evaluate_models():
             "probability_of_detection": 0.85,
             "heidke_skill_score": 0.79,
             "brier_score": 0.08,
-            "mean_lead_time_minutes": 22.0
+            "mean_lead_time_minutes": 22.0,
         },
         "GRU_Forecaster": {
             "true_skill_statistic": 0.78,
@@ -177,7 +190,7 @@ async def evaluate_models():
             "probability_of_detection": 0.81,
             "heidke_skill_score": 0.74,
             "brier_score": 0.11,
-            "mean_lead_time_minutes": 18.0
+            "mean_lead_time_minutes": 18.0,
         },
         "Solar_Transformer": {
             "true_skill_statistic": 0.88,
@@ -185,86 +198,88 @@ async def evaluate_models():
             "probability_of_detection": 0.90,
             "heidke_skill_score": 0.84,
             "brier_score": 0.05,
-            "mean_lead_time_minutes": 26.0
-        }
+            "mean_lead_time_minutes": 26.0,
+        },
     }
 
     return {
         "metrics": metrics,
         "dataset_period": "NOAA Space Weather Core + Aditya-L1 Sync (June 2026 Validation Suite)",
-        "total_events_evaluated": 1250
+        "total_events_evaluated": 1250,
     }
+
 
 @router.get("/health")
 def health():
     return {"status": "healthy"}
 
+
 @router.get("/image-inference")
 async def get_image_inference(flare_id: str):
-    import os
-    import sys
-    import torch
+
     import pandas as pd
-    
+    import torch
+
     # Ensure root is in path
-    root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
+    root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), "../../.."))
     if root_dir not in sys.path:
         sys.path.append(root_dir)
-        
+
     try:
         from scripts.train_image_features import ImageFeaturesMLP
     except ImportError:
         return {"error": "Could not import ImageFeaturesMLP"}
-        
+
     model_path = os.path.join(root_dir, "models/image_features/mlp_model.pt")
     csv_131 = os.path.join(root_dir, "data/features/spectral/image_features_131.csv")
     csv_193 = os.path.join(root_dir, "data/features/spectral/image_features_193.csv")
-    
+
     if not os.path.exists(model_path):
         return {"error": "Model not found. Train the model first."}
-        
+
     model = ImageFeaturesMLP(input_size=2560, num_classes=5)
     model.load_state_dict(torch.load(model_path))
     model.eval()
-    
+
     try:
         df_131 = pd.read_csv(csv_131)
         df_193 = pd.read_csv(csv_193)
     except Exception as e:
-        return {"error": f"Failed to load datasets: {str(e)}"}
-        
+        return {"error": f"Failed to load datasets: {e!s}"}
+
     # Match the flare ID
-    row_131 = df_131[df_131['flare_id'] == flare_id]
+    row_131 = df_131[df_131["flare_id"] == flare_id]
     if row_131.empty:
         return {"error": f"Flare ID {flare_id} not found in 131 dataset."}
-        
-    sample_time = row_131['timestamp'].iloc[0]
-    time_rounded = pd.to_datetime(sample_time).round('10min')
-    df_193['time_rounded'] = pd.to_datetime(df_193['timestamp']).dt.round('10min')
-    row_193 = df_193[(df_193['flare_id'] == flare_id) & (df_193['time_rounded'] == time_rounded)]
-    
+
+    sample_time = row_131["timestamp"].iloc[0]
+    time_rounded = pd.to_datetime(sample_time).round("10min")
+    df_193["time_rounded"] = pd.to_datetime(df_193["timestamp"]).dt.round("10min")
+    row_193 = df_193[(df_193["flare_id"] == flare_id) & (df_193["time_rounded"] == time_rounded)]
+
     if row_193.empty:
         return {"error": f"Matching 193 dataset sequence not found for Flare ID {flare_id}."}
-        
+
     # Extract
-    f131_cols = [f'f{i}' for i in range(1280)]
-    f193_cols = [f'f{i}' for i in range(1280)]
-    
+    f131_cols = [f"f{i}" for i in range(1280)]
+    f193_cols = [f"f{i}" for i in range(1280)]
+
     features_131 = row_131.iloc[0][f131_cols].values.astype(float)
     features_193 = row_193.iloc[0][f193_cols].values.astype(float)
-    
+
     import numpy as np
+
     combined = np.concatenate([features_131, features_193])
     input_tensor = torch.tensor(combined, dtype=torch.float32).unsqueeze(0)
-    
+
     with torch.no_grad():
         logits = model(input_tensor)
         probs = torch.softmax(logits, dim=1).numpy()[0]
         pred_class = int(np.argmax(probs))
-        
+
     return {
         "flare_id": flare_id,
         "timestamp": sample_time,
         "predicted_class": pred_class,
-        "probabilities": [float(p) for p in probs]
+        "probabilities": [float(p) for p in probs],
     }

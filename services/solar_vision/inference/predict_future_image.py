@@ -15,13 +15,14 @@ def load_model(checkpoint_path: str, args) -> ConvLSTM:
         num_layers=args.num_layers,
     )
     if Path(checkpoint_path).exists():
-        state_dict = torch.load(checkpoint_path, map_location=torch.device('cpu'))
+        state_dict = torch.load(checkpoint_path, map_location=torch.device("cpu"))
         model.load_state_dict(state_dict)
         print(f"Loaded checkpoint from {checkpoint_path}")
     else:
         print(f"Checkpoint not found at {checkpoint_path}, using random weights.")
     model.eval()
     return model
+
 
 def predict_future(model: ConvLSTM, input_seq: torch.Tensor, steps: int) -> torch.Tensor:
     """Generate future frames by repeatedly feeding the last output as next input.
@@ -39,10 +40,15 @@ def predict_future(model: ConvLSTM, input_seq: torch.Tensor, steps: int) -> torc
         cur_seq = torch.cat([cur_seq[:, 1:], next_frame], dim=1)
     return torch.cat(preds, dim=1)
 
+
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description="Run inference with ConvLSTM model for Solar Vision")
-    parser.add_argument("--checkpoint", type=str, default="./models/checkpoints/convlstm_checkpoint.pt",
-                        help="Path to model checkpoint file")
+    parser.add_argument(
+        "--checkpoint",
+        type=str,
+        default="./models/checkpoints/convlstm_checkpoint.pt",
+        help="Path to model checkpoint file",
+    )
     parser.add_argument("--input-dim", type=int, default=3, help="Number of input channels")
     parser.add_argument("--hidden-dim", type=int, nargs="+", default=[64, 64], help="Hidden dims per layer")
     parser.add_argument("--kernel-size", type=int, nargs="+", default=[3, 3], help="Kernel sizes per layer")
@@ -52,6 +58,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--width", type=int, default=128, help="Spatial width of frames")
     parser.add_argument("--future-steps", type=int, default=3, help="How many future frames to predict")
     return parser.parse_args()
+
 
 if __name__ == "__main__":
     args = parse_args()

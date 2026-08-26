@@ -9,11 +9,12 @@ from astronova_core.logging import get_logger
 settings = get_settings()
 logger = get_logger("kafka-client")
 
+
 class AstroNovaProducer:
     def __init__(self):
         conf = {
-            'bootstrap.servers': settings.kafka.bootstrap_servers,
-            'client.id': 'astronova-producer'
+            "bootstrap.servers": settings.kafka.bootstrap_servers,
+            "client.id": "astronova-producer",
         }
         self.producer = Producer(conf)
 
@@ -22,8 +23,8 @@ class AstroNovaProducer:
             self.producer.produce(
                 topic,
                 key=key,
-                value=json.dumps(value).encode('utf-8'),
-                callback=self._delivery_report
+                value=json.dumps(value).encode("utf-8"),
+                callback=self._delivery_report,
             )
             self.producer.poll(0)
         except Exception as e:

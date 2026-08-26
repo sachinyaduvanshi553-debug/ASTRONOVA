@@ -1,63 +1,75 @@
-import numpy as np
-import torch
-import os
 import json
-import glob
-import subprocess
+import os
 import sys
+
+import numpy as np
+
 sys.path.append(os.path.abspath("."))
 
 from services.forecasting.services.inference_engine import InferenceEngine
 
+
 def check_random_numbers():
     print("--- Searching for Unauthorized Randomness ---")
-    
+
     # We will use python to search files rather than os-specific commands for safety
     import re
-    
+
     bad_patterns = [r"torch\.randn", r"torch\.rand\(", r"np\.random"]
-    allowed_files = ["training", "dataset", "test", "generator", "mock", "audit", "verify", "seed", "build"]
-    
+    allowed_files = [
+        "training",
+        "dataset",
+        "test",
+        "generator",
+        "mock",
+        "audit",
+        "verify",
+        "seed",
+        "build",
+    ]
+
     violations = []
     for root, _, files in os.walk("."):
         if "venv" in root or ".git" in root or "__pycache__" in root or "node_modules" in root:
             continue
-            
+
         for file in files:
             if not file.endswith(".py"):
                 continue
-                
-            is_allowed = any(allowed in file.lower() for allowed in allowed_files) or "models" in root or "features" in root # Some model init requires randomness
-            
+
+            is_allowed = (
+                any(allowed in file.lower() for allowed in allowed_files) or "models" in root or "features" in root
+            )  # Some model init requires randomness
+
             filepath = os.path.join(root, file)
-            with open(filepath, "r", encoding="utf-8", errors="ignore") as f:
+            with open(filepath, encoding="utf-8", errors="ignore") as f:
                 content = f.read()
-                
+
             for pattern in bad_patterns:
-                if re.search(pattern, content):
-                    if not is_allowed and "inference_engine" in filepath:
-                        violations.append((filepath, pattern))
-                        
+                if re.search(pattern, content) and not is_allowed and "inference_engine" in filepath:
+                    violations.append((filepath, pattern))
+
     if violations:
         print("FAIL: Unauthorized random number generation found in production paths!")
         for v in violations:
             print(f"  {v[0]}: matches {v[1]}")
     else:
         print("PASS: No unauthorized random number generation found in inference paths.")
-        
+
     return violations
+
 
 def check_determinism_and_single_prediction():
     print("\n--- Verifying Determinism & Single Prediction ---")
     engine = InferenceEngine()
-    
+
     # Create a deterministic mock sequence (1 batch, 10 seq, 15 features)
     dummy_input = np.ones((1, 10, 15), dtype=np.float32)
-    dummy_input[0, :, 0] = np.linspace(-8, -4, 10) # log_soft_flux
-    
+    dummy_input[0, :, 0] = np.linspace(-8, -4, 10)  # log_soft_flux
+
     # Run once
     out1 = engine.predict(dummy_input)
-    
+
     # Check structure
     horizons = ["15m", "30m", "1h", "6h"]
     assert "prediction" in out1, "Missing 'prediction' key in output"
@@ -67,60 +79,62 @@ def check_determinism_and_single_prediction():
         assert "flare_class" in h_data, "Missing flare_class"
         assert "probabilities" in h_data, "Missing probabilities"
         assert "predicted_intensity" in h_data, "Missing predicted_intensity"
-        
+
     print("Single Prediction Structure: PASS")
-    
+
     # Run 100 times to check determinism
     for i in range(100):
         out2 = engine.predict(dummy_input)
-        
+
         # Serialize to json string to do a deep equality check
         s1 = json.dumps(out1, sort_keys=True)
         s2 = json.dumps(out2, sort_keys=True)
-        
+
         if s1 != s2:
             print(f"Determinism Check: FAIL at iteration {i}")
             return False
-            
+
     print("Determinism (100 runs): PASS")
     return True
+
 
 def verify_ensemble_contributions():
     print("\n--- Verifying Ensemble Contributions ---")
     engine = InferenceEngine()
-    
+
     w_xgb = engine.weights.get("xgb", 0)
     w_lgb = engine.weights.get("lgb", 0)
     w_lstm = engine.weights.get("lstm", 0)
-    
+
     print(f"Configured Weights - XGB: {w_xgb}, LGB: {w_lgb}, LSTM: {w_lstm}")
-    
+
     if abs((w_xgb + w_lgb + w_lstm) - 1.0) < 1e-4:
         print("Weights Sum to 1.0: PASS")
     else:
         print("Weights Sum to 1.0: FAIL")
-        
+
     # Check if they match expected 0.4, 0.3, 0.3
     if w_xgb == 0.4 and w_lgb == 0.3 and w_lstm == 0.3:
         print("Expected Weight Distribution: PASS")
     else:
         print("Expected Weight Distribution: FAIL (Expected 0.4, 0.3, 0.3)")
 
+
 def main():
     os.makedirs("reports/inference", exist_ok=True)
-    
+
     v = check_random_numbers()
     det = check_determinism_and_single_prediction()
     verify_ensemble_contributions()
-    
+
     report = f"""# Inference Verification Report
 
 ## 1. Randomness Audit
-- Unauthorized PRNGs in inference path: {'❌ Found' if v else '✅ None'}
+- Unauthorized PRNGs in inference path: {"❌ Found" if v else "✅ None"}
 
 ## 2. Determinism & Structure
 - Output format matches expected JSON structure: ✅ PASS
-- 100 identical inputs yield 100 identical outputs: {'✅ PASS' if det else '❌ FAIL'}
+- 100 identical inputs yield 100 identical outputs: {"✅ PASS" if det else "❌ FAIL"}
 
 ## 3. Ensemble Verification
 - XGBoost Weight: 0.4
@@ -133,6 +147,7 @@ def main():
     with open("reports/inference/inference_verification.md", "w", encoding="utf-8") as f:
         f.write(report)
     print("\nReport written to reports/inference/inference_verification.md")
+
 
 if __name__ == "__main__":
     main()

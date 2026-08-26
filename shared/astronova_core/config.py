@@ -72,10 +72,7 @@ class DatabaseSettings(BaseSettings):
         """Build the async database URL from individual components if not provided."""
         if not self.url:
             pwd = self.password.get_secret_value()
-            self.url = (
-                f"postgresql+asyncpg://{self.user}:{pwd}"
-                f"@{self.host}:{self.port}/{self.db}"
-            )
+            self.url = f"postgresql+asyncpg://{self.user}:{pwd}@{self.host}:{self.port}/{self.db}"
         return self
 
     @field_validator("port")
@@ -180,26 +177,14 @@ class KafkaSettings(BaseSettings):
     producer_retries: int = Field(default=5, description="Producer retry count")
     producer_batch_size: int = Field(default=16384, description="Producer batch size bytes")
     producer_linger_ms: int = Field(default=10, description="Producer linger time ms")
-    producer_compression_type: str = Field(
-        default="snappy", description="Producer compression type"
-    )
-    producer_max_block_ms: int = Field(
-        default=60000, description="Max time to block on send"
-    )
+    producer_compression_type: str = Field(default="snappy", description="Producer compression type")
+    producer_max_block_ms: int = Field(default=60000, description="Max time to block on send")
 
     # Consumer settings
-    consumer_auto_offset_reset: str = Field(
-        default="earliest", description="Consumer auto offset reset"
-    )
-    consumer_enable_auto_commit: bool = Field(
-        default=False, description="Enable auto commit (prefer manual)"
-    )
-    consumer_max_poll_records: int = Field(
-        default=500, description="Max records per poll"
-    )
-    consumer_session_timeout_ms: int = Field(
-        default=30000, description="Consumer session timeout ms"
-    )
+    consumer_auto_offset_reset: str = Field(default="earliest", description="Consumer auto offset reset")
+    consumer_enable_auto_commit: bool = Field(default=False, description="Enable auto commit (prefer manual)")
+    consumer_max_poll_records: int = Field(default=500, description="Max records per poll")
+    consumer_session_timeout_ms: int = Field(default=30000, description="Consumer session timeout ms")
 
     @field_validator("producer_acks")
     @classmethod
@@ -235,12 +220,8 @@ class JWTSettings(BaseSettings):
         description="JWT signing secret key",
     )
     algorithm: str = Field(default="HS256", description="JWT signing algorithm")
-    access_token_expire_minutes: int = Field(
-        default=60, ge=1, description="Access token TTL in minutes"
-    )
-    refresh_token_expire_days: int = Field(
-        default=7, ge=1, description="Refresh token TTL in days"
-    )
+    access_token_expire_minutes: int = Field(default=60, ge=1, description="Access token TTL in minutes")
+    refresh_token_expire_days: int = Field(default=7, ge=1, description="Refresh token TTL in days")
 
     @field_validator("algorithm")
     @classmethod
@@ -314,9 +295,7 @@ class ChromaSettings(BaseSettings):
         default="space_weather_knowledge",
         description="Collection name for space weather knowledge base",
     )
-    embedding_dimension: int = Field(
-        default=768, description="Embedding vector dimension"
-    )
+    embedding_dimension: int = Field(default=768, description="Embedding vector dimension")
     distance_function: str = Field(
         default="cosine",
         description="Distance function for similarity search",
@@ -371,39 +350,17 @@ class ServiceURLSettings(BaseSettings):
 
     model_config = SettingsConfigDict(env_file=".env", extra="ignore", populate_by_name=True)
 
-    ingestion_service_url: str = Field(
-        default="http://ingestion:8001", alias="INGESTION_SERVICE_URL"
-    )
-    processing_service_url: str = Field(
-        default="http://processing:8002", alias="PROCESSING_SERVICE_URL"
-    )
-    features_service_url: str = Field(
-        default="http://features:8003", alias="FEATURES_SERVICE_URL"
-    )
-    forecasting_service_url: str = Field(
-        default="http://forecasting:8004", alias="FORECASTING_SERVICE_URL"
-    )
-    xai_service_url: str = Field(
-        default="http://xai:8005", alias="XAI_SERVICE_URL"
-    )
-    earth_impact_service_url: str = Field(
-        default="http://earth-impact:8006", alias="EARTH_IMPACT_SERVICE_URL"
-    )
-    satellite_risk_service_url: str = Field(
-        default="http://satellite-risk:8007", alias="SATELLITE_RISK_SERVICE_URL"
-    )
-    rag_service_url: str = Field(
-        default="http://rag:8008", alias="RAG_SERVICE_URL"
-    )
-    copilot_service_url: str = Field(
-        default="http://copilot:8009", alias="COPILOT_SERVICE_URL"
-    )
-    notification_service_url: str = Field(
-        default="http://notifications:8010", alias="NOTIFICATION_SERVICE_URL"
-    )
-    gateway_url: str = Field(
-        default="http://gateway:8000", alias="GATEWAY_URL"
-    )
+    ingestion_service_url: str = Field(default="http://ingestion:8001", alias="INGESTION_SERVICE_URL")
+    processing_service_url: str = Field(default="http://processing:8002", alias="PROCESSING_SERVICE_URL")
+    features_service_url: str = Field(default="http://features:8003", alias="FEATURES_SERVICE_URL")
+    forecasting_service_url: str = Field(default="http://forecasting:8004", alias="FORECASTING_SERVICE_URL")
+    xai_service_url: str = Field(default="http://xai:8005", alias="XAI_SERVICE_URL")
+    earth_impact_service_url: str = Field(default="http://earth-impact:8006", alias="EARTH_IMPACT_SERVICE_URL")
+    satellite_risk_service_url: str = Field(default="http://satellite-risk:8007", alias="SATELLITE_RISK_SERVICE_URL")
+    rag_service_url: str = Field(default="http://rag:8008", alias="RAG_SERVICE_URL")
+    copilot_service_url: str = Field(default="http://copilot:8009", alias="COPILOT_SERVICE_URL")
+    notification_service_url: str = Field(default="http://notifications:8010", alias="NOTIFICATION_SERVICE_URL")
+    gateway_url: str = Field(default="http://gateway:8000", alias="GATEWAY_URL")
 
 
 # ──────────────────────────────────────────────────────────────────────────────
@@ -414,9 +371,7 @@ class ServiceURLSettings(BaseSettings):
 class NotificationSettings(BaseSettings):
     """Email and webhook notification settings."""
 
-    model_config = SettingsConfigDict(
-        env_prefix="SMTP_", env_file=".env", extra="ignore", populate_by_name=True
-    )
+    model_config = SettingsConfigDict(env_prefix="SMTP_", env_file=".env", extra="ignore", populate_by_name=True)
 
     host: str = Field(default="smtp.gmail.com", description="SMTP host")
     port: int = Field(default=587, description="SMTP port")
@@ -428,9 +383,7 @@ class NotificationSettings(BaseSettings):
         alias="ALERT_EMAIL_RECIPIENTS",
         description="Comma-separated list of alert email recipients",
     )
-    webhook_url: str = Field(
-        default="", alias="WEBHOOK_URL", description="Webhook URL for alerts"
-    )
+    webhook_url: str = Field(default="", alias="WEBHOOK_URL", description="Webhook URL for alerts")
 
     def get_recipients_list(self) -> list[str]:
         """Return alert recipients as a list."""
@@ -489,9 +442,7 @@ class AppSettings(BaseSettings):
         description="Deployment environment (development|staging|production)",
     )
     debug: bool = Field(default=False, alias="DEBUG", description="Enable debug mode")
-    log_level: str = Field(
-        default="INFO", alias="LOG_LEVEL", description="Logging level"
-    )
+    log_level: str = Field(default="INFO", alias="LOG_LEVEL", description="Logging level")
     cors_origins: str = Field(
         default="http://localhost:3000",
         alias="CORS_ORIGINS",
@@ -504,15 +455,9 @@ class AppSettings(BaseSettings):
     )
 
     # File system paths
-    data_dir: str = Field(
-        default="/app/data", alias="DATA_DIR", description="Root data directory"
-    )
-    model_dir: str = Field(
-        default="/app/models", alias="MODEL_DIR", description="Trained models directory"
-    )
-    log_dir: str = Field(
-        default="/app/logs", alias="LOG_DIR", description="Log files directory"
-    )
+    data_dir: str = Field(default="/app/data", alias="DATA_DIR", description="Root data directory")
+    model_dir: str = Field(default="/app/models", alias="MODEL_DIR", description="Trained models directory")
+    log_dir: str = Field(default="/app/logs", alias="LOG_DIR", description="Log files directory")
 
     # Subsystem settings (instantiated lazily via properties)
     _database: DatabaseSettings | None = None

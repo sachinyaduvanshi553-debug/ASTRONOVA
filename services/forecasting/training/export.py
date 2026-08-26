@@ -9,6 +9,7 @@ Supports:
 Usage:
     python -m services.forecasting.training.export
 """
+
 from __future__ import annotations
 
 import json
@@ -16,7 +17,6 @@ import logging
 import pickle
 import sys
 from pathlib import Path
-from typing import Any, Dict
 
 import numpy as np
 
@@ -30,16 +30,22 @@ logging.basicConfig(
 )
 logger = logging.getLogger("astronova.export")
 
-MODELS_DIR  = PROJECT_ROOT / "models" / "artifacts"
-PROCESSED   = PROJECT_ROOT / "datasets" / "processed" / "goes_processed.parquet"
+MODELS_DIR = PROJECT_ROOT / "models" / "artifacts"
+PROCESSED = PROJECT_ROOT / "datasets" / "processed" / "goes_processed.parquet"
 
-_EXCLUDE = {"label_binary", "label_class", "quality_flag",
-            "soft_xray_flux_log_scaled", "hard_xray_flux_log_scaled"}
+_EXCLUDE = {
+    "label_binary",
+    "label_class",
+    "quality_flag",
+    "soft_xray_flux_log_scaled",
+    "hard_xray_flux_log_scaled",
+}
 
 
 def _load_test_sample(n: int = 50) -> tuple[np.ndarray, int]:
     """Load a small sample of test data for ONNX verification."""
     import pandas as pd
+
     if not PROCESSED.exists():
         logger.warning("Processed dataset not found — using random data for ONNX check.")
         meta_path = MODELS_DIR / "feature_metadata.json"
@@ -59,7 +65,7 @@ def _load_test_sample(n: int = 50) -> tuple[np.ndarray, int]:
 
 def export_model(name: str, X_sample: np.ndarray, n_features: int) -> bool:
     """Export a single .pkl model to ONNX and verify output."""
-    pkl_path  = MODELS_DIR / f"{name}.pkl"
+    pkl_path = MODELS_DIR / f"{name}.pkl"
     onnx_path = MODELS_DIR / f"{name}.onnx"
 
     if not pkl_path.exists():
@@ -71,11 +77,11 @@ def export_model(name: str, X_sample: np.ndarray, n_features: int) -> bool:
 
     # ── Export ────────────────────────────────────────────────────────
     try:
-        from skl2onnx import convert_sklearn   # type: ignore
+        from skl2onnx import convert_sklearn  # type: ignore
         from skl2onnx.common.data_types import FloatTensorType  # type: ignore
+
         initial_type = [("float_input", FloatTensorType([None, n_features]))]
-        onnx_model = convert_sklearn(model, initial_types=initial_type,
-                                     options={type(model): {"zipmap": False}})
+        onnx_model = convert_sklearn(model, initial_types=initial_type, options={type(model): {"zipmap": False}})
         with open(onnx_path, "wb") as fh:
             fh.write(onnx_model.SerializeToString())
         logger.info("Exported → %s", onnx_path)
@@ -86,6 +92,7 @@ def export_model(name: str, X_sample: np.ndarray, n_features: int) -> bool:
     # ── Verify ────────────────────────────────────────────────────────
     try:
         import onnxruntime as ort  # type: ignore
+
         sess = ort.InferenceSession(str(onnx_path))
         input_name = sess.get_inputs()[0].name
         onnx_preds = sess.run(None, {input_name: X_sample})[0]

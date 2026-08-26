@@ -7,6 +7,7 @@ from astronova_core.config import get_settings
 
 settings = get_settings()
 
+
 class RedisCache:
     def __init__(self):
         self.client = redis.from_url(settings.redis.redis_url, decode_responses=True)

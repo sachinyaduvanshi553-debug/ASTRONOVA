@@ -8,6 +8,7 @@ class ForecastRequest(BaseModel):
     horizons: list[int] = Field(default=[5, 15, 30, 60])
     model_type: str = Field(default="ensemble")
 
+
 class ForecastResult(BaseModel):
     horizon_minutes: int
     probability: float = Field(..., ge=0.0, le=1.0)
@@ -15,12 +16,14 @@ class ForecastResult(BaseModel):
     peak_flux_estimate: float
     confidence_interval: list[float]
 
+
 class NowcastResult(BaseModel):
     is_flare: bool
     goes_class: str
     confidence: float
     detection_method: str
     peak_flux: float
+
 
 class SolarHazardIndex(BaseModel):
     score: float = Field(..., ge=0.0, le=1.0)

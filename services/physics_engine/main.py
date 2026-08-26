@@ -1,3 +1,23 @@
-'''Physics Engine Service entry point.
+"""Physics Engine Service entry point.
 Provides FastAPI application exposing physics-informed calculations.
-'''\n\nfrom fastapi import FastAPI\nfrom services.physics_engine.routers import physics\nfrom astronova_core.logging import setup_logging\n\nsetup_logging("physics-engine-service")\n\napp = FastAPI(\n    title="Astronova Physics Engine Service",\n    description="Provides physics-informed metrics for solar flare forecasting.",\n    version="0.1.0"\n)\n\napp.include_router(physics.router)\n\n@app.get("/health")\nasync def health_check():\n    return {"status": "ok"}\n
+"""
+
+from fastapi import FastAPI
+
+from services.physics_engine.routers import physics
+from shared.astronova_core.logging import setup_logging
+
+setup_logging("physics-engine-service")
+
+app = FastAPI(
+    title="Astronova Physics Engine Service",
+    description="Provides physics-informed metrics for solar flare forecasting.",
+    version="0.1.0",
+)
+
+app.include_router(physics.router)
+
+
+@app.get("/health")
+async def health_check():
+    return {"status": "ok"}

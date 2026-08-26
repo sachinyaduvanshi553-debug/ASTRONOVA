@@ -1,6 +1,7 @@
+from pathlib import Path
+
 import joblib
 import numpy as np
-from pathlib import Path
 
 MODEL_PATH = Path("models/flare_model.pkl")
 
@@ -28,6 +29,4 @@ def predict(input_data: dict):
     features = np.array(list(input_data.values())).reshape(1, -1)
     prediction = model.predict(features)[0]
 
-    return {
-        "prediction": str(prediction)
-    }
+    return {"prediction": str(prediction)}

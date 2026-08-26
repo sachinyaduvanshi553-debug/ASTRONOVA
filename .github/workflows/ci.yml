@@ -2,7 +2,7 @@ name: AstroNova CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, portfolio-backend ]
   pull_request:
     branches: [ main ]
 
@@ -23,9 +23,10 @@ jobs:
         python -m pip install --upgrade pip
         pip install ruff pytest pytest-asyncio
         
-    - name: Lint with Ruff
+    - name: Lint and format check with Ruff
       run: |
         ruff check .
+        ruff format --check .
         
     - name: Run unit tests
       run: |
