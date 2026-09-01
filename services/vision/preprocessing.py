@@ -29,7 +29,7 @@ class SolarImagePreprocessor:
         self.train_transforms = A.Compose([
             A.Resize(height=target_size, width=target_size),
             A.RandomRotate90(p=0.5),
-            A.Flip(p=0.5),
+            A.HorizontalFlip(p=0.5),
             A.ShiftScaleRotate(shift_limit=0.05, scale_limit=0.05, rotate_limit=15, p=0.3),
             A.RandomBrightnessContrast(brightness_limit=0.1, contrast_limit=0.1, p=0.3),
             A.OneOf([

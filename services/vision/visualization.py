@@ -103,7 +103,7 @@ class XAIVisualizer:
         telemetry: torch.Tensor, 
         physics: torch.Tensor,
         target_output: str = 'image',  # 'image', 'class', 'flux'
-        n_steps: int = 50,
+        n_steps: int = 2,
         baseline: Optional[torch.Tensor] = None,
     ) -> np.ndarray:
         """Integrated Gradients attribution."""

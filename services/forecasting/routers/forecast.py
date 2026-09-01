@@ -1,4 +1,5 @@
 
+import numpy as np
 from fastapi import APIRouter, Body, Query
 from pydantic import BaseModel, Field
 from services.forecasting.services.inference_engine import InferenceEngine

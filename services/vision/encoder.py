@@ -39,7 +39,8 @@ class TemporalEncoder(nn.Module):
         # Or keep spatial features. Let's keep spatial features using ConvLSTM if needed.
         # But a simple approach: process each frame, pool, then standard LSTM.
         self.pool = nn.AdaptiveAvgPool2d((1, 1))
-        self.lstm = nn.LSTM(input_size=hidden_dim, hidden_size=hidden_dim, batch_first=True)
+        in_dim = getattr(getattr(image_encoder, 'proj', None), 'out_channels', hidden_dim)
+        self.lstm = nn.LSTM(input_size=in_dim, hidden_size=hidden_dim, batch_first=True)
 
     def forward(self, x):
         # x is (B, T, C, H, W)

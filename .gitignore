@@ -2,13 +2,18 @@
 venv/
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
 
-# Datasets
+# Datasets (large files / raw data not tracked in git)
 datasets/raw/
 datasets/train/
 datasets/validation/
 datasets/test/
 data/
+*.nc
+*.zip
 
 # Model artifacts
 *.pkl
@@ -18,6 +23,11 @@ data/
 *.pth
 checkpoints/
 models/
+
+# Node / Frontend dependencies
+node_modules/
+.next/
+package-lock.json
 
 # IDE
 .vscode/
@@ -31,3 +41,18 @@ Thumbs.db
 .env
 .env.*
 !*.example
+
+# Coverage / test artifacts
+.coverage
+htmlcov/
+
+# Generated reports / temp scripts
+AstroNova_Report.html
+AstroNova_Report.md
+AstroNova_Report.pdf
+gen_part*.py
+generate_report.py
+md_to_html.py
+test.md
+test_gemini.py
+config.json

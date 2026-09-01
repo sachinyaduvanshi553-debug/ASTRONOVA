@@ -28,7 +28,7 @@ class SpaceWeatherRAGChain:
     def __init__(self) -> None:
         # Load Gemini configuration from env
         self.api_key = os.getenv("GEMINI_API_KEY", "")
-        self.model_name = os.getenv("GEMINI_MODEL", "gemini-2.0-flash")
+        self.model_name = os.getenv("GEMINI_MODEL", "gemini-3.6-flash")
 
         # Load Ollama configuration from env
         self.ollama_url = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")

@@ -1,6 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from services.gateway.routers import auth, proxy, dynamic_logging
+from services.vision.api import router as vision_router
 
 from astronova_core.logging import setup_logging
 from astronova_core.metrics import metrics_router
@@ -25,6 +26,7 @@ app.add_middleware(DynamicLoggingMiddleware, service_name="gateway")
 
 app.include_router(auth.router)
 app.include_router(proxy.router)
+app.include_router(vision_router)
 app.include_router(dynamic_logging.router)
 app.include_router(metrics_router)
 

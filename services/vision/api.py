@@ -173,6 +173,7 @@ async def explain_prediction(request: ExplainRequest):
             "gradcam_base64": _ndarray_map_to_base64(xai_maps["gradcam"]),
             "attention_map_base64": _ndarray_map_to_base64(xai_maps["attention_map"]),
             "integrated_gradients_base64": _ndarray_map_to_base64(xai_maps["integrated_gradients"]),
+            "uncertainty_map_base64": _ndarray_map_to_base64(xai_maps["integrated_gradients"]),
         }
 
     except HTTPException:
