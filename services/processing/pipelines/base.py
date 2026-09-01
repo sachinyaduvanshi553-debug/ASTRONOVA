@@ -5,7 +5,7 @@ import pandas as pd
 
 class BasePipeline(ABC):
     @abstractmethod
-    def fit(self, df: pd.DataFrame) -> 'BasePipeline':
+    def fit(self, df: pd.DataFrame) -> "BasePipeline":
         pass
 
     @abstractmethod

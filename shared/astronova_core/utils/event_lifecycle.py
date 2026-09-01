@@ -1,11 +1,12 @@
 import logging
 from datetime import datetime
-from typing import Any
+from typing import Any, ClassVar
 
 import numpy as np
 import pandas as pd
 
 logger = logging.getLogger("astronova.event_lifecycle")
+
 
 class EventLifecycleTracker:
     """
@@ -13,8 +14,6 @@ class EventLifecycleTracker:
     Implements a state machine representing the physical lifecycle of a flare event:
     Quiescent -> Precursor -> Initiation -> Growth -> Peak -> Decay -> Quiescent
     """
-
-from typing import ClassVar
 
     STATES: ClassVar[list[str]] = ["Quiescent", "Precursor", "Initiation", "Growth", "Peak", "Decay"]
 
@@ -53,14 +52,18 @@ from typing import ClassVar
         if self.state_start_time is not None:
             duration = (current_time - self.state_start_time).total_seconds() / 60.0
 
-        self.history.append({
-            "state": prev_state,
-            "start_time": self.state_start_time,
-            "end_time": current_time,
-            "duration_minutes": duration
-        })
+        self.history.append(
+            {
+                "state": prev_state,
+                "start_time": self.state_start_time,
+                "end_time": current_time,
+                "duration_minutes": duration,
+            }
+        )
 
-        logger.info(f"Lifecycle state transition: {prev_state} -> {new_state} at {current_time} (duration in previous state: {duration:.2f} min)")
+        logger.info(
+            f"Lifecycle state transition: {prev_state} -> {new_state} at {current_time} (duration in previous state: {duration:.2f} min)"
+        )
 
         self.current_state = new_state
         self.state_start_time = current_time

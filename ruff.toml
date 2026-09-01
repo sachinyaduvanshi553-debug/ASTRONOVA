@@ -1,0 +1,22 @@
+# Ruff configuration for AstroNova
+line-length = 120
+target-version = "py312"
+
+[lint]
+select = ["E", "F", "W", "I", "UP", "B", "SIM"]
+ignore = [
+    "E402",   # Module level import not at top of file (needed for sys.path manipulation in scripts)
+    "E501",   # Line too long (handled by formatter)
+    "N803",   # Argument name should be lowercase (scientific notation: X, X_train, etc.)
+    "N806",   # Variable in function should be lowercase (matrices: X, Y, W, etc.)
+    "RUF001", # Ambiguous characters in strings (scientific symbols like ×, –, ρ)
+    "RUF002", # Ambiguous characters in docstrings
+    "RUF003", # Ambiguous characters in comments
+    "B904",   # Within an except clause, raise exceptions with raise ... from
+    "B008",   # Do not perform function call in argument defaults (FastAPI Depends/Query)
+]
+
+[lint.per-file-ignores]
+"__init__.py" = ["F401"]
+"tests/*" = ["F841", "B018"]
+"scripts/*" = ["E402", "F841"]

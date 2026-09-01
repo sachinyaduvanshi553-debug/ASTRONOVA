@@ -1,22 +1,25 @@
-import pandas as pd
-import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
 import os
+
+import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+
 
 def check_features(filepath="datasets/processed/goes_processed.parquet"):
     print(f"Loading dataset: {filepath}")
     os.makedirs("reports/features", exist_ok=True)
-    
+
     try:
         import sys
+
         sys.path.append(os.path.abspath("."))
         df = pd.read_csv("data/sample/real_time_goes.csv")
         from ml.features.compute_flux import compute_flux_features
-        from ml.features.compute_temporal import compute_temporal_features
-        from ml.features.compute_statistics import compute_statistical_features
         from ml.features.compute_physics import compute_physics_features
-        
+        from ml.features.compute_statistics import compute_statistical_features
+        from ml.features.compute_temporal import compute_temporal_features
+
         df = compute_flux_features(df)
         df = compute_temporal_features(df)
         df = compute_statistical_features(df)
@@ -26,12 +29,18 @@ def check_features(filepath="datasets/processed/goes_processed.parquet"):
         return
 
     expected_features = [
-        "log_soft_flux", "log_hard_flux", "xray_ratio",
-        "soft_gradient", "hard_gradient", 
-        "soft_rolling_mean_15", "soft_rolling_std_15",
-        "magnetic_complexity", "noaa_ar_count", "time_since_prev_flare"
+        "log_soft_flux",
+        "log_hard_flux",
+        "xray_ratio",
+        "soft_gradient",
+        "hard_gradient",
+        "soft_rolling_mean_15",
+        "soft_rolling_std_15",
+        "magnetic_complexity",
+        "noaa_ar_count",
+        "time_since_prev_flare",
     ]
-    
+
     # Check if features exist
     missing_feats = [f for f in expected_features if f not in df.columns]
     if missing_feats:
@@ -46,51 +55,53 @@ def check_features(filepath="datasets/processed/goes_processed.parquet"):
         series = df[f]
         inf_count = np.isinf(series).sum()
         nan_count = series.isna().sum()
-        stats.append({
-            "Feature": f,
-            "NaN Count": nan_count,
-            "Inf Count": inf_count,
-            "Mean": series.mean(),
-            "Std": series.std(),
-            "Min": series.min(),
-            "Max": series.max()
-        })
+        stats.append(
+            {
+                "Feature": f,
+                "NaN Count": nan_count,
+                "Inf Count": inf_count,
+                "Mean": series.mean(),
+                "Std": series.std(),
+                "Min": series.min(),
+                "Max": series.max(),
+            }
+        )
     stats_df = pd.DataFrame(stats)
     print(stats_df.to_string(index=False))
 
     # Plot 1: Feature Distributions
     num_feats = len(features_to_check)
-    fig, axes = plt.subplots(int(np.ceil(num_feats/3)), 3, figsize=(15, 12))
+    fig, axes = plt.subplots(int(np.ceil(num_feats / 3)), 3, figsize=(15, 12))
     axes = axes.flatten()
     for i, f in enumerate(features_to_check):
         if df[f].std() > 1e-6:
             sns.histplot(df[f], ax=axes[i], kde=False)
         else:
-            axes[i].text(0.5, 0.5, 'Constant Value', ha='center', va='center')
+            axes[i].text(0.5, 0.5, "Constant Value", ha="center", va="center")
         axes[i].set_title(f)
-    for j in range(i+1, len(axes)):
+    for j in range(i + 1, len(axes)):
         fig.delaxes(axes[j])
     plt.tight_layout()
-    plt.savefig('reports/features/feature_distributions.png')
+    plt.savefig("reports/features/feature_distributions.png")
     plt.close()
 
     # Plot 2: Correlation Matrix
     plt.figure(figsize=(10, 8))
-    sns.heatmap(df[features_to_check].corr(), annot=True, cmap='coolwarm', fmt=".2f")
-    plt.title('Feature Correlation Matrix')
+    sns.heatmap(df[features_to_check].corr(), annot=True, cmap="coolwarm", fmt=".2f")
+    plt.title("Feature Correlation Matrix")
     plt.tight_layout()
-    plt.savefig('reports/features/correlation_matrix.png')
+    plt.savefig("reports/features/correlation_matrix.png")
     plt.close()
 
     # Plot 3: Outlier Analysis (Boxplots)
     plt.figure(figsize=(15, 6))
     sns.boxplot(data=df[features_to_check])
     plt.xticks(rotation=45)
-    plt.title('Feature Outlier Analysis')
+    plt.title("Feature Outlier Analysis")
     plt.tight_layout()
-    plt.savefig('reports/features/outlier_analysis.png')
+    plt.savefig("reports/features/outlier_analysis.png")
     plt.close()
-    
+
     # Write report
     report = f"""# Feature Engineering Verification
 
@@ -100,9 +111,9 @@ def check_features(filepath="datasets/processed/goes_processed.parquet"):
 ```
 
 ## Checks
-- Missing expected features: {missing_feats if missing_feats else 'None ✅'}
-- Features with NaNs: {stats_df[stats_df['NaN Count'] > 0]['Feature'].tolist()}
-- Features with Infs: {stats_df[stats_df['Inf Count'] > 0]['Feature'].tolist()}
+- Missing expected features: {missing_feats if missing_feats else "None ✅"}
+- Features with NaNs: {stats_df[stats_df["NaN Count"] > 0]["Feature"].tolist()}
+- Features with Infs: {stats_df[stats_df["Inf Count"] > 0]["Feature"].tolist()}
 
 ## Visualizations
 - ![Feature Distributions](feature_distributions.png)
@@ -114,6 +125,7 @@ def check_features(filepath="datasets/processed/goes_processed.parquet"):
     with open("reports/features/feature_verification.md", "w", encoding="utf-8") as f:
         f.write(report)
     print("Report written to reports/features/feature_verification.md")
+
 
 if __name__ == "__main__":
     check_features()

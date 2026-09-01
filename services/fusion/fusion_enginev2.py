@@ -1,6 +1,7 @@
-import pandas as pd
-import numpy as np
 from pathlib import Path
+
+import numpy as np
+import pandas as pd
 
 BASE = Path("data/cleaned")
 
@@ -27,7 +28,7 @@ def load_data():
 # 2. STANDARDIZE TIME
 # -----------------------------
 def get_time_col(df):
-    return [c for c in df.columns if "time" in c.lower()][0]
+    return next(c for c in df.columns if "time" in c.lower())
 
 
 def standardize(df):
@@ -76,7 +77,7 @@ def asof(base, other, window="10min"):
         other.sort_values("timestamp"),
         on="timestamp",
         direction="nearest",
-        tolerance=pd.Timedelta(window)
+        tolerance=pd.Timedelta(window),
     )
 
 

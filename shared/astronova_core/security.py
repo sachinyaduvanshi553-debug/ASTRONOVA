@@ -18,25 +18,31 @@ class UserRole(StrEnum):
     VIEWER = "viewer"
     SERVICE = "service"
 
+
 class TokenData(BaseModel):
     username: str | None = None
     role: UserRole | None = None
+
 
 settings = get_settings()
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login", auto_error=False)
 
+
 def verify_password(plain_password: str, hashed_password: str) -> bool:
     return pwd_context.verify(plain_password, hashed_password)
 
+
 def get_password_hash(password: str) -> str:
     return pwd_context.hash(password)
+
 
 def create_access_token(data: dict, expires_delta: timedelta | None = None) -> str:
     to_encode = data.copy()
     expire = datetime.utcnow() + (expires_delta or timedelta(minutes=settings.jwt.access_token_expire_minutes))
     to_encode.update({"exp": expire})
     return jwt.encode(to_encode, settings.jwt.jwt_secret_key, algorithm=settings.jwt.jwt_algorithm)
+
 
 def verify_token(token: str) -> TokenData:
     try:
@@ -49,10 +55,12 @@ def verify_token(token: str) -> TokenData:
     except JWTError:
         raise AuthenticationError("Could not validate credentials")
 
+
 def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData:
     if not token:
         raise AuthenticationError("Token missing")
     return verify_token(token)
+
 
 class RoleChecker:
     def __init__(self, allowed_roles: list[UserRole]):

@@ -7,14 +7,15 @@ Tier 3: Physics-based synthetic solar images (limb darkening, active regions,
          coronal loops, realistic Poisson noise).
 """
 
-import os
 import math
+import os
 import random
-import requests
-import numpy as np
-import cv2
-import pandas as pd
 from datetime import datetime, timedelta
+
+import cv2
+import numpy as np
+import pandas as pd
+import requests
 from tqdm import tqdm
 
 # ---------------------------------------------------------------------------
@@ -22,12 +23,12 @@ from tqdm import tqdm
 # ---------------------------------------------------------------------------
 NUM_IMAGES = 50
 IMAGE_SIZE = 512
-MIN_REAL_IMAGE_BYTES = 10_240          # 10 KB – real 512×512 JPEGs are 30-100 KB
+MIN_REAL_IMAGE_BYTES = 10_240  # 10 KB – real 512×512 JPEGs are 30-100 KB
 SDO_BROWSE_BASE = "https://sdo.gsfc.nasa.gov/assets/img/browse"
 HELIOVIEWER_API = "https://api.helioviewer.org/v2/takeScreenshot/"
 RESOLUTIONS = ["512", "1024", "4096"]
 WAVELENGTHS = ["0193", "0171", "0304"]
-REQUEST_TIMEOUT = 15                   # seconds per HTTP request
+REQUEST_TIMEOUT = 15  # seconds per HTTP request
 
 
 # ---------------------------------------------------------------------------
@@ -88,7 +89,7 @@ def try_helioviewer(dt: datetime, dest: str) -> bool:
 # ---------------------------------------------------------------------------
 def _add_limb_darkening(img: np.ndarray, cx: int, cy: int, radius: float):
     """Apply Eddington limb-darkening: I(μ) = I₀ (0.3 + 0.7 μ)."""
-    yy, xx = np.ogrid[:img.shape[0], :img.shape[1]]
+    yy, xx = np.ogrid[: img.shape[0], : img.shape[1]]
     r = np.sqrt((xx - cx) ** 2 + (yy - cy) ** 2)
     mu = np.sqrt(np.clip(1.0 - (r / radius) ** 2, 0, 1))
     darkening = 0.3 + 0.7 * mu
@@ -96,7 +97,7 @@ def _add_limb_darkening(img: np.ndarray, cx: int, cy: int, radius: float):
     img[disk_mask] = (img[disk_mask] * darkening[disk_mask, np.newaxis]).astype(np.uint8)
 
 
-def _add_active_regions(img: np.ndarray, cx: int, cy: int, radius: float, n: int = None):
+def _add_active_regions(img: np.ndarray, cx: int, cy: int, radius: float, n: int | None = None):
     """Stamp Gaussian bright blobs inside the solar disk."""
     if n is None:
         n = random.randint(3, 8)
@@ -107,15 +108,13 @@ def _add_active_regions(img: np.ndarray, cx: int, cy: int, radius: float, n: int
         ay = int(cy + dist * math.sin(angle))
         sigma = random.uniform(5, 20)
         brightness = random.randint(180, 255)
-        yy, xx = np.ogrid[:img.shape[0], :img.shape[1]]
-        gauss = np.exp(-((xx - ax) ** 2 + (yy - ay) ** 2) / (2 * sigma ** 2))
+        yy, xx = np.ogrid[: img.shape[0], : img.shape[1]]
+        gauss = np.exp(-((xx - ax) ** 2 + (yy - ay) ** 2) / (2 * sigma**2))
         for c in range(3):
-            img[:, :, c] = np.clip(
-                img[:, :, c].astype(np.float64) + brightness * gauss, 0, 255
-            ).astype(np.uint8)
+            img[:, :, c] = np.clip(img[:, :, c].astype(np.float64) + brightness * gauss, 0, 255).astype(np.uint8)
 
 
-def _add_coronal_loops(img: np.ndarray, cx: int, cy: int, radius: float, n: int = None):
+def _add_coronal_loops(img: np.ndarray, cx: int, cy: int, radius: float, n: int | None = None):
     """Draw arc-shaped bright coronal loop features on the limb."""
     if n is None:
         n = random.randint(2, 5)
@@ -129,8 +128,15 @@ def _add_coronal_loops(img: np.ndarray, cx: int, cy: int, radius: float, n: int 
         start_angle = int(angle_start)
         end_angle = int(angle_start + angle_span)
         cv2.ellipse(
-            img, (cx, cy), (arc_radius, arc_radius),
-            0, start_angle, end_angle, color, thickness, cv2.LINE_AA,
+            img,
+            (cx, cy),
+            (arc_radius, arc_radius),
+            0,
+            start_angle,
+            end_angle,
+            color,
+            thickness,
+            cv2.LINE_AA,
         )
 
 
@@ -196,7 +202,7 @@ def validate_image(path: str) -> bool:
     """Return True if file exists, is large enough, and OpenCV can decode it."""
     if not os.path.isfile(path):
         return False
-    if os.path.getsize(path) < 1024:        # absolute minimum sanity check
+    if os.path.getsize(path) < 1024:  # absolute minimum sanity check
         return False
     img = cv2.imread(path)
     return img is not None and img.shape[0] > 0
@@ -283,7 +289,7 @@ def main():
     total_real = stats["sdo_browse"] + stats["helioviewer"]
     total_synth = stats["synthetic"]
     total_fail = stats["failed"]
-    total = total_real + total_synth + total_fail
+    total_real + total_synth + total_fail
 
     print("\n" + "=" * 60)
     print("  ASTRONOVA – SDO Image Acquisition Summary")
@@ -303,7 +309,7 @@ def main():
         print(f"\n  ⚠  {total_fail} image(s) could not be acquired or generated.")
     if total_synth > 0 and total_real == 0:
         print(
-        "\n  [INFO]  All images are synthetic. This is expected if SDO servers"
+            "\n  [INFO]  All images are synthetic. This is expected if SDO servers"
             "\n     are unreachable. Synthetic images use physics-based limb"
             "\n     darkening, active regions, and coronal loops."
         )

@@ -12,27 +12,6 @@ markers = [
     "unit: marks tests as unit tests",
 ]
 
-[tool.ruff]
-line-length = 100
-target-version = "py312"
-src = ["services", "ml", "shared"]
-
-[tool.ruff.lint]
-select = ["E", "F", "I", "N", "W", "UP", "B", "C4", "SIM", "RUF"]
-ignore = [
-    "E501",   # line too long (handled by formatter)
-    "B008",   # do not perform function calls in default args
-    "N806",   # variable in function should be lowercase (conflicts with ML conventions)
-]
-
-[tool.ruff.lint.per-file-ignores]
-"tests/**" = ["S101"]  # allow assert in tests
-"ml/**" = ["N803", "N806"]  # allow uppercase variable names in ML code
-
-[tool.ruff.lint.isort]
-known-first-party = ["astronova_core"]
-combine-as-imports = true
-
 [tool.mypy]
 python_version = "3.12"
 strict = true

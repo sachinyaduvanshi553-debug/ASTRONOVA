@@ -1,5 +1,5 @@
-import sys
 import os
+import sys
 
 # Ensure the project root and shared library are on sys.path so that
 # both `services.copilot.*` and `astronova_core.*` resolve correctly,
@@ -19,9 +19,11 @@ from services.copilot.routers import copilot as copilot_router
 # Attempt structured logging from shared lib; fall back to stdlib
 try:
     from astronova_core.logging import setup_logging
+
     setup_logging("copilot-service")
 except Exception:
     import logging
+
     logging.basicConfig(level=logging.INFO)
     logging.getLogger(__name__).info("Using stdlib logging (astronova_core.logging unavailable)")
 
@@ -29,6 +31,7 @@ except Exception:
 metrics_router = None
 try:
     from astronova_core.metrics import metrics_router as _mr
+
     metrics_router = _mr
 except Exception:
     pass
@@ -60,6 +63,7 @@ def read_root():
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "main:app",
         host="0.0.0.0",

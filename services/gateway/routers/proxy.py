@@ -1,7 +1,6 @@
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
-
 from astronova_core.security import TokenData, get_current_user
+from fastapi import APIRouter, Depends, HTTPException
 
 router = APIRouter(prefix="/api/v1/proxy", tags=["proxy"])
 
@@ -13,8 +12,9 @@ SERVICE_MAP = {
     "impact": "http://localhost:8006",
     "satellite": "http://localhost:8007",
     "rag": "http://localhost:8008",
-    "copilot": "http://localhost:8009"
+    "copilot": "http://localhost:8009",
 }
+
 
 @router.get("/{service_name}/{endpoint}")
 async def proxy_request(service_name: str, endpoint: str, current_user: TokenData = Depends(get_current_user)):

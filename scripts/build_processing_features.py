@@ -3,16 +3,19 @@ import os
 
 def create_file(path, content):
     os.makedirs(os.path.dirname(path), exist_ok=True)
-    with open(path, 'w', encoding='utf-8') as f:
+    with open(path, "w", encoding="utf-8") as f:
         f.write(content)
     print(f"Created: {path}")
+
 
 # =====================================================================
 # PART 1: DATA PROCESSING SERVICE
 # =====================================================================
 
 # --- 1. requirements.txt ---
-create_file("services/processing/requirements.txt", """fastapi>=0.115.0
+create_file(
+    "services/processing/requirements.txt",
+    """fastapi>=0.115.0
 uvicorn>=0.30.0
 pydantic>=2.9.0
 sqlalchemy>=2.0.0
@@ -25,10 +28,13 @@ redis>=5.2.0
 prometheus-client>=0.21.0
 structlog>=24.0.0
 astronova-core
-""")
+""",
+)
 
 # --- 2. main.py ---
-create_file("services/processing/main.py", """from fastapi import FastAPI
+create_file(
+    "services/processing/main.py",
+    """from fastapi import FastAPI
 from astronova_core.logging import setup_logging
 from astronova_core.metrics import metrics_router
 
@@ -49,10 +55,13 @@ def read_root():
 @app.get("/api/v1/process/health")
 def health():
     return {"status": "healthy"}
-""")
+""",
+)
 
 # --- 3. Dockerfile ---
-create_file("services/processing/Dockerfile", """FROM python:3.12-slim as builder
+create_file(
+    "services/processing/Dockerfile",
+    """FROM python:3.12-slim as builder
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
@@ -65,10 +74,13 @@ ENV PATH=/root/.local/bin:$PATH
 ENV PYTHONUNBUFFERED=1
 EXPOSE 8002
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8002"]
-""")
+""",
+)
 
 # --- 4. pipelines/base.py ---
-create_file("services/processing/pipelines/base.py", """from abc import ABC, abstractmethod
+create_file(
+    "services/processing/pipelines/base.py",
+    """from abc import ABC, abstractmethod
 import pandas as pd
 
 class BasePipeline(ABC):
@@ -82,10 +94,13 @@ class BasePipeline(ABC):
 
     def fit_transform(self, df: pd.DataFrame) -> pd.DataFrame:
         return self.fit(df).transform(df)
-""")
+""",
+)
 
 # --- 5. pipelines/cleaning.py ---
-create_file("services/processing/pipelines/cleaning.py", """import pandas as pd
+create_file(
+    "services/processing/pipelines/cleaning.py",
+    """import pandas as pd
 import numpy as np
 from services.processing.pipelines.base import BasePipeline
 
@@ -109,10 +124,13 @@ class DataCleaningPipeline(BasePipeline):
             upper_bound = q3 + 1.5 * iqr
             df[col] = np.clip(df[col], lower_bound, upper_bound)
         return df
-""")
+""",
+)
 
 # --- 6. pipelines/smoothing.py ---
-create_file("services/processing/pipelines/smoothing.py", """import pandas as pd
+create_file(
+    "services/processing/pipelines/smoothing.py",
+    """import pandas as pd
 from scipy.signal import savgol_filter
 from services.processing.pipelines.base import BasePipeline
 
@@ -131,7 +149,8 @@ class SmoothingPipeline(BasePipeline):
             df["soft_xray_flux"] = savgol_filter(df["soft_xray_flux"], self.window_length, self.polyorder)
             df["hard_xray_flux"] = savgol_filter(df["hard_xray_flux"], self.window_length, self.polyorder)
         return df
-""")
+""",
+)
 
 
 # =====================================================================
@@ -139,7 +158,9 @@ class SmoothingPipeline(BasePipeline):
 # =====================================================================
 
 # --- 7. requirements.txt ---
-create_file("services/features/requirements.txt", """fastapi>=0.115.0
+create_file(
+    "services/features/requirements.txt",
+    """fastapi>=0.115.0
 uvicorn>=0.30.0
 pydantic>=2.9.0
 sqlalchemy>=2.0.0
@@ -151,10 +172,13 @@ redis>=5.2.0
 prometheus-client>=0.21.0
 structlog>=24.0.0
 astronova-core
-""")
+""",
+)
 
 # --- 8. main.py ---
-create_file("services/features/main.py", """from fastapi import FastAPI
+create_file(
+    "services/features/main.py",
+    """from fastapi import FastAPI
 from services.features.routers import features
 from astronova_core.logging import setup_logging
 from astronova_core.metrics import metrics_router
@@ -173,10 +197,13 @@ app.include_router(metrics_router)
 @app.get("/")
 def read_root():
     return {"message": "AstroNova Feature Service API v1"}
-""")
+""",
+)
 
 # --- 9. Dockerfile ---
-create_file("services/features/Dockerfile", """FROM python:3.12-slim as builder
+create_file(
+    "services/features/Dockerfile",
+    """FROM python:3.12-slim as builder
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir --user -r requirements.txt
@@ -189,10 +216,13 @@ ENV PATH=/root/.local/bin:$PATH
 ENV PYTHONUNBUFFERED=1
 EXPOSE 8003
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8003"]
-""")
+""",
+)
 
 # --- 10. engineering/time_domain.py ---
-create_file("services/features/engineering/time_domain.py", """import pandas as pd
+create_file(
+    "services/features/engineering/time_domain.py",
+    """import pandas as pd
 import numpy as np
 
 class TimeDomainFeatures:
@@ -210,10 +240,13 @@ class TimeDomainFeatures:
         df["soft_flux_gradient"] = df["soft_xray_flux"].diff().fillna(0)
         df["hard_flux_gradient"] = df["hard_xray_flux"].diff().fillna(0)
         return df
-""")
+""",
+)
 
 # --- 11. engineering/physics_features.py ---
-create_file("services/features/engineering/physics_features.py", """import pandas as pd
+create_file(
+    "services/features/engineering/physics_features.py",
+    """import pandas as pd
 from astronova_core.utils.physics import compute_xray_ratio
 
 class PhysicsFeatures:
@@ -225,10 +258,13 @@ class PhysicsFeatures:
             lambda row: compute_xray_ratio(row["soft_xray_flux"], row["hard_xray_flux"]), axis=1
         )
         return df
-""")
+""",
+)
 
 # --- 12. routers/features.py ---
-create_file("services/features/routers/features.py", """from fastapi import APIRouter, Depends
+create_file(
+    "services/features/routers/features.py",
+    """from fastapi import APIRouter, Depends
 from sqlalchemy.ext.asyncio import AsyncSession
 from astronova_core.database import get_db
 from services.features.engineering.time_domain import TimeDomainFeatures
@@ -272,6 +308,7 @@ async def compute_features(db: AsyncSession = Depends(get_db)):
 @router.get("/health")
 def health():
     return {"status": "healthy"}
-""")
+""",
+)
 
 print("PROCESSING & FEATURES SERVICES WRITTEN")

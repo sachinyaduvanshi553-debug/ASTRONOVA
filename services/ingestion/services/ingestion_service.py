@@ -3,14 +3,15 @@ import uuid
 from datetime import datetime
 
 import pandas as pd
-from services.ingestion.models import IngestionJob
-from services.ingestion.services.kafka_producer import DataProducer
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from astronova_core.logging import get_logger
 from astronova_core.models.timeseries import SolexsObservation
+from sqlalchemy.ext.asyncio import AsyncSession
+
+from services.ingestion.models import IngestionJob
+from services.ingestion.services.kafka_producer import DataProducer
 
 logger = get_logger("ingestion-service")
+
 
 class IngestionService:
     def __init__(self):
@@ -22,7 +23,7 @@ class IngestionService:
             status="processing",
             source_file=file_path,
             format=file_format,
-            started_at=datetime.utcnow()
+            started_at=datetime.utcnow(),
         )
         db.add(job)
         await db.commit()
@@ -57,7 +58,7 @@ class IngestionService:
                     energy_band_lo=1.0,
                     energy_band_hi=8.0,
                     quality_flag=int(row.get("quality_flag", 0)),
-                    source_file=os.path.basename(file_path)
+                    source_file=os.path.basename(file_path),
                 )
                 await db.merge(db_obs)
 
@@ -69,8 +70,8 @@ class IngestionService:
                         "soft_xray_flux": float(row["soft_xray_flux"]),
                         "hard_xray_flux": float(row["hard_xray_flux"]),
                         "quality_flag": int(row.get("quality_flag", 0)),
-                        "source_file": os.path.basename(file_path)
-                    }
+                        "source_file": os.path.basename(file_path),
+                    },
                 )
                 rows_stored += 1
 

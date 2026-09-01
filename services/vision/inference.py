@@ -1,17 +1,18 @@
-import torch
-import numpy as np
-import cv2
-from typing import List, Union, Dict, Any, Optional
+from typing import Any
 
-from .visualization import XAIVisualizer
+import cv2
+import numpy as np
+import torch
+
 from .model import SolarVisionPredictor
 from .uncertainty import UncertaintyEngine
+from .visualization import XAIVisualizer
 
 
 class VisionInferencePipeline:
     def __init__(
         self,
-        model_path: Optional[str] = None,
+        model_path: str | None = None,
         device: str = "cuda" if torch.cuda.is_available() else "cpu",
         target_size: int = 512,
         mc_dropout_samples: int = 20,
@@ -27,7 +28,7 @@ class VisionInferencePipeline:
                 self.model.load_state_dict(checkpoint["model_state_dict"])
             except Exception as e:
                 print(f"Failed to load checkpoint strictly: {e}. Trying backward compat load.")
-                
+
         self.model.eval()
 
         self.xai = XAIVisualizer(self.model)
@@ -50,7 +51,7 @@ class VisionInferencePipeline:
         img = np.transpose(img, (2, 0, 1))
         return img
 
-    def _prepare_image_sequence(self, image_sequence: Union[np.ndarray, List[np.ndarray], torch.Tensor]) -> torch.Tensor:
+    def _prepare_image_sequence(self, image_sequence: np.ndarray | list[np.ndarray] | torch.Tensor) -> torch.Tensor:
         if isinstance(image_sequence, torch.Tensor):
             if image_sequence.dim() == 4:
                 image_sequence = image_sequence.unsqueeze(0)
@@ -69,7 +70,7 @@ class VisionInferencePipeline:
         return tensor.to(self.device)
 
     @staticmethod
-    def _prepare_vector(data: Union[list, np.ndarray, torch.Tensor], target_len: int) -> torch.Tensor:
+    def _prepare_vector(data: list | np.ndarray | torch.Tensor, target_len: int) -> torch.Tensor:
         if isinstance(data, torch.Tensor):
             vec = data.detach().cpu().numpy().flatten()
         elif isinstance(data, np.ndarray):
@@ -86,10 +87,10 @@ class VisionInferencePipeline:
 
     def predict(
         self,
-        image_sequence: Union[np.ndarray, List[np.ndarray], torch.Tensor],
-        telemetry: Union[list, np.ndarray, torch.Tensor],
-        physics: Union[list, np.ndarray, torch.Tensor],
-    ) -> Dict[str, Any]:
+        image_sequence: np.ndarray | list[np.ndarray] | torch.Tensor,
+        telemetry: list | np.ndarray | torch.Tensor,
+        physics: list | np.ndarray | torch.Tensor,
+    ) -> dict[str, Any]:
         images_t = self._prepare_image_sequence(image_sequence)
         telemetry_t = self._prepare_vector(telemetry, target_len=10).to(self.device)
         physics_t = self._prepare_vector(physics, target_len=5).to(self.device)
@@ -99,19 +100,19 @@ class VisionInferencePipeline:
             out = self.model(images_t, telemetry_t, physics_t)
 
         pred_np = out["predicted_image"].cpu().numpy()
-        
+
         class_probs = out["class_probs"][0].cpu().numpy()
         class_idx = int(np.argmax(class_probs))
         flare_class = self.class_names[class_idx]
-        
-        flare_prob = float(class_probs[3] + class_probs[4]) # M + X class
-        
+
+        flare_prob = float(class_probs[3] + class_probs[4])  # M + X class
+
         log_flux = out["reg_output"].item()
-        flux_w_m2 = 10 ** log_flux
-        
+        flux_w_m2 = 10**log_flux
+
         latent = out["latent_embedding"][0].cpu().numpy()
 
-        class_probs_dict = {name: float(prob) for name, prob in zip(self.class_names, class_probs)}
+        class_probs_dict = {name: float(prob) for name, prob in zip(self.class_names, class_probs, strict=False)}
 
         return {
             "predicted_image": pred_np,
@@ -126,33 +127,33 @@ class VisionInferencePipeline:
 
     def predict_with_uncertainty(
         self,
-        image_sequence: Union[np.ndarray, List[np.ndarray], torch.Tensor],
-        telemetry: Union[list, np.ndarray, torch.Tensor],
-        physics: Union[list, np.ndarray, torch.Tensor],
-    ) -> Dict[str, Any]:
+        image_sequence: np.ndarray | list[np.ndarray] | torch.Tensor,
+        telemetry: list | np.ndarray | torch.Tensor,
+        physics: list | np.ndarray | torch.Tensor,
+    ) -> dict[str, Any]:
         images_t = self._prepare_image_sequence(image_sequence)
         telemetry_t = self._prepare_vector(telemetry, target_len=10).to(self.device)
         physics_t = self._prepare_vector(physics, target_len=5).to(self.device)
 
         # Get deterministic baseline
         result = self.predict(image_sequence, telemetry, physics)
-        
+
         # Add uncertainty quantification
         unc_stats = self.uncertainty_engine.compute_pixel_uncertainty(images_t, telemetry_t, physics_t)
-        
+
         result["confidence"] = unc_stats["confidence"]
         result["pixel_variance_map"] = unc_stats["pixel_variance"]
         result["class_uncertainty"] = unc_stats["class_uncertainty"]
         result["flux_uncertainty"] = unc_stats["flux_uncertainty"]
-        
+
         return result
 
     def explain(
         self,
-        image_sequence: Union[np.ndarray, List[np.ndarray], torch.Tensor],
-        telemetry: Union[list, np.ndarray, torch.Tensor],
-        physics: Union[list, np.ndarray, torch.Tensor],
-    ) -> Dict[str, np.ndarray]:
+        image_sequence: np.ndarray | list[np.ndarray] | torch.Tensor,
+        telemetry: list | np.ndarray | torch.Tensor,
+        physics: list | np.ndarray | torch.Tensor,
+    ) -> dict[str, np.ndarray]:
         images_t = self._prepare_image_sequence(image_sequence)
         telemetry_t = self._prepare_vector(telemetry, target_len=10).to(self.device)
         physics_t = self._prepare_vector(physics, target_len=5).to(self.device)

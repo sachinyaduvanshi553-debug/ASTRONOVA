@@ -6,6 +6,7 @@ import pandas as pd
 
 logger = logging.getLogger("astronova.physics_validator")
 
+
 class PhysicsValidator:
     """
     Validates space weather predictions and observations against physical constraints
@@ -48,7 +49,7 @@ class PhysicsValidator:
             return True
 
         if soft_flux <= 0 or hard_flux <= 0:
-            return True # Non-negativity is handled separately
+            return True  # Non-negativity is handled separately
 
         # Hard X-ray should not exceed soft X-ray by more than a physical margin (e.g., F_hard / F_soft <= 2.0)
         # Even in hard flares, soft X-ray flux is much larger or comparable because it represents integrated energy.
@@ -56,14 +57,14 @@ class PhysicsValidator:
         is_valid = ratio <= 2.0
 
         if not is_valid:
-            logger.warning(f"Physical validation failed: Hard X-ray flux exceeds soft X-ray flux unexpectedly (ratio = {ratio:.2f})")
+            logger.warning(
+                f"Physical validation failed: Hard X-ray flux exceeds soft X-ray flux unexpectedly (ratio = {ratio:.2f})"
+            )
 
         return is_valid
 
     def validate_temporal_continuity(
-        self,
-        flux_values: np.ndarray | list[float],
-        dt_minutes: float = 1.0
+        self, flux_values: np.ndarray | list[float], dt_minutes: float = 1.0
     ) -> tuple[bool, float]:
         """
         Ensures the rate of change of solar flux does not violate thermal limits.
@@ -86,7 +87,9 @@ class PhysicsValidator:
         is_valid = bool(max_ratio <= threshold)
 
         if not is_valid:
-            logger.warning(f"Physical validation failed: Flux growth rate exceeds thermodynamic limit ({max_ratio:.1f}x in {dt_minutes}m)")
+            logger.warning(
+                f"Physical validation failed: Flux growth rate exceeds thermodynamic limit ({max_ratio:.1f}x in {dt_minutes}m)"
+            )
 
         return is_valid, float(max_ratio)
 
@@ -99,7 +102,7 @@ class PhysicsValidator:
         soft_fluxes: list[float],
         hard_fluxes: list[float] | None = None,
         quality_score: float = 1.0,
-        dt_minutes: float = 1.0
+        dt_minutes: float = 1.0,
     ) -> dict[str, Any]:
         """
         Generates a comprehensive physics validation report.
@@ -122,19 +125,8 @@ class PhysicsValidator:
 
         return {
             "all_passed": all_passed,
-            "non_negativity": {
-                "passed": non_neg_valid,
-                "min_flux": min_flux
-            },
-            "temporal_continuity": {
-                "passed": continuity_valid,
-                "max_ratio_change": max_ratio
-            },
-            "energy_conservation": {
-                "passed": energy_valid
-            },
-            "sensor_reliability": {
-                "passed": sensor_valid,
-                "quality_score": quality_score
-            }
+            "non_negativity": {"passed": non_neg_valid, "min_flux": min_flux},
+            "temporal_continuity": {"passed": continuity_valid, "max_ratio_change": max_ratio},
+            "energy_conservation": {"passed": energy_valid},
+            "sensor_reliability": {"passed": sensor_valid, "quality_score": quality_score},
         }

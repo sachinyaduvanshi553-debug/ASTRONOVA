@@ -1,24 +1,19 @@
 import asyncio
 import json
 import time
-from typing import Any, Optional
 
-from fastapi import APIRouter, Depends, HTTPException, Query, Request
-from fastapi.responses import StreamingResponse
-from sqlalchemy import inspect, text
-
-from astronova_core.database import AsyncSessionLocal, engine, get_db
+from astronova_core.database import engine
 from astronova_core.dynamic_logging import dynamic_logger_manager
 from astronova_core.schemas.logging import (
-    DatabaseStatsResponse,
-    DatabaseTableSummary,
     DynamicQueryRequest,
     DynamicQueryResponse,
     LogEntryCreate,
-    LogEntryResponse,
     LogLevelResponse,
     LogLevelUpdate,
 )
+from fastapi import APIRouter, HTTPException, Query, Request
+from fastapi.responses import StreamingResponse
+from sqlalchemy import inspect, text
 
 router = APIRouter(prefix="/api/v1/logging", tags=["Dynamic Logging & Database"])
 
@@ -45,10 +40,10 @@ async def set_log_level(payload: LogLevelUpdate):
 
 @router.get("/logs", summary="Query dynamic logs")
 async def get_logs(
-    service_name: Optional[str] = Query(None, description="Filter by service name"),
-    level: Optional[str] = Query(None, description="Filter by log level (DEBUG, INFO, ERROR)"),
-    category: Optional[str] = Query(None, description="Filter by category (HTTP_REQUEST, DB_QUERY, SYSTEM)"),
-    search: Optional[str] = Query(None, description="Search keyword in log message or path"),
+    service_name: str | None = Query(None, description="Filter by service name"),
+    level: str | None = Query(None, description="Filter by log level (DEBUG, INFO, ERROR)"),
+    category: str | None = Query(None, description="Filter by category (HTTP_REQUEST, DB_QUERY, SYSTEM)"),
+    search: str | None = Query(None, description="Search keyword in log message or path"),
     limit: int = Query(100, ge=1, le=1000, description="Max logs to return"),
 ):
     """Fetch captured dynamic logs from memory or database for Postman inspection."""
@@ -99,22 +94,27 @@ async def get_database_schema():
     """Dynamically inspect database tables, column names, data types, and estimated row counts for Postman."""
     try:
         async with engine.connect() as conn:
+
             def _inspect_tables(sync_conn):
                 inspector = inspect(sync_conn)
                 tables_info = []
                 for table_name in inspector.get_table_names():
                     columns = []
                     for col in inspector.get_columns(table_name):
-                        columns.append({
-                            "name": col["name"],
-                            "type": str(col["type"]),
-                            "nullable": str(col.get("nullable", True)),
-                        })
-                    tables_info.append({
-                        "table_name": table_name,
-                        "column_count": len(columns),
-                        "columns": columns,
-                    })
+                        columns.append(
+                            {
+                                "name": col["name"],
+                                "type": str(col["type"]),
+                                "nullable": str(col.get("nullable", True)),
+                            }
+                        )
+                    tables_info.append(
+                        {
+                            "table_name": table_name,
+                            "column_count": len(columns),
+                            "columns": columns,
+                        }
+                    )
                 return tables_info
 
             tables = await conn.run_sync(_inspect_tables)
@@ -176,10 +176,12 @@ async def execute_dynamic_query(payload: DynamicQueryRequest):
     start_time = time.time()
     try:
         async with engine.connect() as conn:
-            limited_query = f"{clean_query} LIMIT {payload.limit}" if "LIMIT" not in clean_query.upper() else clean_query
+            limited_query = (
+                f"{clean_query} LIMIT {payload.limit}" if "LIMIT" not in clean_query.upper() else clean_query
+            )
             result = await conn.execute(text(limited_query))
             columns = list(result.keys())
-            rows_data = [dict(zip(columns, row)) for row in result.fetchall()]
+            rows_data = [dict(zip(columns, row, strict=False)) for row in result.fetchall()]
             duration = round((time.time() - start_time) * 1000, 2)
 
             # Log execution dynamically
@@ -199,7 +201,7 @@ async def execute_dynamic_query(payload: DynamicQueryRequest):
                 rows=rows_data,
                 execution_time_ms=duration,
             )
-    except Exception as e:
+    except Exception:
         duration = round((time.time() - start_time) * 1000, 2)
         # Mock/simulated response if raw DB execution fails or table is empty
         mock_rows = [
@@ -233,15 +235,17 @@ async def execute_dynamic_query(payload: DynamicQueryRequest):
 async def get_database_stats():
     """Retrieve dynamic database health, connection stats, and log buffer metrics for Postman."""
     recent_logs = dynamic_logger_manager.get_recent_logs(limit=1000)
-    error_logs = [l for l in recent_logs if l["level"] in ("ERROR", "CRITICAL")]
-    
+    error_logs = [log_entry for log_entry in recent_logs if log_entry["level"] in ("ERROR", "CRITICAL")]
+
     return {
         "status": "healthy",
         "engine": engine.name,
         "total_buffered_logs": len(recent_logs),
         "total_error_logs": len(error_logs),
         "active_log_levels": dynamic_logger_manager.get_all_levels(),
-        "database_url_masked": str(engine.url).replace(engine.url.password or "", "*****") if engine.url.password else str(engine.url),
+        "database_url_masked": str(engine.url).replace(engine.url.password or "", "*****")
+        if engine.url.password
+        else str(engine.url),
     }
 
 
@@ -250,16 +254,15 @@ async def stream_logs(request: Request):
     """Server-Sent Events (SSE) endpoint to stream dynamic logs live to Postman / HTTP clients."""
 
     async def log_generator():
-        last_index = 0
         while True:
             if await request.is_disconnected():
                 break
-            
+
             logs = dynamic_logger_manager.get_recent_logs(limit=10)
             if logs:
                 latest = logs[0]
                 yield f"data: {json.dumps(latest)}\n\n"
-            
+
             await asyncio.sleep(2.0)
 
     return StreamingResponse(log_generator(), media_type="text/event-stream")

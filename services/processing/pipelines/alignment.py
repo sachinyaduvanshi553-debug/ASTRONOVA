@@ -3,10 +3,10 @@
 Merges GOES XRS flux with NOAA event labels and other ancillary streams
 onto a common 1-minute UTC time grid using forward-fill joining.
 """
+
 from __future__ import annotations
 
 import logging
-from typing import Dict, List, Optional
 
 import numpy as np
 import pandas as pd
@@ -37,7 +37,7 @@ class AlignmentPipeline(BasePipeline):
         self.freq = freq
         self.fill_limit = fill_limit
 
-    def fit(self, df: pd.DataFrame) -> "AlignmentPipeline":
+    def fit(self, df: pd.DataFrame) -> AlignmentPipeline:
         return self
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:
@@ -63,11 +63,15 @@ class AlignmentPipeline(BasePipeline):
         df = df.sort_index()
 
         # ── Identify numeric vs categorical columns ───────────────────
-        num_cols  = df.select_dtypes(include=[np.number]).columns.tolist()
-        cat_cols  = [c for c in df.columns if c not in num_cols]
+        num_cols = df.select_dtypes(include=[np.number]).columns.tolist()
+        cat_cols = [c for c in df.columns if c not in num_cols]
 
         # ── Resample numeric columns: mean ────────────────────────────
-        df_num = df[num_cols].resample(self.freq).mean() if num_cols else pd.DataFrame(index=pd.date_range(df.index[0], df.index[-1], freq=self.freq, tz="UTC"))
+        df_num = (
+            df[num_cols].resample(self.freq).mean()
+            if num_cols
+            else pd.DataFrame(index=pd.date_range(df.index[0], df.index[-1], freq=self.freq, tz="UTC"))
+        )
 
         # ── Resample categorical / flag columns: forward-fill ─────────
         if cat_cols:
@@ -79,13 +83,18 @@ class AlignmentPipeline(BasePipeline):
         # ── Fill gaps ─────────────────────────────────────────────────
         for col in num_cols:
             if col in df_resampled.columns:
-                df_resampled[col] = df_resampled[col].interpolate(
-                    method="time", limit=self.fill_limit
-                ).ffill(limit=self.fill_limit).bfill(limit=self.fill_limit)
+                df_resampled[col] = (
+                    df_resampled[col]
+                    .interpolate(method="time", limit=self.fill_limit)
+                    .ffill(limit=self.fill_limit)
+                    .bfill(limit=self.fill_limit)
+                )
 
         logger.info(
             "AlignmentPipeline: %d → %d rows at %s cadence.",
-            len(df), len(df_resampled), self.freq,
+            len(df),
+            len(df_resampled),
+            self.freq,
         )
         return df_resampled
 
@@ -113,7 +122,7 @@ def merge_goes_and_events(
         label_binary – 1 if M or X class within window, else 0
     """
     merged = goes_df.copy()
-    merged["label_class"]  = ""
+    merged["label_class"] = ""
     merged["label_binary"] = 0
 
     if events_df is None or events_df.empty:
@@ -125,16 +134,11 @@ def merge_goes_and_events(
     for tcol in ["start_time", "peak_time", "end_time"]:
         if tcol in events_df.columns:
             col = pd.to_datetime(events_df[tcol], errors="coerce")
-            if col.dt.tz is None:
-                col = col.dt.tz_localize("UTC")
-            else:
-                col = col.dt.tz_convert("UTC")
+            col = col.dt.tz_localize("UTC") if col.dt.tz is None else col.dt.tz_convert("UTC")
             events_df[tcol] = col
 
     # Keep only M/X class flares for binary labelling
-    flare_events = events_df[
-        events_df["flare_class"].str.startswith(("M", "X"), na=False)
-    ].copy()
+    flare_events = events_df[events_df["flare_class"].str.startswith(("M", "X"), na=False)].copy()
 
     if flare_events.empty:
         logger.warning("No M/X class events in events_df — all labels will be 0.")
@@ -151,16 +155,17 @@ def merge_goes_and_events(
     # (look-BACK: a label is set at times where the flare will happen in the future)
     for _, event_row in flare_events.iterrows():
         evt_start = event_row["start_time"]
-        cls       = str(event_row.get("flare_class", ""))
+        cls = str(event_row.get("flare_class", ""))
         # All GOES timestamps in [evt_start - window, evt_start]
         mask = (goes_times >= evt_start - window) & (goes_times <= evt_start)
         merged.loc[mask, "label_binary"] = 1
-        merged.loc[mask, "label_class"]  = cls
+        merged.loc[mask, "label_class"] = cls
 
     positive = int(merged["label_binary"].sum())
     logger.info(
         "merge_goes_and_events: %d total rows, %d M/X positive labels (%.1f%%).",
-        len(merged), positive, 100 * positive / max(len(merged), 1),
+        len(merged),
+        positive,
+        100 * positive / max(len(merged), 1),
     )
     return merged
-

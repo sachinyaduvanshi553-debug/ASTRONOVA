@@ -1,14 +1,14 @@
-
 import torch
 from fastapi import APIRouter, Body
 from pydantic import BaseModel, Field
+from services.solar_vision.models.unet import UNet
 
 # Import model classes
 from services.solar_vision.models.convlstm import ConvLSTM
 from services.solar_vision.models.diffusion import DiffusionModel
-from services.solar_vision.models.unet import UNet
 
 router = APIRouter(prefix="/solar-vision", tags=["Solar Vision"])
+
 
 class VisionInput(BaseModel):
     sdo_images: list[str] = Field(..., description="List of file paths or URLs to historical SDO images")
@@ -16,12 +16,14 @@ class VisionInput(BaseModel):
     solexs: list[float] = Field(..., description="SOLEXS measurement series")
     noaa_regions: list[dict] = Field(..., description="Active‑region metadata from NOAA")
 
+
 class VisionPrediction(BaseModel):
     timestamps: list[str] = Field(..., description="Future time points for predictions")
     convlstm_shape: list[int] = Field(..., description="Output tensor shape from ConvLSTM")
     unet_shape: list[int] = Field(..., description="Output tensor shape from UNet")
     diffusion_shape: list[int] = Field(..., description="Output tensor shape from Diffusion model")
     confidence: list[float] = Field(..., description="Model confidence for each time slot")
+
 
 @router.post("/predict", response_model=VisionPrediction)
 async def predict_vision(payload: VisionInput = Body(...)):

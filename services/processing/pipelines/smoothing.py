@@ -6,6 +6,7 @@ Implements:
 - Exponential Weighted Moving Average (EWMA)
 - Adaptive mode selector based on data length
 """
+
 from __future__ import annotations
 
 import logging
@@ -13,8 +14,8 @@ from typing import Literal
 
 import numpy as np
 import pandas as pd
-from scipy.signal import savgol_filter
 from scipy.ndimage import gaussian_filter1d
+from scipy.signal import savgol_filter
 
 from services.processing.pipelines.base import BasePipeline
 
@@ -49,7 +50,7 @@ class SmoothingPipeline(BasePipeline):
         polyorder: int = 3,
         sigma: float = 2.0,
         ewma_span: int = 5,
-        flux_columns: list = None,
+        flux_columns: list | None = None,
     ) -> None:
         self.mode = mode
         self.window_length = window_length if window_length % 2 == 1 else window_length + 1
@@ -58,7 +59,7 @@ class SmoothingPipeline(BasePipeline):
         self.ewma_span = ewma_span
         self.flux_columns = flux_columns or _FLUX_COLS
 
-    def fit(self, df: pd.DataFrame) -> "SmoothingPipeline":
+    def fit(self, df: pd.DataFrame) -> SmoothingPipeline:
         return self
 
     def transform(self, df: pd.DataFrame) -> pd.DataFrame:

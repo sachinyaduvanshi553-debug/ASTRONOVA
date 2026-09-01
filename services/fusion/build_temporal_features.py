@@ -1,5 +1,6 @@
-import pandas as pd
 from pathlib import Path
+
+import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[2]
 
@@ -18,15 +19,10 @@ def load_solexs():
         "peak_flux_60",
         "background_flux",
         "snr",
-        "volatility"
+        "volatility",
     ]
 
-    df = pd.read_csv(
-        SOLEXS_PATH,
-        usecols=cols,
-        parse_dates=["date"],
-        low_memory=True
-    )
+    df = pd.read_csv(SOLEXS_PATH, usecols=cols, parse_dates=["date"], low_memory=True)
 
     df = df.rename(columns={"date": "timestamp"})
     df = df.sort_values("timestamp")

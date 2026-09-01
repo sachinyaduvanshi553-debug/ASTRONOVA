@@ -15,6 +15,7 @@ def test_nowcast_detection():
     assert res["is_flare"] is True
     assert "M" in res["goes_class"]
 
+
 def test_solar_hazard_index():
     probabilities = {"A": 0.05, "B": 0.05, "C": 0.1, "M": 0.5, "X": 0.3}
     gradient = 1.2e-5
@@ -23,6 +24,7 @@ def test_solar_hazard_index():
     assert 0.0 <= shi["score"] <= 1.0
     assert shi["category"] in ["Safe", "Moderate", "High", "Extreme"]
     assert "composite_flare_probability" in shi["components"]
+
 
 def test_inference_engine_prediction():
     engine = InferenceEngine()

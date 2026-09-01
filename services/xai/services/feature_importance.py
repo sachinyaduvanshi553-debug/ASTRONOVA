@@ -9,17 +9,16 @@ Combines importance signals from multiple sources:
 Produces a consensus ranking and cross-model comparison plots.
 """
 
-import sys
 import logging
+import sys
 from pathlib import Path
-from typing import Any, Dict, List, Optional
 
+import matplotlib
 import numpy as np
 import pandas as pd
-import matplotlib
+
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import matplotlib.ticker as mticker
 
 # ── Project root guard ────────────────────────────────────────────────────────
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
@@ -29,19 +28,28 @@ if str(PROJECT_ROOT) not in sys.path:
 logger = logging.getLogger("astronova.xai.feature_importance")
 
 FEATURE_NAMES = [
-    "log_soft_flux", "log_hard_flux", "xray_ratio",
-    "soft_gradient", "hard_gradient",
-    "soft_rolling_mean_15", "soft_rolling_std_15",
-    "soft_rolling_max_30", "soft_rolling_min_30",
-    "flux_acceleration", "time_since_prev_flare",
-    "hour_sin", "doy_sin", "noaa_ar_count", "magnetic_complexity",
+    "log_soft_flux",
+    "log_hard_flux",
+    "xray_ratio",
+    "soft_gradient",
+    "hard_gradient",
+    "soft_rolling_mean_15",
+    "soft_rolling_std_15",
+    "soft_rolling_max_30",
+    "soft_rolling_min_30",
+    "flux_acceleration",
+    "time_since_prev_flare",
+    "hour_sin",
+    "doy_sin",
+    "noaa_ar_count",
+    "magnetic_complexity",
 ]
 HORIZON_LABELS = ["15m", "30m", "1h", "6h"]
 
 MODEL_COLOURS = {
-    "XGBoost":  "#F59E0B",
+    "XGBoost": "#F59E0B",
     "LightGBM": "#10B981",
-    "BiLSTM":   "#818CF8",
+    "BiLSTM": "#818CF8",
     "Consensus": "#F43F5E",
 }
 
@@ -69,7 +77,7 @@ class FeatureImportanceAggregator:
         self.out_dir.mkdir(parents=True, exist_ok=True)
 
         # Storage: model_name → ndarray [n_features]
-        self._importances: Dict[str, np.ndarray] = {}
+        self._importances: dict[str, np.ndarray] = {}
 
     # ─────────────────────────────────────────────────────────── add data ──
     def add_shap_importance(
@@ -112,9 +120,9 @@ class FeatureImportanceAggregator:
         imp = np.asarray(importance)
         # If flat (seq_len × n_features), average over timesteps
         if imp.ndim == 1 and imp.shape[0] > len(FEATURE_NAMES):
-            n_feat  = len(FEATURE_NAMES)
+            n_feat = len(FEATURE_NAMES)
             seq_len = imp.shape[0] // n_feat
-            imp     = imp.reshape(seq_len, n_feat).mean(axis=0)
+            imp = imp.reshape(seq_len, n_feat).mean(axis=0)
         key = f"{model_name}(native)"
         self._importances[key] = imp
         logger.info("Added native importance for %s", model_name)
@@ -137,13 +145,15 @@ class FeatureImportanceAggregator:
             max_v = imp.max()
             norm_dict[key] = imp / (max_v + 1e-12)
 
-        matrix    = np.stack(list(norm_dict.values()), axis=0)   # [sources, F]
+        matrix = np.stack(list(norm_dict.values()), axis=0)  # [sources, F]
         consensus = matrix.mean(axis=0)
 
-        df = pd.DataFrame({
-            "feature":   FEATURE_NAMES,
-            "consensus": consensus,
-        })
+        df = pd.DataFrame(
+            {
+                "feature": FEATURE_NAMES,
+                "consensus": consensus,
+            }
+        )
         for key, v in norm_dict.items():
             df[key] = v
 
@@ -165,37 +175,38 @@ class FeatureImportanceAggregator:
         """
         df = self.consensus_ranking(top_n)
         source_cols = [c for c in df.columns if c not in ("feature", "consensus")]
-        n_sources   = len(source_cols)
-        n_feats     = len(df)
+        n_sources = len(source_cols)
+        n_feats = len(df)
 
         fig, ax = plt.subplots(figsize=(14, 7), facecolor="#0D1117")
         ax.set_facecolor("#0D1117")
 
-        x     = np.arange(n_feats)
+        x = np.arange(n_feats)
         width = 0.8 / max(n_sources, 1)
-        cmap  = matplotlib.colormaps.get_cmap("tab10")
+        cmap = matplotlib.colormaps.get_cmap("tab10")
 
         for si, col in enumerate(source_cols):
             vals = df[col].fillna(0).values
             offset = (si - n_sources / 2 + 0.5) * width
             ax.bar(x + offset, vals, width, label=col, color=cmap(si), alpha=0.88)
 
-        ax.bar(x, df["consensus"].values, 0, alpha=0,
-               label=None, color="none")
+        ax.bar(x, df["consensus"].values, 0, alpha=0, label=None, color="none")
 
         ax.set_xticks(x)
-        ax.set_xticklabels(df["feature"], rotation=45, ha="right",
-                           color="white", fontsize=8)
+        ax.set_xticklabels(df["feature"], rotation=45, ha="right", color="white", fontsize=8)
         ax.set_ylabel("Normalised Importance", color="white", fontsize=10)
-        ax.set_title("Cross-Model Feature Importance Comparison",
-                     color="white", fontsize=13, pad=12)
+        ax.set_title("Cross-Model Feature Importance Comparison", color="white", fontsize=13, pad=12)
         ax.tick_params(colors="white")
         for spine in ax.spines.values():
             spine.set_edgecolor("#333")
 
-        legend = ax.legend(
-            loc="upper right", facecolor="#1C2333", edgecolor="#444",
-            labelcolor="white", fontsize=8, framealpha=0.8,
+        ax.legend(
+            loc="upper right",
+            facecolor="#1C2333",
+            edgecolor="#444",
+            labelcolor="white",
+            fontsize=8,
+            framealpha=0.8,
         )
         plt.tight_layout()
         out = self.out_dir / "feature_importance_cross_model.png"
@@ -215,8 +226,12 @@ class FeatureImportanceAggregator:
         colours = plt.cm.plasma(np.linspace(0.15, 0.9, len(df)))[::-1]
         ax.barh(df["feature"][::-1], df["consensus"][::-1], color=colours)
         ax.set_xlabel("Consensus Importance Score", color="white", fontsize=10)
-        ax.set_title("Unified Feature Importance — Consensus Ranking\n(Averaged across SHAP + IG + Native)",
-                     color="white", fontsize=12, pad=10)
+        ax.set_title(
+            "Unified Feature Importance — Consensus Ranking\n(Averaged across SHAP + IG + Native)",
+            color="white",
+            fontsize=12,
+            pad=10,
+        )
         ax.tick_params(colors="white")
         for spine in ax.spines.values():
             spine.set_edgecolor("#333")
@@ -236,14 +251,13 @@ class FeatureImportanceAggregator:
         """
         df = self.consensus_ranking(top_n)
         source_cols = [c for c in df.columns if c not in ("feature", "consensus")]
-        features    = df["feature"].tolist()
-        n_feats     = len(features)
+        features = df["feature"].tolist()
+        n_feats = len(features)
 
         angles = np.linspace(0, 2 * np.pi, n_feats, endpoint=False).tolist()
-        angles += angles[:1]   # close the polygon
+        angles += angles[:1]  # close the polygon
 
-        fig, ax = plt.subplots(figsize=(9, 9), subplot_kw=dict(polar=True),
-                               facecolor="#0D1117")
+        fig, ax = plt.subplots(figsize=(9, 9), subplot_kw={"polar": True}, facecolor="#0D1117")
         ax.set_facecolor("#0D1117")
         ax.spines["polar"].set_edgecolor("#333")
         ax.set_facecolor("#0D1117")
@@ -262,13 +276,20 @@ class FeatureImportanceAggregator:
         ax.set_yticklabels([], color="white")
         ax.grid(color="#333", linewidth=0.5)
 
-        legend = ax.legend(
-            loc="upper right", bbox_to_anchor=(1.3, 1.1),
-            facecolor="#1C2333", edgecolor="#444",
-            labelcolor="white", fontsize=8,
+        ax.legend(
+            loc="upper right",
+            bbox_to_anchor=(1.3, 1.1),
+            facecolor="#1C2333",
+            edgecolor="#444",
+            labelcolor="white",
+            fontsize=8,
         )
-        ax.set_title("Feature Importance Radar\n(Normalised scores by source)",
-                     color="white", fontsize=12, pad=20)
+        ax.set_title(
+            "Feature Importance Radar\n(Normalised scores by source)",
+            color="white",
+            fontsize=12,
+            pad=20,
+        )
 
         plt.tight_layout()
         out = self.out_dir / "feature_importance_radar.png"
@@ -282,8 +303,7 @@ class FeatureImportanceAggregator:
         """Heatmap of Pearson correlation between importance sources."""
         corr = self.source_correlation()
 
-        fig, ax = plt.subplots(figsize=(max(6, len(corr)), max(5, len(corr))),
-                               facecolor="#0D1117")
+        fig, ax = plt.subplots(figsize=(max(6, len(corr)), max(5, len(corr))), facecolor="#0D1117")
         ax.set_facecolor("#0D1117")
 
         im = ax.imshow(corr.values, cmap="coolwarm", vmin=-1, vmax=1, aspect="auto")
@@ -295,14 +315,20 @@ class FeatureImportanceAggregator:
 
         for i in range(len(labels)):
             for j in range(len(labels)):
-                ax.text(j, i, f"{corr.values[i, j]:.2f}",
-                        ha="center", va="center", color="white", fontsize=7)
+                ax.text(
+                    j,
+                    i,
+                    f"{corr.values[i, j]:.2f}",
+                    ha="center",
+                    va="center",
+                    color="white",
+                    fontsize=7,
+                )
 
         cbar = fig.colorbar(im, ax=ax, fraction=0.03)
         cbar.ax.yaxis.set_tick_params(color="white")
         plt.setp(cbar.ax.yaxis.get_ticklabels(), color="white")
-        ax.set_title("Feature Importance Source Correlation",
-                     color="white", fontsize=12, pad=10)
+        ax.set_title("Feature Importance Source Correlation", color="white", fontsize=12, pad=10)
 
         plt.tight_layout()
         out = self.out_dir / "feature_importance_correlation.png"

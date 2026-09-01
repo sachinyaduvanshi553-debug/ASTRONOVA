@@ -1,7 +1,9 @@
-from fastapi import APIRouter
-from services.xai.services.shap_explainer import SHAPExplainer
-from ml.models.xgboost_model import XGBoostForecaster
 import os
+
+from fastapi import APIRouter
+
+from ml.models.xgboost_model import XGBoostForecaster
+from services.xai.services.shap_explainer import SHAPExplainer
 
 router = APIRouter(prefix="/api/v1/xai", tags=["xai"])
 
@@ -12,11 +14,13 @@ if os.path.exists(model_path):
 else:
     explainer = None
 
+
 @router.get("/explain")
 async def get_explanation():
     if explainer is None:
         return {"error": "Model not found, cannot explain."}
     return explainer.explain_prediction()
+
 
 @router.get("/health")
 def health():

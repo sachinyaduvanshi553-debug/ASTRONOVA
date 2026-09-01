@@ -18,28 +18,27 @@ Usage (API):
     gen.run()
 """
 
-import os
-import sys
 import logging
+import sys
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
+import matplotlib
 import numpy as np
 import torch
-import matplotlib
+
 matplotlib.use("Agg")
-import matplotlib.pyplot as plt
 
 # ── Project root guard ────────────────────────────────────────────────────────
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
 if str(PROJECT_ROOT) not in sys.path:
     sys.path.insert(0, str(PROJECT_ROOT))
 
-from services.xai.services.shap_explainer import SHAPExplainer
-from services.xai.services.integrated_gradients import IntegratedGradientsExplainer
 from services.xai.services.feature_importance import FeatureImportanceAggregator
+from services.xai.services.integrated_gradients import IntegratedGradientsExplainer
+from services.xai.services.shap_explainer import SHAPExplainer
 
 logging.basicConfig(
     level=logging.INFO,
@@ -48,14 +47,23 @@ logging.basicConfig(
 logger = logging.getLogger("astronova.xai.report_generator")
 
 HORIZON_LABELS = ["15m", "30m", "1h", "6h"]
-CLASS_NAMES    = ["A/B", "C", "M", "X"]
-FEATURE_NAMES  = [
-    "log_soft_flux", "log_hard_flux", "xray_ratio",
-    "soft_gradient", "hard_gradient",
-    "soft_rolling_mean_15", "soft_rolling_std_15",
-    "soft_rolling_max_30", "soft_rolling_min_30",
-    "flux_acceleration", "time_since_prev_flare",
-    "hour_sin", "doy_sin", "noaa_ar_count", "magnetic_complexity",
+CLASS_NAMES = ["A/B", "C", "M", "X"]
+FEATURE_NAMES = [
+    "log_soft_flux",
+    "log_hard_flux",
+    "xray_ratio",
+    "soft_gradient",
+    "hard_gradient",
+    "soft_rolling_mean_15",
+    "soft_rolling_std_15",
+    "soft_rolling_max_30",
+    "soft_rolling_min_30",
+    "flux_acceleration",
+    "time_since_prev_flare",
+    "hour_sin",
+    "doy_sin",
+    "noaa_ar_count",
+    "magnetic_complexity",
 ]
 
 OUT_DIR = Path("reports/xai")
@@ -78,20 +86,20 @@ class XAIReportGenerator:
 
     def __init__(
         self,
-        data_path: str   = "data/sample/real_time_goes.csv",
-        model_dir: str   = "models",
-        out_dir: str     = "reports/xai",
+        data_path: str = "data/sample/real_time_goes.csv",
+        model_dir: str = "models",
+        out_dir: str = "reports/xai",
         max_samples: int = 300,
-        device: str      = "cpu",
+        device: str = "cpu",
     ):
-        self.data_path   = data_path
-        self.model_dir   = Path(model_dir)
-        self.out_dir     = Path(out_dir)
+        self.data_path = data_path
+        self.model_dir = Path(model_dir)
+        self.out_dir = Path(out_dir)
         self.max_samples = max_samples
-        self.device      = device
+        self.device = device
         self.out_dir.mkdir(parents=True, exist_ok=True)
 
-        self._results: Dict[str, Any] = {}
+        self._results: dict[str, Any] = {}
 
     # ─────────────────────────────────────────────────────────── public API ──
     def run(self):
@@ -102,8 +110,8 @@ class XAIReportGenerator:
         logger.info("=" * 70)
 
         # 1. Load data & models
-        X, y_class, xgb_model, lgb_model, lstm_model, feature_names = self._load_assets()
-        X_np   = X.numpy()    # [N, seq_len, F]
+        X, _y_class, xgb_model, lgb_model, lstm_model, _feature_names = self._load_assets()
+        X_np = X.numpy()  # [N, seq_len, F]
         X_flat = X_np.reshape(X_np.shape[0], -1)
 
         agg = FeatureImportanceAggregator(out_dir=str(self.out_dir))
@@ -134,16 +142,17 @@ class XAIReportGenerator:
     def _load_assets(self):
         """Load the dataset and pre-trained models."""
         from ml.data.dataset import RealGoesDataset
+        from ml.models.lightgbm_model import LightGBMForecaster
+
         from ml.models.bilstm import BiLSTMForecaster
         from ml.models.xgboost_model import XGBoostForecaster
-        from ml.models.lightgbm_model import LightGBMForecaster
 
         logger.info("Loading dataset …")
         ds = RealGoesDataset(self.data_path)
-        N  = len(ds)
+        N = len(ds)
         # Use a random test split (last 20 %)
         split = int(0.8 * N)
-        X       = ds.X[split:]
+        X = ds.X[split:]
         y_class = ds.y_class[split:]
         feature_names = ds.feature_cols
 
@@ -157,8 +166,12 @@ class XAIReportGenerator:
 
         logger.info("Loading BiLSTM …")
         lstm_model = BiLSTMForecaster(
-            input_size=15, hidden_size=64, num_layers=2,
-            num_classes=4, num_horizons=4, dropout=0.3,
+            input_size=15,
+            hidden_size=64,
+            num_layers=2,
+            num_classes=4,
+            num_horizons=4,
+            dropout=0.3,
         )
         ckpt_path = self.model_dir / "bilstm/best_model.pt"
         if ckpt_path.exists():
@@ -178,7 +191,7 @@ class XAIReportGenerator:
         X_flat: np.ndarray,
         model_name: str,
         agg: FeatureImportanceAggregator,
-    ) -> List[Path]:
+    ) -> list[Path]:
         logger.info("─── SHAP: %s ───", model_name)
         explainer = SHAPExplainer(
             model=model,
@@ -190,17 +203,15 @@ class XAIReportGenerator:
         plots = []
         for hi in range(4):
             try:
-                shap_arr = explainer.compute_shap_values(X_flat, hi, self.max_samples)
+                explainer.compute_shap_values(X_flat, hi, self.max_samples)
 
                 # Global importance → aggregator
                 df_imp = explainer.global_feature_importance(hi, top_n=len(FEATURE_NAMES))
-                # Flatten timestep dimension: average over first t_ groups
-                flat_imp = df_imp["importance"].values
                 # Map back to base features
                 base_imp = np.zeros(len(FEATURE_NAMES))
                 for _, row in df_imp.iterrows():
                     fname = row["feature"]
-                    base  = fname.split("_", 1)[1] if "_" in fname else fname
+                    base = fname.split("_", 1)[1] if "_" in fname else fname
                     if base in FEATURE_NAMES:
                         idx = FEATURE_NAMES.index(base)
                         base_imp[idx] = max(base_imp[idx], row["importance"])
@@ -230,7 +241,7 @@ class XAIReportGenerator:
         lstm_model,
         X: torch.Tensor,
         agg: FeatureImportanceAggregator,
-    ) -> List[Path]:
+    ) -> list[Path]:
         logger.info("─── Integrated Gradients: BiLSTM ───")
         ig = IntegratedGradientsExplainer(
             model=lstm_model,
@@ -242,8 +253,7 @@ class XAIReportGenerator:
         plots = []
         for hi in range(4):
             try:
-                attrs = ig.compute_attributions(X, hi, class_idx=3,
-                                                max_samples=min(100, self.max_samples))
+                ig.compute_attributions(X, hi, class_idx=3, max_samples=min(100, self.max_samples))
                 imp = ig.feature_importance_from_ig(hi, 3)
                 agg.add_ig_importance(imp, hi, 3)
                 plots.append(ig.plot_feature_importance(hi, 3))
@@ -258,7 +268,7 @@ class XAIReportGenerator:
 
         return plots
 
-    def _run_consensus(self, agg: FeatureImportanceAggregator) -> List[Path]:
+    def _run_consensus(self, agg: FeatureImportanceAggregator) -> list[Path]:
         logger.info("─── Consensus Aggregation ───")
         plots = []
         try:
@@ -284,30 +294,23 @@ class XAIReportGenerator:
     def _write_report(
         self,
         agg: FeatureImportanceAggregator,
-        plots: List[Path],
+        plots: list[Path],
         elapsed: float,
     ) -> Path:
-        ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M UTC")
+        ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M UTC")
 
         # Build consensus table
         try:
             consensus_df = agg.consensus_ranking(top_n=15)
             table_rows = "\n".join(
-                f"| {i+1} | `{row.feature}` | {row.consensus:.4f} |"
-                for i, row in consensus_df.iterrows()
+                f"| {i + 1} | `{row.feature}` | {row.consensus:.4f} |" for i, row in consensus_df.iterrows()
             )
-            consensus_table = (
-                "| Rank | Feature | Consensus Score |\n"
-                "|------|---------|----------------|\n"
-                + table_rows
-            )
+            consensus_table = "| Rank | Feature | Consensus Score |\n|------|---------|----------------|\n" + table_rows
         except Exception:
             consensus_table = "_No consensus data available._"
 
         # List all generated plots
-        plot_list = "\n".join(
-            f"- `{p.name}`" for p in plots if p is not None and Path(p).exists()
-        )
+        plot_list = "\n".join(f"- `{p.name}`" for p in plots if p is not None and Path(p).exists())
 
         report_md = f"""# ASTRONOVA XAI Report
 *Generated: {ts}*
