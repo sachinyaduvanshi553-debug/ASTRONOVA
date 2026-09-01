@@ -565,6 +565,36 @@ make train MODEL=lstm_forecaster
 open http://localhost:5000
 ```
 
+### Run AstroNova ML from Terminal
+
+You can execute the entire Python ML and forecasting system directly from the Windows terminal without launching the frontend, backend, or UI.
+
+```cmd
+cd /d C:\Users\sachi\OneDrive\Documents\ASTRONOVA
+
+venv\Scripts\activate.bat
+
+set OPENBLAS_NUM_THREADS=1
+set OMP_NUM_THREADS=1
+set MKL_NUM_THREADS=1
+set NUMEXPR_NUM_THREADS=1
+
+python scripts\run_ml.py
+```
+
+Other available commands:
+
+```cmd
+python scripts\run_ml.py --model xgboost
+python scripts\run_ml.py --model lightgbm
+python scripts\run_ml.py --model lstm
+python scripts\run_ml.py --model ensemble
+python scripts\run_ml.py --demo
+python scripts\run_ml.py --help
+```
+
+*Note: These commands run the standalone ML pipeline natively on CPU without requiring any web services.*
+
 ### Evaluation Metrics
 
 | Metric | Description | Target |

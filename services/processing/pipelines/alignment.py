@@ -162,6 +162,11 @@ def merge_goes_and_events(
         merged.loc[mask, "label_class"] = cls
 
     positive = int(merged["label_binary"].sum())
+    
+    if positive == 0 and not flare_events.empty:
+        logger.error("merge_goes_and_events: positive labels == 0 despite M/X events existing. Label alignment failed.")
+        raise ValueError("0 positive labels generated despite M/X events existing. Label alignment failed.")
+        
     logger.info(
         "merge_goes_and_events: %d total rows, %d M/X positive labels (%.1f%%).",
         len(merged),

@@ -199,21 +199,34 @@ def parse_noaa_events(filepath: str) -> pd.DataFrame:
         r"(\S+)\s+(\d)\s+(\S+)\s+(\S+)\s+(\S+)\s+(\S+)"
     )
     date_str: str | None = None
+    
+    # Try parsing date from filename first
+    filename = Path(filepath).name
+    m_filename_date = re.search(r"(\d{4})(\d{2})(\d{2})", filename)
+    if m_filename_date:
+        y, m, d = m_filename_date.groups()
+        date_str = f"{y}-{m}-{d}"
+        
     with open(filepath, encoding="utf-8", errors="replace") as fh:
         for line in fh:
-            # Extract date from header
-            m_date = re.search(r"(\d{4})\s+(\w{3})\s+(\d{2})", line)
-            if m_date and ":Created:" in line:
-                date_str = m_date.group(0).replace(" ", " ")
+            # Extract date from header only if not found in filename
+            if date_str is None:
+                m_date = re.search(r"(\d{4})\s+(\w{3})\s+(\d{2})", line)
+                if m_date and ":Created:" in line:
+                    date_str = m_date.group(0).replace(" ", " ")
+                    
             m = flare_pat.match(line.strip())
             if m and m.group(7) == "FLA":  # Only flare events
                 event_id, begin, peak, end, _obs, _qual, _typ, loc, cls, reg = m.groups()
-                # Build timestamps — use the date from the file header
-                base_date = (
-                    pd.Timestamp.now().normalize()
-                    if date_str is None
-                    else pd.to_datetime(date_str, format="%Y %b %d", errors="coerce")
-                )
+                # Build timestamps — use the date from the file header or filename
+                if date_str is not None and "-" in date_str:
+                    base_date = pd.to_datetime(date_str, format="%Y-%m-%d", errors="coerce")
+                else:
+                    base_date = (
+                        pd.Timestamp.now().normalize()
+                        if date_str is None
+                        else pd.to_datetime(date_str, format="%Y %b %d", errors="coerce")
+                    )
 
                 def _t(hhmm: str, bd=base_date) -> pd.Timestamp:
                     h, mi = int(hhmm[:2]), int(hhmm[2:])
