@@ -1,0 +1,7 @@
+{
+    "model": "lightgbm",
+    "predicted_probability": 0.9661,
+    "predicted_class": "M/X FLARE",
+    "confidence_pct": 96.61,
+    "risk_level": "HIGH"
+}

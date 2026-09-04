@@ -1,0 +1,7 @@
+{
+    "model": "xgboost",
+    "predicted_probability": 0.9368,
+    "predicted_class": "M/X FLARE",
+    "confidence_pct": 93.68,
+    "risk_level": "HIGH"
+}
