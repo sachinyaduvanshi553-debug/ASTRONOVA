@@ -3,8 +3,11 @@
 # Launches: Gateway (8000), Forecasting (8004), Copilot (8009), Frontend (3000)
 # ============================================================
 
-$BaseDir = "c:\Users\sachi\OneDrive\Documents\ASTRONOVA"
+$BaseDir = if ($PSScriptRoot) { $PSScriptRoot } else { Get-Location }
 $VenvPython = "$BaseDir\venv\Scripts\python.exe"
+if (!(Test-Path $VenvPython)) {
+    $VenvPython = "python"
+}
 
 Write-Host ""
 Write-Host "=========================================" -ForegroundColor Cyan

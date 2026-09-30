@@ -5,25 +5,23 @@ $services = [ordered]@{
     "features" = 8003
     "forecasting" = 8004
     "xai" = 8005
-    "earth-impact" = 8006
-    "satellite-risk" = 8007
+    "earth_impact" = 8006
+    "satellite_risk" = 8007
     "rag" = 8008
     "copilot" = 8009
     "notifications" = 8010
 }
 
-$basePath = "c:\Users\sachi\OneDrive\Documents\ASTRONOVA"
-$env:PYTHONPATH = "$basePath;$basePath\shared"
+$basePath = if ($PSScriptRoot) { $PSScriptRoot } else { (Get-Location).Path }
+$venvPython = "$basePath\venv\Scripts\python.exe"
+if (!(Test-Path $venvPython)) { $venvPython = "python" }
 
 foreach ($svc in $services.GetEnumerator()) {
     $name = $svc.Name
     $port = $svc.Value
     Write-Host "Starting $name on port $port..."
     
-    # Command to run in the new window
-    $cmd = "cd '$basePath\services\$name'; if (Test-Path 'app\main.py') { uvicorn app.main:app --host 0.0.0.0 --port $port --reload } else { uvicorn main:app --host 0.0.0.0 --port $port --reload }"
-    
-    # Start a new PowerShell window minimized
+    $cmd = "`$env:PYTHONPATH='$basePath;$basePath\shared'; cd '$basePath'; & '$venvPython' -m uvicorn services.$name.main:app --host 0.0.0.0 --port $port --reload"
     Start-Process powershell -ArgumentList "-NoExit","-Command", $cmd -WindowStyle Minimized
 }
 

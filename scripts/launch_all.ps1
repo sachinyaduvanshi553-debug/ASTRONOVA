@@ -1,6 +1,9 @@
 param()
-$env:PYTHONPATH = "C:\Users\sachi\OneDrive\Documents\ASTRONOVA"
-Set-Location "C:\Users\sachi\OneDrive\Documents\ASTRONOVA"
+$baseDir = if ($PSScriptRoot) { Split-Path -Parent $PSScriptRoot } else { (Get-Location).Path }
+$env:PYTHONPATH = "$baseDir;$baseDir\shared"
+Set-Location "$baseDir"
+$venvPython = "$baseDir\venv\Scripts\python.exe"
+if (!(Test-Path $venvPython)) { $venvPython = "python" }
 
 $services = @(
     [PSCustomObject]@{ Name="Gateway";       Module="services.gateway.main:app";        Port=8000 },
@@ -29,9 +32,9 @@ foreach ($svc in $services) {
     Write-Host ">> Starting $($svc.Name) on port $($svc.Port)..." -ForegroundColor Yellow
     $mod = $svc.Module
     $port = $svc.Port
-    Start-Process -FilePath "cmd.exe" `
-        -ArgumentList "/c", "set PYTHONPATH=C:\Users\sachi\OneDrive\Documents\ASTRONOVA && cd /d C:\Users\sachi\OneDrive\Documents\ASTRONOVA && uvicorn $mod --port $port --host 0.0.0.0 > logs\${port}.log 2>&1" `
-        -WindowStyle Hidden
+    Start-Process -FilePath "powershell.exe" `
+        -ArgumentList "-NoExit", "-Command", "`$env:PYTHONPATH='$baseDir;$baseDir\shared'; cd '$baseDir'; & '$venvPython' -m uvicorn $mod --port $port --host 0.0.0.0" `
+        -WindowStyle Minimized
 }
 
 Write-Host ""
