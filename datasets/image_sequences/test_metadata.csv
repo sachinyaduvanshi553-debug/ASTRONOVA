@@ -1,0 +1,4 @@
+anchor_timestamp,n_images,active_region_id,h15m_C_plus,h15m_M_plus,h15m_X_plus,h15m_max_class,h30m_C_plus,h30m_M_plus,h30m_X_plus,h30m_max_class,h60m_C_plus,h60m_M_plus,h60m_X_plus,h60m_max_class,h360m_C_plus,h360m_M_plus,h360m_X_plus,h360m_max_class,h720m_C_plus,h720m_M_plus,h720m_X_plus,h720m_max_class,h1440m_C_plus,h1440m_M_plus,h1440m_X_plus,h1440m_max_class
+2024-10-02T17:00:00+00:00,25,13780,False,False,False,quiet,False,False,False,quiet,False,False,False,quiet,False,False,False,quiet,False,False,False,quiet,False,False,False,quiet
+2024-10-02T18:00:00+00:00,25,13780,False,False,False,quiet,False,False,False,quiet,False,False,False,quiet,False,False,False,quiet,False,False,False,quiet,False,False,False,quiet
+2024-10-02T19:00:00+00:00,25,13780,False,False,False,quiet,False,False,False,quiet,False,False,False,quiet,False,False,False,quiet,False,False,False,quiet,False,False,False,quiet

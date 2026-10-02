@@ -669,6 +669,13 @@ export default function Dashboard() {
               {label}
             </button>
           ))}
+          <a
+            href="/image-forecast"
+            className="w-full flex items-center gap-3 px-4 py-3 mt-2 rounded-lg text-sm font-medium transition-all duration-200 text-cyan-500 hover:bg-cyan-950/20 border-l-4 border-transparent hover:border-cyan-500 shadow-[0_0_10px_rgba(6,182,212,0.1)] hover:shadow-[0_0_15px_rgba(6,182,212,0.3)] glow-white-border"
+          >
+            <Zap className="w-5 h-5 animate-pulse" />
+            AI Forecast Panel
+          </a>
           <div className="mt-auto border-t border-neutral-900/20 pt-4">
             <div className="p-3 bg-neutral-950/20 border border-neutral-500/15 rounded-lg flex items-start gap-2 text-xs glow-white-border">
               <AlertTriangle className="w-5 h-5 text-neutral-500 shrink-0" />

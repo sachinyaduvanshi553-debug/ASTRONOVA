@@ -1,0 +1,222 @@
+{
+  "is_synthetic_data": true,
+  "WARNING": "SMOKE TEST \u2014 these metrics are computed on SYNTHETIC data and are NOT scientifically valid. Do NOT cite in publications.",
+  "classification": {
+    "h15m": {
+      "C_plus": {
+        "roc_auc": NaN,
+        "pr_auc": NaN,
+        "brier": 0.2081431746482849,
+        "tss": 0.0,
+        "hss": 0.0,
+        "ece": 0.45622706413269043,
+        "n_positive": 0,
+        "n_total": 3,
+        "prevalence": 0.0
+      },
+      "M_plus": {
+        "roc_auc": NaN,
+        "pr_auc": NaN,
+        "brier": 0.15007728338241577,
+        "tss": 0.0,
+        "hss": 0.0,
+        "ece": 0.3873981237411499,
+        "n_positive": 0,
+        "n_total": 3,
+        "prevalence": 0.0
+      },
+      "X_plus": {
+        "roc_auc": NaN,
+        "pr_auc": NaN,
+        "brier": 0.2757141888141632,
+        "tss": -1.0,
+        "hss": 0.0,
+        "ece": 0.525084912776947,
+        "n_positive": 0,
+        "n_total": 3,
+        "prevalence": 0.0
+      }
+    },
+    "h30m": {
+      "C_plus": {
+        "roc_auc": NaN,
+        "pr_auc": NaN,
+        "brier": 0.24573348462581635,
+        "tss": 0.0,
+        "hss": 0.0,
+        "ece": 0.4957151412963867,
+        "n_positive": 0,
+        "n_total": 3,
+        "prevalence": 0.0
+      },
+      "M_plus": {
+        "roc_auc": NaN,
+        "pr_auc": NaN,
+        "brier": 0.293461412191391,
+        "tss": -1.0,
+        "hss": 0.0,
+        "ece": 0.5417208075523376,
+        "n_positive": 0,
+        "n_total": 3,
+        "prevalence": 0.0
+      },
+      "X_plus": {
+        "roc_auc": NaN,
+        "pr_auc": NaN,
+        "brier": 0.26750367879867554,
+        "tss": -1.0,
+        "hss": 0.0,
+        "ece": 0.5172075629234314,
+        "n_positive": 0,
+        "n_total": 3,
+        "prevalence": 0.0
+      }
+    },
+    "h60m": {
+      "C_plus": {
+        "roc_auc": NaN,
+        "pr_auc": NaN,
+        "brier": 0.21356584131717682,
+        "tss": 0.0,
+        "hss": 0.0,
+        "ece": 0.4621318280696869,
+        "n_positive": 0,
+        "n_total": 3,
+        "prevalence": 0.0
+      },
+      "M_plus": {
+        "roc_auc": NaN,
+        "pr_auc": NaN,
+        "brier": 0.3069664239883423,
+        "tss": -1.0,
+        "hss": 0.0,
+        "ece": 0.5540454983711243,
+        "n_positive": 0,
+        "n_total": 3,
+        "prevalence": 0.0
+      },
+      "X_plus": {
+        "roc_auc": NaN,
+        "pr_auc": NaN,
+        "brier": 0.17431952059268951,
+        "tss": 0.0,
+        "hss": 0.0,
+        "ece": 0.41751590371131897,
+        "n_positive": 0,
+        "n_total": 3,
+        "prevalence": 0.0
+      }
+    },
+    "h360m": {
+      "C_plus": {
+        "roc_auc": NaN,
+        "pr_auc": NaN,
+        "brier": 0.24614107608795166,
+        "tss": 0.0,
+        "hss": 0.0,
+        "ece": 0.4961260259151459,
+        "n_positive": 0,
+        "n_total": 3,
+        "prevalence": 0.0
+      },
+      "M_plus": {
+        "roc_auc": NaN,
+        "pr_auc": NaN,
+        "brier": 0.22280651330947876,
+        "tss": 0.0,
+        "hss": 0.0,
+        "ece": 0.4720238149166107,
+        "n_positive": 0,
+        "n_total": 3,
+        "prevalence": 0.0
+      },
+      "X_plus": {
+        "roc_auc": NaN,
+        "pr_auc": NaN,
+        "brier": 0.13977307081222534,
+        "tss": 0.0,
+        "hss": 0.0,
+        "ece": 0.3738623559474945,
+        "n_positive": 0,
+        "n_total": 3,
+        "prevalence": 0.0
+      }
+    },
+    "h720m": {
+      "C_plus": {
+        "roc_auc": NaN,
+        "pr_auc": NaN,
+        "brier": 0.34259286522865295,
+        "tss": -1.0,
+        "hss": 0.0,
+        "ece": 0.5853143334388733,
+        "n_positive": 0,
+        "n_total": 3,
+        "prevalence": 0.0
+      },
+      "M_plus": {
+        "roc_auc": NaN,
+        "pr_auc": NaN,
+        "brier": 0.21193046867847443,
+        "tss": 0.0,
+        "hss": 0.0,
+        "ece": 0.4603590667247772,
+        "n_positive": 0,
+        "n_total": 3,
+        "prevalence": 0.0
+      },
+      "X_plus": {
+        "roc_auc": NaN,
+        "pr_auc": NaN,
+        "brier": 0.12872356176376343,
+        "tss": 0.0,
+        "hss": 0.0,
+        "ece": 0.3587806224822998,
+        "n_positive": 0,
+        "n_total": 3,
+        "prevalence": 0.0
+      }
+    },
+    "h1440m": {
+      "C_plus": {
+        "roc_auc": NaN,
+        "pr_auc": NaN,
+        "brier": 0.22188805043697357,
+        "tss": 0.0,
+        "hss": 0.0,
+        "ece": 0.4710499048233032,
+        "n_positive": 0,
+        "n_total": 3,
+        "prevalence": 0.0
+      },
+      "M_plus": {
+        "roc_auc": NaN,
+        "pr_auc": NaN,
+        "brier": 0.341557115316391,
+        "tss": -1.0,
+        "hss": 0.0,
+        "ece": 0.5844288468360901,
+        "n_positive": 0,
+        "n_total": 3,
+        "prevalence": 0.0
+      },
+      "X_plus": {
+        "roc_auc": NaN,
+        "pr_auc": NaN,
+        "brier": 0.14214563369750977,
+        "tss": 0.0,
+        "hss": 0.0,
+        "ece": 0.37702202796936035,
+        "n_positive": 0,
+        "n_total": 3,
+        "prevalence": 0.0
+      }
+    }
+  },
+  "image_quality": {
+    "mae": 0.3421996533870697,
+    "rmse": 0.39082053303718567,
+    "ssim": 0.025130530819296837,
+    "psnr": 8.160451889038086
+  }
+}

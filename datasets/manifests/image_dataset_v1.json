@@ -1,0 +1,28 @@
+{
+  "version": "1.0",
+  "created": "2026-09-30T10:45:00.960591Z",
+  "n_samples_total": 20,
+  "n_train": 14,
+  "n_val": 3,
+  "n_test": 3,
+  "image_dimensions": "256x256",
+  "channels": 3,
+  "date_range_start": "2024-10-02T00:00:00+00:00",
+  "date_range_end": "2024-10-02T19:00:00+00:00",
+  "split_strategy": "chronological",
+  "train_fraction": 0.7,
+  "val_fraction": 0.15,
+  "test_fraction": 0.15,
+  "class_distribution": {
+    "train_M_plus_h60m": 2,
+    "val_M_plus_h60m": 1,
+    "test_M_plus_h60m": 0
+  },
+  "leakage_prevention": {
+    "chronological_split": true,
+    "event_gap_enforced": true,
+    "normalization_from_train_only": true,
+    "no_future_features_in_input": true
+  },
+  "data_sufficiency_notes": "SMOKE TEST ONLY \u2014 synthetic/limited data"
+}

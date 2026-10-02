@@ -1,0 +1,87 @@
+# AstroNova Image Forecasting Training Configuration
+
+model:
+  name: cnn_transformer   # Options: cnn_lstm, cnn_transformer, multimodal_transformer
+  image_size: 256
+  channels: 3
+  spatial_dim: 256        # CNN encoder output dimension
+  temporal_dim: 256       # Temporal model hidden dimension
+  physics_dim: 128        # Physics/telemetry encoder dimension
+  n_heads: 4              # Transformer attention heads
+  n_transformer_layers: 2
+  dropout: 0.1
+  pretrained_encoder: false  # true = use ImageNet weights; document scientific justification
+
+  # Flare classification heads
+  forecast_horizons: [15, 30, 60, 360, 720, 1440]  # minutes
+  flare_classes: [C_plus, M_plus, X_plus]           # P(C+), P(M+), P(X+)
+
+  # Uncertainty
+  mc_dropout_passes: 20   # N forward passes for MC-Dropout uncertainty
+
+# Loss function configuration
+loss:
+  lambda_cls: 1.0       # Weight for classification loss
+  lambda_location: 0.5  # Weight for spatial heatmap loss
+  lambda_image: 0.5     # Weight for future image prediction loss
+
+  # Classification: Focal loss recommended for imbalanced flare data
+  cls_loss: focal        # Options: bce, focal
+  focal_gamma: 2.0
+  focal_alpha: 0.25
+
+  # Location: Binary cross-entropy + Dice
+  location_loss: bce_dice   # Options: bce, dice, bce_dice
+
+  # Image: L1 + SSIM
+  image_loss: l1_ssim    # Options: l1, ssim, l1_ssim
+  ssim_weight: 0.5       # Weight within l1_ssim combo
+
+# Training
+training:
+  epochs: 50
+  batch_size: 8
+  learning_rate: 1.0e-4
+  lr_scheduler: cosine        # Options: cosine, step, plateau
+  lr_warmup_epochs: 3
+  weight_decay: 1.0e-4
+  gradient_clip_norm: 1.0     # Gradient clipping
+  early_stopping_patience: 10
+  early_stopping_metric: val_roc_auc   # Monitor for best checkpoint
+  mixed_precision: true        # Use torch.cuda.amp when CUDA available
+
+  # Seeds for reproducibility
+  seed: 42
+
+# Checkpoint configuration
+checkpoint:
+  dir: checkpoints/vision
+  save_best_roc_auc: true
+  save_best_val_loss: true
+  save_last: true
+
+# Evaluation
+evaluation:
+  # Classification metrics
+  compute_roc_auc: true
+  compute_pr_auc: true
+  compute_tss: true
+  compute_hss: true
+  compute_brier: true
+  compute_ece: true
+  # Spatial metrics
+  compute_iou: true
+  compute_dice: true
+  # Image metrics
+  compute_mae: true
+  compute_rmse: true
+  compute_ssim: true
+  compute_psnr: true
+
+# Smoke-test defaults (tiny run for pipeline verification)
+smoke_test:
+  epochs: 1
+  batch_size: 2
+  image_size: 128
+  lookback_hours: 4
+  horizon_minutes: 60

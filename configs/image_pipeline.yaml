@@ -1,0 +1,55 @@
+# AstroNova Image Pipeline Configuration
+# CRITICAL: Normalization statistics must be computed ONLY from the training split.
+
+image:
+  size: 256          # Default: 256x256. Options: 128, 256, 512
+  channels: 3        # RGB (SDO browse) or 1 (grayscale FITS)
+  normalization: robust   # Options: minmax, zscore, robust, per_image, dataset_level
+  limb_mask: false        # Mask pixels outside solar limb
+  solar_disc_crop: true   # Crop to solar disc bounding box
+
+# Temporal sequence parameters
+sequence:
+  lookback_hours: 24      # Historical observation window (W)
+  cadence_minutes: 60     # One image per hour
+  forecast_horizons_minutes: [15, 30, 60, 360, 720, 1440]  # H values
+
+# Dataset split (chronological - NO random splitting)
+split:
+  train_fraction: 0.70
+  val_fraction: 0.15
+  test_fraction: 0.15
+  strategy: chronological        # MUST be chronological for temporal data
+  event_gap_hours: 6             # Minimum gap between events in different splits
+
+# Augmentation (training only - physically reasonable)
+augmentation:
+  enabled: true
+  rotation_max_deg: 5.0         # Small rotation only (solar disc orientation matters)
+  translation_max_px: 4         # Max pixel shift
+  intensity_scale_range: [0.95, 1.05]  # +/-5% intensity
+  gaussian_noise_std: 0.01      # Very small noise
+  horizontal_flip: false        # DISABLED - heliographic coordinates matter
+  vertical_flip: false          # DISABLED
+  contrast_range: [0.9, 1.1]
+
+# Magnetic feature definition (HMI SHARP 16 parameters)
+magnetic_features:
+  - ABSNJZH
+  - AREA_ACR
+  - MEANALP
+  - MEANJZH
+  - MEANPOT
+  - MEANSHR
+  - R_VALUE
+  - SAVNCPP
+  - TOTBSQ
+  - TOTFX
+  - TOTFY
+  - TOTFZ
+  - TOTPOT
+  - TOTUSJH
+  - TOTUSJZ
+  - USFLUX
+  missing_strategy: mask   # Options: mask, impute, exclude_sample
+  impute_value: 0.0        # Used only if missing_strategy=impute
