@@ -1,8 +1,7 @@
 import numpy as np
 import cv2
 import torch
-import albumentations as A
-from albumentations.pytorch import ToTensorV2
+import torchvision.transforms as T
 from typing import List, Dict, Any
 import pandas as pd
 
@@ -15,57 +14,49 @@ class SolarImagePreprocessor:
         self.target_size = target_size
         self.augment = augment
 
-        # Base transforms applied to all images (validation/inference)
-        self.base_transforms = A.Compose([
-            A.Resize(height=target_size, width=target_size),
-            A.Normalize(
-                mean=[0.485, 0.456, 0.406],
-                std=[0.229, 0.224, 0.225],
-            ),
-            ToTensorV2()
-        ])
+        self.normalize = T.Normalize(
+            mean=[0.485, 0.456, 0.406],
+            std=[0.229, 0.224, 0.225],
+        )
 
-        # Augmentation transforms for training
-        self.train_transforms = A.Compose([
-            A.Resize(height=target_size, width=target_size),
-            A.RandomRotate90(p=0.5),
-            A.HorizontalFlip(p=0.5),
-            A.ShiftScaleRotate(shift_limit=0.05, scale_limit=0.05, rotate_limit=15, p=0.3),
-            A.RandomBrightnessContrast(brightness_limit=0.1, contrast_limit=0.1, p=0.3),
-            A.OneOf([
-                A.GaussNoise(p=1.0),
-                A.GaussianBlur(blur_limit=3, p=1.0),
-            ], p=0.2),
-            A.Normalize(
-                mean=[0.485, 0.456, 0.406],
-                std=[0.229, 0.224, 0.225],
-            ),
-            ToTensorV2()
-        ])
-
-    def preprocess_image(self, image: np.ndarray, is_training: bool = False) -> Any:
+    def preprocess_image(self, image: np.ndarray, is_training: bool = False) -> torch.Tensor:
         """
         Apply resizing, normalization, and optionally augmentations.
-        Returns a torch Tensor.
+        Returns a torch Tensor [C, H, W] in float32.
         """
-        # Ensure image is in RGB format if it's single channel
+        # Ensure image is in RGB format if it's single channel or RGBA
         if len(image.shape) == 2:
             image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
-        elif image.shape[2] == 4:
+        elif len(image.shape) == 3 and image.shape[2] == 4:
             image = cv2.cvtColor(image, cv2.COLOR_BGRA2RGB)
+        elif len(image.shape) == 3 and image.shape[2] == 1:
+            image = cv2.cvtColor(image, cv2.COLOR_GRAY2RGB)
+
+        # Resize
+        if image.shape[0] != self.target_size or image.shape[1] != self.target_size:
+            image = cv2.resize(image, (self.target_size, self.target_size), interpolation=cv2.INTER_AREA)
+
+        # Convert to float tensor [0, 1]
+        tensor = torch.from_numpy(image).permute(2, 0, 1).float() / 255.0
 
         if is_training and self.augment:
-            augmented = self.train_transforms(image=image)
-        else:
-            augmented = self.base_transforms(image=image)
-            
-        return augmented["image"]
+            # Random slight rotation
+            if np.random.rand() > 0.5:
+                angle = float(np.random.uniform(-5.0, 5.0))
+                tensor = T.functional.rotate(tensor, angle)
+            # Random slight brightness/contrast
+            if np.random.rand() > 0.5:
+                brightness = float(np.random.uniform(0.9, 1.1))
+                tensor = (tensor * brightness).clamp(0.0, 1.0)
+
+        # Apply normalization
+        tensor = self.normalize(tensor)
+        return tensor
 
     @staticmethod
     def equalize_histogram(image: np.ndarray) -> np.ndarray:
         """Apply CLAHE for better contrast in solar features like active regions and flares."""
         if len(image.shape) == 3:
-            # Convert to LAB for CLAHE
             lab = cv2.cvtColor(image, cv2.COLOR_RGB2LAB)
             l, a, b = cv2.split(lab)
             clahe = cv2.createCLAHE(clipLimit=3.0, tileGridSize=(8, 8))
@@ -88,17 +79,12 @@ class SolarImagePreprocessor:
         h, w = image.shape[:2]
         center_x, center_y = w // 2, h // 2
 
-        # Convert to grayscale for circle detection
         if len(image.shape) == 3:
             gray = cv2.cvtColor(image, cv2.COLOR_RGB2GRAY)
         else:
             gray = image.copy()
 
-        # Apply Gaussian blur to reduce noise for Hough detection
         blurred = cv2.GaussianBlur(gray, (9, 9), 2)
-
-        # Detect circles (solar disk) using Hough Circle Transform
-        # Solar disk typically occupies 80-95% of the image in SDO data
         min_radius = int(min(h, w) * 0.3)
         max_radius = int(min(h, w) * 0.5)
 
@@ -114,16 +100,12 @@ class SolarImagePreprocessor:
         )
 
         if circles is not None:
-            # Take the most prominent circle
             circles = np.round(circles[0, :]).astype(int)
             best_circle = circles[0]
             cx, cy, r = best_circle
-
-            # Calculate shift needed to center the disk
             shift_x = center_x - cx
             shift_y = center_y - cy
 
-            # Only shift if the offset is significant (> 2% of image size)
             if abs(shift_x) > w * 0.02 or abs(shift_y) > h * 0.02:
                 M = np.float32([[1, 0, shift_x], [0, 1, shift_y]])
                 image = cv2.warpAffine(image, M, (w, h), borderMode=cv2.BORDER_CONSTANT, borderValue=0)
@@ -144,15 +126,11 @@ class SolarImagePreprocessor:
     def mask_off_limb(image: np.ndarray, margin: float = 0.02) -> np.ndarray:
         """
         Masks off-limb regions (outside the solar disk) to black.
-        This removes stray light and cosmic ray artifacts outside the disk.
         """
         h, w = image.shape[:2]
         center_x, center_y = w // 2, h // 2
-        
-        # Approximate solar radius as ~45% of image dimension
         radius = int(min(h, w) * (0.45 + margin))
         
-        # Create circular mask
         Y, X = np.ogrid[:h, :w]
         dist_from_center = np.sqrt((X - center_x) ** 2 + (Y - center_y) ** 2)
         mask = dist_from_center <= radius
@@ -182,20 +160,17 @@ def synchronize_data(
 ) -> pd.DataFrame:
     """
     Aligns images with nearest GOES telemetry within a tolerance using pandas merge_asof.
-    This is the production-grade version using vectorized operations.
     """
     import glob
     import os
     from datetime import datetime
 
-    # Load GOES data
     df_goes = pd.read_csv(goes_csv_path)
     df_goes['time'] = pd.to_datetime(df_goes['time'], utc=True)
     df_goes = df_goes.sort_values('time').reset_index(drop=True)
 
-    # Parse image timestamps from filenames
     image_records = []
-    for path in sorted(glob.glob(os.path.join(image_dir, "*.jpg"))):
+    for path in sorted(glob.glob(os.path.join(image_dir, "*.jpg")) + glob.glob(os.path.join(image_dir, "*.png"))):
         filename = os.path.basename(path)
         try:
             dt_str = filename[:15]
@@ -210,7 +185,6 @@ def synchronize_data(
 
     df_images = pd.DataFrame(image_records).sort_values('time').reset_index(drop=True)
 
-    # Merge using merge_asof for efficient nearest-neighbor temporal alignment
     aligned = pd.merge_asof(
         df_images,
         df_goes,
@@ -219,7 +193,5 @@ def synchronize_data(
         tolerance=pd.Timedelta(seconds=tolerance_seconds)
     )
 
-    # Drop rows where telemetry wasn't found within tolerance
     aligned = aligned.dropna(subset=['xrsa_flux', 'xrsb_flux'])
-
     return aligned

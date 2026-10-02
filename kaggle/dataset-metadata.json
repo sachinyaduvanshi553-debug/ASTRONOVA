@@ -1,0 +1,9 @@
+{
+  "title": "AstroNova Solar Flare Forecasting Dataset",
+  "id": "astronova-user/astronova-solar-flare-dataset",
+  "licenses": [
+    {
+      "name": "CC0-1.0"
+    }
+  ]
+}

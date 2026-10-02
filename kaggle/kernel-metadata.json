@@ -1,0 +1,19 @@
+{
+  "id": "astronova-user/astronova-solar-flare-ml",
+  "title": "AstroNova Solar Flare ML Training Pipeline",
+  "code_file": "astronova_solar_flare_ml_kaggle.ipynb",
+  "language": "python",
+  "kernel_type": "notebook",
+  "is_private": "true",
+  "enable_gpu": "true",
+  "enable_internet": "true",
+  "keywords": [
+    "space-weather",
+    "solar-flare",
+    "deep-learning",
+    "multimodal",
+    "time-series",
+    "computer-vision"
+  ],
+  "dataset_sources": []
+}
