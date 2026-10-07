@@ -1,271 +1,138 @@
+"""
+Forecasting Router.
+Provides production API endpoints for:
+- POST /api/v1/forecast/predict (24x16 sequence flare prediction)
+- POST /api/v1/forecast/forecast (Standard forecast endpoint)
+- GET /api/v1/forecast/model-info (Model metadata, architecture, features)
+- GET /api/v1/forecast/metrics (Benchmark test evaluation metrics)
+- GET /api/v1/forecast/health (Health check)
+"""
 
-import numpy as np
+import json
+import os
+from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, Body, Query
+import numpy as np
+import pandas as pd
 from pydantic import BaseModel, Field
-from services.forecasting.services.inference_engine import InferenceEngine
-from services.forecasting.services.nowcasting import NowcastingService
-from services.forecasting.services.solar_hazard_index import SolarHazardIndexCalculator
 
-from astronova_core.schemas.forecasting import ForecastRequest
+from services.forecasting.services.inference_engine import AstroNovaInferenceEngine
 
 router = APIRouter(prefix="/api/v1/forecast", tags=["forecasting"])
-inference_engine = InferenceEngine()
-nowcast_service = NowcastingService()
+inference_engine = AstroNovaInferenceEngine()
 
-# --- Pydantic Models for Simulation & Evaluation ---
-class SimulationRequest(BaseModel):
-    goes_class: str = Field("M5.0", description="GOES class to simulate (e.g. C5.0, M1.0, X2.0)")
-    peak_flux: float = Field(5e-5, ge=1e-9, description="Peak soft X-ray flux value in W/m^2")
-    duration_minutes: int = Field(30, ge=1, description="Simulated flare lifecycle duration")
-    precursor_score: float = Field(0.4, ge=0.0, le=1.0, description="Simulated magnetic reconnection precursor index")
 
-class SimulationResponse(BaseModel):
-    goes_class: str
-    simulated_peak_flux: float
-    solar_hazard_index: dict
-    comms_impact_assessment: dict
-    satellite_operational_directive: str
+class SequenceForecastRequest(BaseModel):
+    sequence: Optional[List[List[float]]] = Field(
+        None, description="24-hour sequence of 16 photospheric magnetic features (24 x 16)"
+    )
+    features: Optional[List[float]] = Field(
+        None, description="Single observation features (fallback for 1x16)"
+    )
+    use_ensemble: bool = Field(True, description="Whether to use multi-model ensemble")
+    include_xai: bool = Field(True, description="Whether to include XAI feature & temporal attributions")
 
-class EvaluationResponse(BaseModel):
-    metrics: dict[str, dict]
-    dataset_period: str
-    total_events_evaluated: int
 
 @router.post("/predict")
-async def get_prediction(
-    request: ForecastRequest,
-    current_flux: float = Query(1e-7, description="Current observed flux for constraint check")
-):
+async def predict_flare(request: SequenceForecastRequest = Body(...)):
     """
-    Generates multi-horizon probabilistic forecasts with physics-informed bounds.
+    Predicts >= M-class solar flare probability for the next 24 hours
+    given a 24-hour sequence of 16 photospheric magnetic parameters.
     """
-    dummy_features = np.zeros((1, 10, 15), dtype=np.float32)
-    if hasattr(request, 'features') and request.features:
-        try:
-            dummy_features = np.array([request.features], dtype=np.float32)
-        except: pass
-    res = inference_engine.predict(dummy_features, current_flux=current_flux)
-    return res
-
-@router.get("/nowcast")
-async def get_nowcast(
-    current_flux: float = Query(..., description="Current observed flux (W/m^2)"),
-    flux_history: list[float] | None = Query(None, description="Recent historical flux values for lifecycle tracking")
-):
-    """
-    Nowcast current flux state, tracking lifecycle phase and recommended cadence.
-    """
-    res = nowcast_service.analyze_nowcast(current_flux, flux_history=flux_history)
-    return res
-
-@router.get("/shi")
-async def get_shi(
-    current_flux: float = Query(..., description="Current observed flux (W/m^2)"),
-    similarity: float = Query(0.1, ge=0.0, le=1.0, description="Historical similarity score"),
-    sat_risk: float = Query(0.1, ge=0.0, le=1.0, description="Satellite risk factor"),
-    impact_risk: float = Query(0.1, ge=0.0, le=1.0, description="Geospatial earth impact risk")
-):
-    """
-    Computes advanced Solar Hazard Index incorporating multi-factor risks.
-    """
-    # Generate nowcast and predict states
-    nowcast_res = nowcast_service.analyze_nowcast(current_flux)
-    dummy_features = np.zeros((1, 10, 15), dtype=np.float32)
-    pred_res = inference_engine.predict(dummy_features, current_flux=current_flux)
-    
-    # Calculate gradient proxy from nowcast
-    gradient = current_flux * 0.05
-    probabilities = pred_res["prediction"]["horizons"]["15m"]["probabilities"]
-    
-    shi = SolarHazardIndexCalculator.calculate_shi(
-        probabilities=probabilities,
-        gradient=gradient,
-        similarity=similarity,
-        sat_risk=sat_risk,
-        impact_risk=impact_risk
-    )
-    return shi
-
-@router.post("/simulate", response_model=SimulationResponse)
-async def simulate_scenario(request: SimulationRequest = Body(...)):
-    """
-    Projects hazards, radio/GNSS blackout severity, and satellite risk matrices for customized solar flare scenarios.
-    """
-    # 1. Compute simulated hazard index
-    # Simulated probabilities: highest probability to target simulated goes_class
-    sim_class = request.goes_class[0].upper()
-    probs = {"A": 0.02, "B": 0.03, "C": 0.05, "M": 0.1, "X": 0.1}
-    probs[sim_class] = 0.8  # Target class is dominant
-
-    # Gradient proxy based on peak flux and duration
-    sim_gradient = request.peak_flux / (request.duration_minutes * 60)
-
-    sim_shi = SolarHazardIndexCalculator.calculate_shi(
-        probabilities=probs,
-        gradient=sim_gradient,
-        similarity=0.88,  # Simulated matches
-        sat_risk=0.65 if sim_class in ["M", "X"] else 0.2,
-        impact_risk=0.72 if sim_class in ["M", "X"] else 0.15
-    )
-
-    # 2. Compute comms impact assessment
-    severity = "Low"
-    absorption_db = 1.2
-    scintillation_s4 = 0.15
-    if sim_class == "M":
-        severity = "Moderate"
-        absorption_db = 8.5
-        scintillation_s4 = 0.45
-    elif sim_class == "X":
-        severity = "Critical"
-        absorption_db = 22.4
-        scintillation_s4 = 0.85
-
-    comms_assessment = {
-        "gps_degradation": {
-            "severity": severity,
-            "position_error_increase_meters": 1.5 if severity == "Low" else (5.4 if severity == "Moderate" else 14.8),
-            "confidence": 0.94
-        },
-        "navic_degradation": {
-            "severity": severity,
-            "s4_index": scintillation_s4,
-            "scintillation_warning": bool(scintillation_s4 >= 0.4),
-            "confidence": 0.92
-        },
-        "hf_radio": {
-            "dellinger_absorption_db": absorption_db,
-            "blackout_probability": 0.15 if severity == "Low" else (0.65 if severity == "Moderate" else 0.98),
-            "affected_frequency_mhz_ceiling": 15 if severity == "Low" else (25 if severity == "Moderate" else 35)
-        }
-    }
-
-    # 3. Operational directive recommendation
-    if sim_class == "X":
-        directive = "CRITICAL ACTION: Trigger safing procedures for GEO platforms. Divert polar aviation routes. Initiate NavIC receiver tracking-loop adjustments."
-    elif sim_class == "M":
-        directive = "AMBER ACTION: Monitor transponder thermal limits. Prepare GPS/NavIC receivers for scintillation anomalies."
+    if request.sequence is not None and len(request.sequence) > 0:
+        seq = request.sequence
+    elif request.features is not None and len(request.features) > 0:
+        # Replicate across 24h window if single observation provided
+        feat = request.features
+        seq = [feat for _ in range(24)]
     else:
-        directive = "GREEN ACTION: Routine operations. Continue monitoring standard cadence."
+        # Default nominal active region sample
+        seq = np.zeros((24, 16), dtype=np.float32).tolist()
+
+    res = inference_engine.predict(
+        sequence_data=seq,
+        include_xai=request.include_xai,
+        use_ensemble=request.use_ensemble,
+    )
+    return res
+
+
+@router.post("/forecast")
+async def forecast_endpoint(request: SequenceForecastRequest = Body(...)):
+    """
+    Alias endpoint for operational flare forecasting.
+    """
+    return await predict_flare(request)
+
+
+@router.get("/model-info")
+def get_model_info():
+    """
+    Returns active model architecture, dataset study window, feature set, and checkpoint status.
+    """
+    cfg_path = "checkpoints/model_config.json"
+    cfg = {}
+    if os.path.exists(cfg_path):
+        with open(cfg_path, "r") as f:
+            cfg = json.load(f)
+
+    split_path = "checkpoints/split_metadata.json"
+    split_meta = {}
+    if os.path.exists(split_path):
+        with open(split_path, "r") as f:
+            split_meta = json.load(f)
 
     return {
-        "goes_class": request.goes_class,
-        "simulated_peak_flux": request.peak_flux,
-        "solar_hazard_index": sim_shi,
-        "comms_impact_assessment": comms_assessment,
-        "satellite_operational_directive": directive
+        "model_name": "AstroNova Research-Grade Forecaster",
+        "base_paper": "Prediction of Solar Flares Using Photospheric Magnetic Field Parameters with Deep Learning (Chaudhary et al., 2026)",
+        "study_period": "May 2010 – May 2018 (Solar Cycle 24)",
+        "dataset_sources": [
+            "SDO/HMI SHARPs (hmi.sharp)",
+            "cgem.Lorentz (Integrated Lorentz Forces)",
+            "GOES X-ray Flare Catalog (NCEI/NOAA)",
+        ],
+        "input_shape": [24, 16],
+        "prediction_horizon": "24 hours",
+        "target": "Binary (1: >= M-Class Flare in next 24h, 0: Quiet / < M-Class)",
+        "features": inference_engine.features,
+        "feature_count": len(inference_engine.features),
+        "locked_threshold": inference_engine.threshold,
+        "calibrator_type": "Platt Scaling" if inference_engine.calibrator else "Raw",
+        "active_models": list(inference_engine.ensemble.models.keys()),
+        "ensemble_weights": inference_engine.ensemble.weights,
+        "dataset_splits": split_meta,
+        "config": cfg,
     }
 
-@router.get("/evaluate", response_model=EvaluationResponse)
-async def evaluate_models():
+
+@router.get("/metrics")
+def get_metrics():
     """
-    Computes and returns validation metrics (TSS, FAR, POD, HSS, Brier Score, and Lead-Time accuracy)
-    on historical/recent solar weather events for benchmarking.
+    Returns evaluation metrics across Baseline Transformer, Optimized Transformer, BiLSTM, and Ensemble.
     """
-    # Standard research benchmark values based on validation runs
-    metrics = {
-        "BiLSTM_Forecaster": {
-            "true_skill_statistic": 0.82,
-            "false_alarm_ratio": 0.12,
-            "probability_of_detection": 0.85,
-            "heidke_skill_score": 0.79,
-            "brier_score": 0.08,
-            "mean_lead_time_minutes": 22.0
-        },
-        "GRU_Forecaster": {
-            "true_skill_statistic": 0.78,
-            "false_alarm_ratio": 0.15,
-            "probability_of_detection": 0.81,
-            "heidke_skill_score": 0.74,
-            "brier_score": 0.11,
-            "mean_lead_time_minutes": 18.0
-        },
-        "Solar_Transformer": {
-            "true_skill_statistic": 0.88,
-            "false_alarm_ratio": 0.09,
-            "probability_of_detection": 0.90,
-            "heidke_skill_score": 0.84,
-            "brier_score": 0.05,
-            "mean_lead_time_minutes": 26.0
+    csv_path = "reports/benchmark_comparison.csv"
+    if os.path.exists(csv_path):
+        df = pd.read_csv(csv_path)
+        return {
+            "status": "success",
+            "benchmark_comparison": df.to_dict(orient="records"),
         }
-    }
 
     return {
-        "metrics": metrics,
-        "dataset_period": "NOAA Space Weather Core + Aditya-L1 Sync (June 2026 Validation Suite)",
-        "total_events_evaluated": 1250
+        "status": "pending",
+        "message": "Benchmark comparison is currently computing.",
     }
+
 
 @router.get("/health")
 def health():
-    return {"status": "healthy"}
-
-@router.get("/image-inference")
-async def get_image_inference(flare_id: str):
-    import os
-    import sys
-    import torch
-    import pandas as pd
-    
-    # Ensure root is in path
-    root_dir = os.path.abspath(os.path.join(os.path.dirname(__file__), '../../..'))
-    if root_dir not in sys.path:
-        sys.path.append(root_dir)
-        
-    try:
-        from scripts.train_image_features import ImageFeaturesMLP
-    except ImportError:
-        return {"error": "Could not import ImageFeaturesMLP"}
-        
-    model_path = os.path.join(root_dir, "models/image_features/mlp_model.pt")
-    csv_131 = os.path.join(root_dir, "data/features/spectral/image_features_131.csv")
-    csv_193 = os.path.join(root_dir, "data/features/spectral/image_features_193.csv")
-    
-    if not os.path.exists(model_path):
-        return {"error": "Model not found. Train the model first."}
-        
-    model = ImageFeaturesMLP(input_size=2560, num_classes=5)
-    model.load_state_dict(torch.load(model_path))
-    model.eval()
-    
-    try:
-        df_131 = pd.read_csv(csv_131)
-        df_193 = pd.read_csv(csv_193)
-    except Exception as e:
-        return {"error": f"Failed to load datasets: {str(e)}"}
-        
-    # Match the flare ID
-    row_131 = df_131[df_131['flare_id'] == flare_id]
-    if row_131.empty:
-        return {"error": f"Flare ID {flare_id} not found in 131 dataset."}
-        
-    sample_time = row_131['timestamp'].iloc[0]
-    time_rounded = pd.to_datetime(sample_time).round('10min')
-    df_193['time_rounded'] = pd.to_datetime(df_193['timestamp']).dt.round('10min')
-    row_193 = df_193[(df_193['flare_id'] == flare_id) & (df_193['time_rounded'] == time_rounded)]
-    
-    if row_193.empty:
-        return {"error": f"Matching 193 dataset sequence not found for Flare ID {flare_id}."}
-        
-    # Extract
-    f131_cols = [f'f{i}' for i in range(1280)]
-    f193_cols = [f'f{i}' for i in range(1280)]
-    
-    features_131 = row_131.iloc[0][f131_cols].values.astype(float)
-    features_193 = row_193.iloc[0][f193_cols].values.astype(float)
-    
-    import numpy as np
-    combined = np.concatenate([features_131, features_193])
-    input_tensor = torch.tensor(combined, dtype=torch.float32).unsqueeze(0)
-    
-    with torch.no_grad():
-        logits = model(input_tensor)
-        probs = torch.softmax(logits, dim=1).numpy()[0]
-        pred_class = int(np.argmax(probs))
-        
+    """
+    Service health check endpoint.
+    """
     return {
-        "flare_id": flare_id,
-        "timestamp": sample_time,
-        "predicted_class": pred_class,
-        "probabilities": [float(p) for p in probs]
+        "status": "healthy",
+        "device": str(inference_engine.device),
+        "models_loaded": len(inference_engine.ensemble.models) > 0,
+        "feature_count": len(inference_engine.features),
+        "locked_threshold": inference_engine.threshold,
     }
